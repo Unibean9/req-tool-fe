@@ -1,13 +1,13 @@
 import type { RequirementEdge, RequirementNode, RequirementNodeKind } from "./requirementsModelTypes";
 
-const NODE_WIDTH: Record<RequirementNodeKind, number> = {
+export const REQUIREMENT_NODE_WIDTH: Record<RequirementNodeKind, number> = {
   actor: 232,
   epic: 280,
   feature: 280,
   userStory: 300,
 };
 
-const NODE_HEIGHT: Record<RequirementNodeKind, number> = {
+export const REQUIREMENT_NODE_HEIGHT: Record<RequirementNodeKind, number> = {
   actor: 200,
   epic: 260,
   feature: 260,
@@ -40,7 +40,7 @@ function measureSubtreeWidth(
   if (cached != null) return cached;
 
   const node = nodeById.get(id);
-  const leafWidth = node ? NODE_WIDTH[node.data.kind] : 280;
+  const leafWidth = node ? REQUIREMENT_NODE_WIDTH[node.data.kind] : 280;
   const kids = children.get(id) ?? [];
 
   if (kids.length === 0) {
@@ -71,18 +71,18 @@ function layoutSubtree(
   const node = nodeById.get(id);
   if (!node) return;
 
-  const width = NODE_WIDTH[node.data.kind];
+  const width = REQUIREMENT_NODE_WIDTH[node.data.kind];
   positions.set(id, { x: xCenter - width / 2, y });
 
   const kids = children.get(id) ?? [];
   if (kids.length === 0) return;
 
-  const childY = y + NODE_HEIGHT[node.data.kind] + LEVEL_GAP;
-  const subtreeWidth = widthCache.get(id) ?? NODE_WIDTH[node.data.kind];
+  const childY = y + REQUIREMENT_NODE_HEIGHT[node.data.kind] + LEVEL_GAP;
+  const subtreeWidth = widthCache.get(id) ?? REQUIREMENT_NODE_WIDTH[node.data.kind];
   let xCursor = xCenter - subtreeWidth / 2;
 
   for (const kidId of kids) {
-    const kidWidth = widthCache.get(kidId) ?? NODE_WIDTH.actor;
+    const kidWidth = widthCache.get(kidId) ?? REQUIREMENT_NODE_WIDTH.actor;
     layoutSubtree(
       kidId,
       xCursor + kidWidth / 2,
@@ -119,7 +119,7 @@ export function layoutRequirementTree(
     nodes[0];
 
   if (root) {
-    const rootWidth = widthCache.get(root.id) ?? NODE_WIDTH[root.data.kind];
+    const rootWidth = widthCache.get(root.id) ?? REQUIREMENT_NODE_WIDTH[root.data.kind];
     layoutSubtree(
       root.id,
       ORIGIN_X + rootWidth / 2,
@@ -148,9 +148,9 @@ export function layoutRequirementTree(
 
   for (const n of nodes) {
     if (placed.has(n.id)) continue;
-    const w = NODE_WIDTH[n.data.kind];
+    const w = REQUIREMENT_NODE_WIDTH[n.data.kind];
     positions.set(n.id, { x: orphanX, y: orphanY });
-    orphanY += NODE_HEIGHT[n.data.kind] + LEVEL_GAP;
+    orphanY += REQUIREMENT_NODE_HEIGHT[n.data.kind] + LEVEL_GAP;
     if (orphanY > 1200) {
       orphanY = ORIGIN_Y;
       orphanX += w + SIBLING_GAP;
@@ -164,14 +164,33 @@ export function layoutRequirementTree(
 }
 
 /** Vị trí gợi ý khi thêm node con (dưới parent). */
+/** Epic (hoặc kind khác) chứa điểm thả trên canvas — dùng khi kéo từ palette. */
+export function findNodeAtFlowPosition(
+  nodes: RequirementNode[],
+  position: { x: number; y: number },
+  kind: RequirementNodeKind
+): RequirementNode | undefined {
+  return nodes.find((n) => {
+    if (n.data.kind !== kind) return false;
+    const w = REQUIREMENT_NODE_WIDTH[kind];
+    const h = REQUIREMENT_NODE_HEIGHT[kind];
+    return (
+      position.x >= n.position.x &&
+      position.x <= n.position.x + w &&
+      position.y >= n.position.y &&
+      position.y <= n.position.y + h
+    );
+  });
+}
+
 export function positionChildBelowParent(
   parent: RequirementNode,
   childKind: RequirementNodeKind,
   siblingIndex = 0
 ): { x: number; y: number } {
-  const offsetX = siblingIndex * (NODE_WIDTH[childKind] + SIBLING_GAP);
+  const offsetX = siblingIndex * (REQUIREMENT_NODE_WIDTH[childKind] + SIBLING_GAP);
   return {
     x: parent.position.x + offsetX,
-    y: parent.position.y + NODE_HEIGHT[parent.data.kind] + LEVEL_GAP,
+    y: parent.position.y + REQUIREMENT_NODE_HEIGHT[parent.data.kind] + LEVEL_GAP,
   };
 }

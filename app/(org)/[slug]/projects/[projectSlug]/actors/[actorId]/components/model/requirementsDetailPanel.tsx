@@ -1,6 +1,6 @@
 "use client";
 
-import { X } from "lucide-react";
+import { Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -30,11 +30,18 @@ export function RequirementsDetailPanel() {
     panelOpen,
     closePanel,
     updateNodeData,
-    suggestedActorsForStory,
+    deleteNode,
+    actorMeta,
+    isDeletingEpic,
+    isDeletingFeature,
+    isDeletingUserStory,
   } = useRequirementsModel();
 
   const node = nodes.find((n) => n.id === selectedNodeId);
   const kind = node?.data.kind;
+  const canDeleteEpic = node && isEpicNodeData(node.data);
+  const canDeleteFeature = node && isFeatureNodeData(node.data);
+  const canDeleteUserStory = node && isUserStoryNodeData(node.data);
 
   return (
     <aside
@@ -52,8 +59,17 @@ export function RequirementsDetailPanel() {
             {kind ? REQUIREMENT_KIND_LABELS[kind] : "Chi tiết"}
           </p>
           <h2 className="mt-0.5 truncate text-sm font-semibold text-foreground">
-            {node ? panelTitle(node.data) : "Chọn node trên canvas"}
+            {node ? panelTitle(node.data) : "Chọn một thẻ trên sơ đồ"}
           </h2>
+          {node ? (
+            <p className="mt-1.5 text-[11px] leading-snug text-muted-foreground">
+              {isEpicNodeData(node.data) ||
+              isFeatureNodeData(node.data) ||
+              isUserStoryNodeData(node.data)
+                ? "Thay đổi được lưu tự động sau vài giây. Xóa bằng nút bên dưới hoặc phím Delete."
+                : "Chỉnh các trường bên dưới."}
+            </p>
+          ) : null}
         </div>
         <Button
           type="button"
@@ -85,17 +101,57 @@ export function RequirementsDetailPanel() {
             <UserStoryDetailForm
               data={node.data}
               onChange={(patch) => updateNodeData(node.id, patch)}
-              suggestedActors={suggestedActorsForStory()}
+              lockedActorRef={actorMeta.name.trim() || "Actor"}
             />
           ) : null}
         </div>
       ) : (
         <p className="flex-1 px-4 py-6 text-sm text-muted-foreground">
-          Click một node trên sơ đồ để chỉnh sửa.
+          Bấm vào thẻ Epic, Feature hoặc User Story trên sơ đồ để chỉnh chi tiết tại
+          đây.
         </p>
       )}
 
-      <footer className="shrink-0 border-t border-border px-4 py-2.5">
+      <footer className="flex shrink-0 flex-col gap-2 border-t border-border px-4 py-2.5">
+        {canDeleteEpic ? (
+          <Button
+            type="button"
+            variant="destructive"
+            size="sm"
+            className="w-full gap-1.5"
+            disabled={isDeletingEpic}
+            onClick={() => deleteNode(node.id)}
+          >
+            <Trash2 className="size-3.5" aria-hidden />
+            Xóa Epic
+          </Button>
+        ) : null}
+        {canDeleteFeature ? (
+          <Button
+            type="button"
+            variant="destructive"
+            size="sm"
+            className="w-full gap-1.5"
+            disabled={isDeletingFeature}
+            onClick={() => deleteNode(node.id)}
+          >
+            <Trash2 className="size-3.5" aria-hidden />
+            Xóa Feature
+          </Button>
+        ) : null}
+        {canDeleteUserStory ? (
+          <Button
+            type="button"
+            variant="destructive"
+            size="sm"
+            className="w-full gap-1.5"
+            disabled={isDeletingUserStory}
+            onClick={() => deleteNode(node.id)}
+          >
+            <Trash2 className="size-3.5" aria-hidden />
+            Xóa User Story
+          </Button>
+        ) : null}
         <Button
           type="button"
           variant="ghost"

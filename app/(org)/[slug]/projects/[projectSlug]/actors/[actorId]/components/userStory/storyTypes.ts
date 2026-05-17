@@ -4,12 +4,18 @@ export type StoryStatus = (typeof STORY_STATUSES)[number];
 export const STORY_PRIORITIES = ["low", "medium", "high", "critical"] as const;
 export type StoryPriority = (typeof STORY_PRIORITIES)[number];
 
-/** Một dòng tiêu chí nghiệm thu (mock — API trả mảng). */
+/** Một dòng tiêu chí nghiệm thu — khớp API (`description`, `order`). */
 export type AcceptanceCriterion = {
   id: string;
-  text: string;
-  done: boolean;
+  description: string;
+  order: number;
 };
+
+export function reindexAcceptanceCriteria(
+  criteria: AcceptanceCriterion[]
+): AcceptanceCriterion[] {
+  return criteria.map((c, index) => ({ ...c, order: index }));
+}
 
 /** Shape khớp response API User Story. */
 export type UserStoryRecord = {

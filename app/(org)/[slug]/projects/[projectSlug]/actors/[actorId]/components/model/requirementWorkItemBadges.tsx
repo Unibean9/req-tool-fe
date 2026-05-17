@@ -3,19 +3,10 @@
 import { Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const STATUS_LABELS: Record<string, string> = {
-  draft: "Draft",
-  active: "Active",
-  done: "Done",
-  archived: "Archived",
-};
-
-const PRIORITY_LABELS: Record<string, string> = {
-  low: "Low",
-  medium: "Medium",
-  high: "High",
-  critical: "Critical",
-};
+import {
+  workItemPriorityLabel,
+  workItemStatusLabel,
+} from "./requirementWorkItemLabels";
 
 const PRIORITY_PILL_CLASS: Record<string, string> = {
   low: "border-border/70 bg-muted/60 text-muted-foreground",
@@ -40,11 +31,11 @@ export function RequirementPriorityPill({ priority }: { priority: string }) {
   return (
     <span
       className={cn(
-        "inline-flex shrink-0 items-center rounded-md border px-2 py-0.5 text-[10px] font-semibold capitalize",
+        "inline-flex shrink-0 items-center rounded-md border px-2 py-0.5 text-[10px] font-semibold",
         PRIORITY_PILL_CLASS[priority] ?? PRIORITY_PILL_CLASS.low
       )}
     >
-      {PRIORITY_LABELS[priority] ?? priority}
+      {workItemPriorityLabel(priority)}
     </span>
   );
 }
@@ -52,7 +43,7 @@ export function RequirementPriorityPill({ priority }: { priority: string }) {
 export function RequirementStatusPill({ status }: { status: string }) {
   return (
     <span className="inline-flex shrink-0 items-center rounded-md border border-border/70 bg-muted/50 px-2 py-0.5 text-[10px] font-medium text-foreground/90">
-      {STATUS_LABELS[status] ?? status}
+      {workItemStatusLabel(status)}
     </span>
   );
 }

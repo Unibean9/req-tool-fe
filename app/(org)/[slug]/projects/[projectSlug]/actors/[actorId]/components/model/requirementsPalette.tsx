@@ -19,7 +19,11 @@ const PALETTE_ITEMS: {
   hint: string;
 }[] = [
   { kind: "epic", icon: Layers, hint: "Gắn vào actor hiện tại" },
-  { kind: "feature", icon: ListTree, hint: "Thuộc một Epic" },
+  {
+    kind: "feature",
+    icon: ListTree,
+    hint: "Thả lên thẻ Epic (không thả trống canvas)",
+  },
   { kind: "userStory", icon: BookOpen, hint: "Thuộc một Feature" },
 ];
 

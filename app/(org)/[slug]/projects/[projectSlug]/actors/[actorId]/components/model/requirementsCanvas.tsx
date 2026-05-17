@@ -122,6 +122,11 @@ function RequirementsCanvasInner() {
           Auto-layout
         </Button>
       </div>
+      <p className="shrink-0 border-b border-border/60 bg-muted/20 px-3 py-1.5 text-[11px] text-muted-foreground">
+        Click thẻ để sửa · Epic: nút + thêm Feature · Kéo Feature thả{" "}
+        <strong className="font-medium text-foreground">lên</strong> thẻ Epic ·
+        Góc nhìn &quot;Epic view&quot; ẩn Feature — dùng Full tree sau khi thêm
+      </p>
 
       <div className="relative min-h-0 flex-1" onDragOver={onDragOver} onDrop={onDrop}>
         <ReactFlow

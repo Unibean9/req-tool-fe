@@ -7,11 +7,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import {
   ChevronsUpDown,
   Check,
-  Layers,
   LayoutDashboard,
-  ListTodo,
   LogOut,
-  MessageCircle,
   Pencil,
   PersonStanding,
   Plus,
@@ -48,10 +45,6 @@ import { CreateOrgDialog } from "../../../../components/createOrgDialog";
 import { CreateProjectActorDialog } from "./sub-task/actor/createProjectActorDialog";
 import { DeleteProjectActorDialog } from "./sub-task/actor/deleteProjectActorDialog";
 import { EditProjectActorDialog } from "./sub-task/actor/editProjectActorDialog";
-import {
-  ACTOR_USER_STORIES_EMPTY_MOCK_ACTOR_ID,
-  ACTOR_USER_STORIES_MOCK_ACTOR_ID,
-} from "../actors/[actorId]/components/userStory/actorUserStoriesMock";
 import {
   buildOrgEntryPath,
   projectWorkspaceSubPathFromPathname,
@@ -287,10 +280,10 @@ function ProjectWorkspaceActorsNav({
   }
 
   return (
-    <>
+    <div className="flex min-h-0 flex-1 flex-col">
       <div
         className={cn(
-          "max-h-40 overflow-y-auto overscroll-contain scrollbar-none",
+          "min-h-0 flex-1 overflow-y-auto overscroll-contain scrollbar-none",
           "[&::-webkit-scrollbar]:hidden"
         )}
       >
@@ -413,7 +406,7 @@ function ProjectWorkspaceActorsNav({
         }}
         onRowInteractBusy={setEditMutationBusy}
       />
-    </>
+    </div>
   );
 }
 
@@ -442,12 +435,8 @@ function ProjectWorkspaceActorsSection({
     projectId.length > 0;
 
   return (
-    <div
-      className="space-y-1"
-      data-actor-user-stories-mock={ACTOR_USER_STORIES_MOCK_ACTOR_ID}
-      data-actor-user-stories-empty-demo={ACTOR_USER_STORIES_EMPTY_MOCK_ACTOR_ID}
-    >
-      <div className="mt-1 border-t border-border/70 px-1 pt-3">
+    <div className="flex min-h-0 flex-1 flex-col">
+      <div className="mt-1 shrink-0 border-t border-border/70 px-1 pt-3">
         <div
           className={cn(
             "flex items-center gap-2 px-0.5 pb-2",
@@ -483,7 +472,7 @@ function ProjectWorkspaceActorsSection({
           ) : null}
         </div>
       </div>
-      <div className="px-0.5">
+      <div className="flex min-h-0 flex-1 flex-col px-0.5">
         <ProjectWorkspaceActorsNav
           projectId={projectId}
           projectsLoaded={projectsLoaded}
@@ -587,11 +576,8 @@ export function ProjectWorkspaceNavSidebar({
   const nav = useMemo(
     () => ({
       dashboard: `${base}/dashboard`,
-      exchange: `${base}/trao-doi`,
       members: `${base}/members`,
       actorsBase: `${base}/actors`,
-      epics: `${base}/epics`,
-      tasks: `${base}/tasks`,
     }),
     [base]
   );
@@ -601,7 +587,7 @@ export function ProjectWorkspaceNavSidebar({
       <CreateOrgDialog open={createOrgOpen} onOpenChange={setCreateOrgOpen} />
       <aside
         className={cn(
-          "flex w-70 shrink-0 flex-col border-r border-border/60 bg-muted/20",
+          "flex h-full min-h-0 w-70 shrink-0 flex-col border-r border-border/60 bg-muted/20",
           className
         )}
         aria-label="Điều hướng dự án"
@@ -719,8 +705,8 @@ export function ProjectWorkspaceNavSidebar({
           </DropdownMenu>
         </div>
 
-        <nav className="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto px-2 py-4 scrollbar-none">
-          <div className="space-y-1">
+        <nav className="flex min-h-0 flex-1 flex-col gap-4 px-2 py-4">
+          <div className="shrink-0 space-y-1">
             <SidebarSectionTitle>Tổng quan</SidebarSectionTitle>
             <div className="space-y-1 px-0.5">
               <SidebarNavLink
@@ -728,12 +714,6 @@ export function ProjectWorkspaceNavSidebar({
                 label="Tổng quan dự án"
                 icon={LayoutDashboard}
                 active={pathActive(pathname, nav.dashboard)}
-              />
-              <SidebarNavLink
-                href={nav.exchange}
-                label="Trao đổi"
-                icon={MessageCircle}
-                active={pathActive(pathname, nav.exchange)}
               />
               <SidebarNavLink
                 href={nav.members}
@@ -752,24 +732,6 @@ export function ProjectWorkspaceNavSidebar({
             dashboardHref={nav.dashboard}
             canManageActors={canManageOrgMembers}
           />
-
-          <div className="space-y-1">
-            <SidebarSectionTitle withDivider>Tính năng</SidebarSectionTitle>
-            <div className="space-y-1 px-0.5">
-              <SidebarNavLink
-                href={nav.epics}
-                label="Epics"
-                icon={Layers}
-                active={pathActive(pathname, nav.epics)}
-              />
-              <SidebarNavLink
-                href={nav.tasks}
-                label="Task"
-                icon={ListTodo}
-                active={pathActive(pathname, nav.tasks)}
-              />
-            </div>
-          </div>
         </nav>
 
         <div className="shrink-0 border-t border-border/60 px-2 pt-2 pb-1">

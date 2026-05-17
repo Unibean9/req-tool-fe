@@ -1,20 +1,21 @@
 "use client";
 
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-
 import {
   DetailFieldRow,
   DetailPanelSection,
+  DetailPrioritySelect,
+  DetailStatusSelect,
+  DetailTextAreaField,
+  DetailTextField,
 } from "../model/requirementDetailPanelUi";
+import {
+  REQ_DESCRIPTION_MAX_CHARS,
+  REQ_LABELS_MAX_CHARS,
+  REQ_NFR_NOTE_MAX_CHARS,
+  REQ_PREFIX_MAX_CHARS,
+  REQ_REFERENCES_MAX_CHARS,
+  REQ_TITLE_MAX_CHARS,
+} from "../model/requirementDetailFormLimits";
 import type { FeatureNodeData } from "./featureTypes";
 import { FEATURE_PRIORITIES, FEATURE_STATUSES } from "./featureTypes";
 
@@ -27,108 +28,82 @@ export function FeatureDetailForm({
 }) {
   return (
     <div className="space-y-6">
-      <DetailPanelSection title="Định danh">
+      <DetailPanelSection title="Thông tin chung">
         <DetailFieldRow>
-          <div className="space-y-2">
-            <Label htmlFor="feature-prefix">Prefix</Label>
-            <Input
-              id="feature-prefix"
-              value={data.prefix}
-              onChange={(e) => onChange({ prefix: e.target.value })}
-              placeholder="FEAT-01"
-              className="font-mono text-sm"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="feature-status">Status</Label>
-            <Select
-              value={data.status}
-              onValueChange={(status) =>
-                onChange({ status: status as FeatureNodeData["status"] })
-              }
-            >
-              <SelectTrigger id="feature-status" className="w-full">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {FEATURE_STATUSES.map((s) => (
-                  <SelectItem key={s} value={s}>
-                    {s}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </DetailFieldRow>
-        <div className="space-y-2">
-          <Label htmlFor="feature-title">Title</Label>
-          <Input
-            id="feature-title"
-            value={data.title}
-            onChange={(e) => onChange({ title: e.target.value })}
+          <DetailTextField
+            id="feature-prefix"
+            label="Mã (prefix)"
+            value={data.prefix}
+            onChange={(prefix) => onChange({ prefix })}
+            maxLength={REQ_PREFIX_MAX_CHARS}
+            placeholder="VD: FEAT-01"
+            className="font-mono"
           />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="feature-priority">Priority</Label>
-          <Select
-            value={data.priority}
-            onValueChange={(priority) =>
-              onChange({ priority: priority as FeatureNodeData["priority"] })
-            }
-          >
-            <SelectTrigger id="feature-priority" className="w-full">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {FEATURE_PRIORITIES.map((p) => (
-                <SelectItem key={p} value={p}>
-                  {p}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+          <DetailStatusSelect
+            id="feature-status"
+            label="Trạng thái"
+            value={data.status}
+            options={FEATURE_STATUSES}
+            onChange={(status) => onChange({ status })}
+          />
+        </DetailFieldRow>
+        <DetailTextField
+          id="feature-title"
+          label="Tiêu đề"
+          value={data.title}
+          onChange={(title) => onChange({ title })}
+          maxLength={REQ_TITLE_MAX_CHARS}
+          placeholder="VD: Xem và chỉnh sửa lịch ca"
+        />
+        <DetailPrioritySelect
+          id="feature-priority"
+          label="Độ ưu tiên"
+          value={data.priority}
+          options={FEATURE_PRIORITIES}
+          onChange={(priority) => onChange({ priority })}
+        />
       </DetailPanelSection>
 
-      <DetailPanelSection title="Nội dung">
-        <div className="space-y-2">
-          <Label htmlFor="feature-desc">Description</Label>
-          <Textarea
-            id="feature-desc"
-            value={data.description}
-            onChange={(e) => onChange({ description: e.target.value })}
-            rows={3}
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="feature-nfr">NFR note</Label>
-          <Textarea
-            id="feature-nfr"
-            value={data.nfr_note}
-            onChange={(e) => onChange({ nfr_note: e.target.value })}
-            rows={2}
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="feature-labels">Labels</Label>
-          <Input
-            id="feature-labels"
-            value={data.labels}
-            onChange={(e) => onChange({ labels: e.target.value })}
-          />
-        </div>
+      <DetailPanelSection title="Mô tả & yêu cầu phi chức năng">
+        <DetailTextAreaField
+          id="feature-desc"
+          label="Mô tả"
+          value={data.description}
+          onChange={(description) => onChange({ description })}
+          maxLength={REQ_DESCRIPTION_MAX_CHARS}
+          rows={3}
+          placeholder="Khả năng nghiệp vụ mà feature này cung cấp…"
+        />
+        <DetailTextAreaField
+          id="feature-nfr"
+          label="Ghi chú NFR"
+          value={data.nfr_note}
+          onChange={(nfr_note) => onChange({ nfr_note })}
+          maxLength={REQ_NFR_NOTE_MAX_CHARS}
+          rows={2}
+          placeholder="VD: P95 phản hồi dưới 2 giây, hỗ trợ 50 ca/tuần…"
+          hint="Non-functional requirement — giúp tránh cảnh báo khi để trống."
+        />
+        <DetailTextField
+          id="feature-labels"
+          label="Nhãn"
+          value={data.labels}
+          onChange={(labels) => onChange({ labels })}
+          maxLength={REQ_LABELS_MAX_CHARS}
+          placeholder="VD: mobile, api (phân tách bằng dấu phẩy)"
+        />
       </DetailPanelSection>
 
       <DetailPanelSection title="Tham chiếu">
-        <div className="space-y-2">
-          <Label htmlFor="feature-refs">References</Label>
-          <Textarea
-            id="feature-refs"
-            value={data.references}
-            onChange={(e) => onChange({ references: e.target.value })}
-            rows={2}
-          />
-        </div>
+        <DetailTextAreaField
+          id="feature-refs"
+          label="Tài liệu / liên kết"
+          value={data.references}
+          onChange={(references) => onChange({ references })}
+          maxLength={REQ_REFERENCES_MAX_CHARS}
+          rows={2}
+          placeholder="VD: mockup Figma, API spec…"
+        />
       </DetailPanelSection>
     </div>
   );

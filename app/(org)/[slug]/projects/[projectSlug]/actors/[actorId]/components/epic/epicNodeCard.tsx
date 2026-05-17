@@ -30,7 +30,7 @@ function EpicNodeCardComponent({
   data,
   selected,
 }: NodeProps<EpicFlowNode>) {
-  const { selectNode, quickAddFeature, toggleNodeCollapsed } =
+  const { selectNode, quickAddFeature, toggleNodeCollapsed, isCreatingFeature } =
     useRequirementsModel();
 
   return (
@@ -70,6 +70,7 @@ function EpicNodeCardComponent({
               size="icon-xs"
               className="size-7"
               title="Thêm Feature"
+              disabled={isCreatingFeature}
               onClick={(e) => {
                 e.stopPropagation();
                 quickAddFeature(id);

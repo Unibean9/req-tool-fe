@@ -1,20 +1,20 @@
 "use client";
 
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-
 import {
   DetailFieldRow,
   DetailPanelSection,
+  DetailPrioritySelect,
+  DetailStatusSelect,
+  DetailTextAreaField,
+  DetailTextField,
 } from "../model/requirementDetailPanelUi";
+import {
+  REQ_DESCRIPTION_MAX_CHARS,
+  REQ_LABELS_MAX_CHARS,
+  REQ_PREFIX_MAX_CHARS,
+  REQ_REFERENCES_MAX_CHARS,
+  REQ_TITLE_MAX_CHARS,
+} from "../model/requirementDetailFormLimits";
 import type { EpicNodeData } from "./epicTypes";
 import { EPIC_PRIORITIES, EPIC_STATUSES } from "./epicTypes";
 
@@ -27,100 +27,76 @@ export function EpicDetailForm({
 }) {
   return (
     <div className="space-y-6">
-      <DetailPanelSection title="Định danh">
+      <DetailPanelSection
+        title="Thông tin chung"
+        hint="Mã và trạng thái thường do hệ thống gán; bạn có thể chỉnh khi cần."
+      >
         <DetailFieldRow>
-          <div className="space-y-2">
-            <Label htmlFor="epic-prefix">Prefix</Label>
-            <Input
-              id="epic-prefix"
-              value={data.prefix}
-              onChange={(e) => onChange({ prefix: e.target.value })}
-              placeholder="EPIC-01"
-              className="font-mono text-sm"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="epic-status">Status</Label>
-            <Select
-              value={data.status}
-              onValueChange={(status) =>
-                onChange({ status: status as EpicNodeData["status"] })
-              }
-            >
-              <SelectTrigger id="epic-status" className="w-full">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {EPIC_STATUSES.map((s) => (
-                  <SelectItem key={s} value={s}>
-                    {s}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </DetailFieldRow>
-        <div className="space-y-2">
-          <Label htmlFor="epic-title">Title</Label>
-          <Input
-            id="epic-title"
-            value={data.title}
-            onChange={(e) => onChange({ title: e.target.value })}
+          <DetailTextField
+            id="epic-prefix"
+            label="Mã (prefix)"
+            value={data.prefix}
+            onChange={(prefix) => onChange({ prefix })}
+            maxLength={REQ_PREFIX_MAX_CHARS}
+            placeholder="VD: EPIC-01"
+            className="font-mono"
           />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="epic-priority">Priority</Label>
-          <Select
-            value={data.priority}
-            onValueChange={(priority) =>
-              onChange({ priority: priority as EpicNodeData["priority"] })
-            }
-          >
-            <SelectTrigger id="epic-priority" className="w-full">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {EPIC_PRIORITIES.map((p) => (
-                <SelectItem key={p} value={p}>
-                  {p}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+          <DetailStatusSelect
+            id="epic-status"
+            label="Trạng thái"
+            value={data.status}
+            options={EPIC_STATUSES}
+            onChange={(status) => onChange({ status })}
+          />
+        </DetailFieldRow>
+        <DetailTextField
+          id="epic-title"
+          label="Tiêu đề"
+          value={data.title}
+          onChange={(title) => onChange({ title })}
+          maxLength={REQ_TITLE_MAX_CHARS}
+          placeholder="VD: Quản lý lịch làm việc theo ca"
+        />
+        <DetailPrioritySelect
+          id="epic-priority"
+          label="Độ ưu tiên"
+          value={data.priority}
+          options={EPIC_PRIORITIES}
+          onChange={(priority) => onChange({ priority })}
+        />
       </DetailPanelSection>
 
-      <DetailPanelSection title="Nội dung">
-        <div className="space-y-2">
-          <Label htmlFor="epic-desc">Description</Label>
-          <Textarea
-            id="epic-desc"
-            value={data.description}
-            onChange={(e) => onChange({ description: e.target.value })}
-            rows={4}
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="epic-labels">Labels</Label>
-          <Input
-            id="epic-labels"
-            value={data.labels}
-            onChange={(e) => onChange({ labels: e.target.value })}
-            placeholder="operations, scheduling"
-          />
-        </div>
+      <DetailPanelSection title="Mô tả & phân loại">
+        <DetailTextAreaField
+          id="epic-desc"
+          label="Mô tả"
+          value={data.description}
+          onChange={(description) => onChange({ description })}
+          maxLength={REQ_DESCRIPTION_MAX_CHARS}
+          rows={4}
+          placeholder="Mục tiêu nghiệp vụ, phạm vi và giá trị của epic…"
+        />
+        <DetailTextField
+          id="epic-labels"
+          label="Nhãn"
+          value={data.labels}
+          onChange={(labels) => onChange({ labels })}
+          maxLength={REQ_LABELS_MAX_CHARS}
+          placeholder="VD: vận hành, lịch ca (phân tách bằng dấu phẩy)"
+          hint="Nhiều nhãn cách nhau bởi dấu phẩy."
+        />
       </DetailPanelSection>
 
       <DetailPanelSection title="Tham chiếu">
-        <div className="space-y-2">
-          <Label htmlFor="epic-refs">References</Label>
-          <Textarea
-            id="epic-refs"
-            value={data.references}
-            onChange={(e) => onChange({ references: e.target.value })}
-            rows={2}
-          />
-        </div>
+        <DetailTextAreaField
+          id="epic-refs"
+          label="Tài liệu / liên kết"
+          value={data.references}
+          onChange={(references) => onChange({ references })}
+          maxLength={REQ_REFERENCES_MAX_CHARS}
+          rows={2}
+          placeholder="VD: link Confluence, ticket Jira, ghi chú nguồn…"
+        />
       </DetailPanelSection>
     </div>
   );

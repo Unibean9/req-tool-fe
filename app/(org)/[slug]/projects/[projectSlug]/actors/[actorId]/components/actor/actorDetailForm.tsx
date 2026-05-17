@@ -1,10 +1,15 @@
 "use client";
 
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-
-import { DetailPanelSection } from "../model/requirementDetailPanelUi";
+import {
+  DetailPanelSection,
+  DetailTextAreaField,
+  DetailTextField,
+} from "../model/requirementDetailPanelUi";
+import {
+  REQ_ACTOR_DESCRIPTION_MAX_CHARS,
+  REQ_ACTOR_ROLE_MAX_CHARS,
+  REQ_ACTOR_TITLE_MAX_CHARS,
+} from "../model/requirementDetailFormLimits";
 import type { ActorNodeData } from "../model/requirementsModelTypes";
 
 export function ActorDetailForm({
@@ -17,34 +22,34 @@ export function ActorDetailForm({
   return (
     <div className="space-y-6">
       <DetailPanelSection title="Thông tin">
-        <div className="space-y-2">
-          <Label htmlFor="actor-title">Tên</Label>
-          <Input
-            id="actor-title"
-            value={data.title}
-            onChange={(e) => onChange({ title: e.target.value })}
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="actor-desc">Mô tả ngắn</Label>
-          <Textarea
-            id="actor-desc"
-            value={data.description}
-            onChange={(e) => onChange({ description: e.target.value })}
-            rows={2}
-          />
-        </div>
+        <DetailTextField
+          id="actor-title"
+          label="Tên actor"
+          value={data.title}
+          onChange={(title) => onChange({ title })}
+          maxLength={REQ_ACTOR_TITLE_MAX_CHARS}
+          placeholder="VD: Nhân viên ca"
+        />
+        <DetailTextAreaField
+          id="actor-desc"
+          label="Mô tả ngắn"
+          value={data.description}
+          onChange={(description) => onChange({ description })}
+          maxLength={REQ_ACTOR_DESCRIPTION_MAX_CHARS}
+          rows={2}
+          placeholder="Vai trò tóm tắt trên sơ đồ…"
+        />
       </DetailPanelSection>
       <DetailPanelSection title="Vai trò">
-        <div className="space-y-2">
-          <Label htmlFor="actor-role">Role</Label>
-          <Textarea
-            id="actor-role"
-            value={data.roleDescription ?? ""}
-            onChange={(e) => onChange({ roleDescription: e.target.value })}
-            rows={3}
-          />
-        </div>
+        <DetailTextAreaField
+          id="actor-role"
+          label="Mô tả vai trò"
+          value={data.roleDescription ?? ""}
+          onChange={(roleDescription) => onChange({ roleDescription })}
+          maxLength={REQ_ACTOR_ROLE_MAX_CHARS}
+          rows={3}
+          placeholder="VD: Người đăng ký và theo dõi ca làm việc của bản thân"
+        />
       </DetailPanelSection>
     </div>
   );
