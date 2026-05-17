@@ -8,6 +8,12 @@ export type RequirementNodeKind = "actor" | "epic" | "feature" | "userStory";
 
 export type RequirementsViewMode = "full" | "epic" | "feature";
 
+export type RequirementsModelActorMeta = {
+  id: string;
+  name: string;
+  roleDescription: string;
+};
+
 export type ActorNodeData = {
   kind: "actor";
   title: string;

@@ -21,6 +21,28 @@ export function projectActorsQueryKey(projectId: string) {
   return [...PROJECTS_ROOT, "actors", projectId] as const;
 }
 
+/** Key mô hình yêu cầu (epic / feature / story) theo actor. */
+export function actorRequirementModelQueryKey(projectId: string, actorId: string) {
+  return [
+    ...PROJECTS_ROOT,
+    projectId,
+    "actors",
+    actorId,
+    "requirement-model",
+  ] as const;
+}
+
+/** Key layout canvas React Flow theo actor. */
+export function actorCanvasLayoutQueryKey(projectId: string, actorId: string) {
+  return [
+    ...PROJECTS_ROOT,
+    projectId,
+    "actors",
+    actorId,
+    "canvas-layout",
+  ] as const;
+}
+
 /** Namespace org — `satisfies` buộc đủ key. */
 type OrgQueryKeys = {
   readonly all: typeof ORG_ROOT;

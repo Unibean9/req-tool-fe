@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 
 import { buildPageMetadata } from "@/lib/seo/metadata";
 
+import { defaultActorMetaForId } from "./components/model/requirementsModelDefaults";
 import { RequirementsModelPageClient } from "./components/model/requirementsModelPageClient";
-import { getRequirementsModelActorMeta } from "./components/model/requirementsModelMock";
 
 function segmentForPath(segment: string): string {
   try {
@@ -29,7 +29,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug, projectSlug, actorId: rawActorId } = await params;
   const actorId = normalizeActorIdParam(rawActorId);
-  const actor = getRequirementsModelActorMeta(actorId);
+  const actor = defaultActorMetaForId(actorId);
   const path = `/${segmentForPath(slug)}/projects/${segmentForPath(projectSlug)}/actors/${encodeURIComponent(actorId)}`;
 
   return buildPageMetadata({

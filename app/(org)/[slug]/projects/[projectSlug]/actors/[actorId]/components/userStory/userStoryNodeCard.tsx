@@ -38,7 +38,9 @@ function UserStoryNodeCardComponent({
       ? `${data.actor_ref} — mô tả ngắn cho story.`
       : "");
 
-  const acTexts = data.acceptance_criteria.map((c) => c.text).filter(Boolean);
+  const acTexts = data.acceptance_criteria
+    .map((c) => c.description)
+    .filter(Boolean);
   const hasBody =
     Boolean(data.action_text.trim()) ||
     Boolean(data.goal_text.trim()) ||

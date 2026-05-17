@@ -1,7 +1,7 @@
 "use client";
 
 import { memo } from "react";
-import { Minus } from "lucide-react";
+import { Minus, Plus } from "lucide-react";
 import type { Node, NodeProps } from "@/components/ui/react-flow";
 import { Button } from "@/components/ui/button";
 
@@ -31,7 +31,12 @@ function FeatureNodeCardComponent({
   data,
   selected,
 }: NodeProps<FeatureFlowNode>) {
-  const { selectNode, toggleNodeCollapsed } = useRequirementsModel();
+  const {
+    selectNode,
+    quickAddUserStory,
+    toggleNodeCollapsed,
+    isCreatingUserStory,
+  } = useRequirementsModel();
   const hasWarnings = data.warnings.length > 0;
   const hasExtra = Boolean(data.nfr_note.trim()) || hasWarnings;
 
@@ -52,7 +57,7 @@ function FeatureNodeCardComponent({
         sourceBottom
         widthClass="w-[280px]"
         footer={
-          <div className="flex justify-end opacity-0 transition-opacity group-hover/feature:opacity-100">
+          <div className="flex items-center justify-between gap-1 opacity-0 transition-opacity group-hover/feature:opacity-100">
             <Button
               type="button"
               variant="ghost"
@@ -65,6 +70,20 @@ function FeatureNodeCardComponent({
               }}
             >
               <Minus className="size-3.5" aria-hidden />
+            </Button>
+            <Button
+              type="button"
+              variant="secondary"
+              size="icon-xs"
+              className="size-7"
+              title="Thêm User Story"
+              disabled={isCreatingUserStory}
+              onClick={(e) => {
+                e.stopPropagation();
+                quickAddUserStory(id);
+              }}
+            >
+              <Plus className="size-3.5" aria-hidden />
             </Button>
           </div>
         }
