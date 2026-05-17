@@ -19,6 +19,11 @@ import type {
 import { REQUIREMENT_EDGE_DEFAULT_OPTIONS } from "./requirementsModelConstants";
 import { layoutRequirementTree } from "./requirementsModelLayout";
 import { parseWorkItemLabels } from "./requirementWorkItemCard";
+import {
+  isEpicNodeData,
+  isFeatureNodeData,
+  isUserStoryNodeData,
+} from "./requirementsModelTypes";
 import type {
   RequirementEdge,
   RequirementNode,
@@ -144,6 +149,63 @@ export function payloadToActorMeta(
     name: actor.name,
     roleDescription: actor.roleDescription,
   };
+}
+
+/**
+ * Sau hydrate từ API: giữ vị trí đang hiển thị trên canvas.
+ * Node mới từ server (chưa có trên canvas) lấy vị trí từ optimistic tương ứng.
+ */
+export function mergeHydratedNodesWithLivePositions(
+  hydrated: RequirementNode[],
+  live: RequirementNode[],
+  pendingOptimisticIds: ReadonlySet<string>
+): { nodes: RequirementNode[]; consumedOptimisticIds: Set<string> } {
+  const liveById = new Map(live.map((n) => [n.id, n]));
+  const optimisticCandidates = live.filter((n) => pendingOptimisticIds.has(n.id));
+  const consumedOptimisticIds = new Set<string>();
+
+  const takeOptimisticPosition = (
+    node: RequirementNode
+  ): { x: number; y: number } | undefined => {
+    for (const candidate of optimisticCandidates) {
+      if (consumedOptimisticIds.has(candidate.id)) continue;
+      if (candidate.data.kind !== node.data.kind) continue;
+
+      if (isFeatureNodeData(node.data) && isFeatureNodeData(candidate.data)) {
+        if (node.data.epic_id !== candidate.data.epic_id) continue;
+      }
+      if (isUserStoryNodeData(node.data) && isUserStoryNodeData(candidate.data)) {
+        if (node.data.feature_id !== candidate.data.feature_id) continue;
+      }
+
+      consumedOptimisticIds.add(candidate.id);
+      return candidate.position;
+    }
+    return undefined;
+  };
+
+  const nodes = hydrated.map((node) => {
+    const fromLive = liveById.get(node.id);
+    if (fromLive) {
+      return {
+        ...node,
+        position: fromLive.position,
+        data: { ...node.data, collapsed: fromLive.data.collapsed },
+      };
+    }
+
+    const fromOptimistic = takeOptimisticPosition(node);
+    if (fromOptimistic) {
+      return {
+        ...node,
+        position: fromOptimistic,
+      };
+    }
+
+    return node;
+  });
+
+  return { nodes, consumedOptimisticIds };
 }
 
 /** Gắn position / collapsed từ GET canvas-layout lên nodes đã build. */
