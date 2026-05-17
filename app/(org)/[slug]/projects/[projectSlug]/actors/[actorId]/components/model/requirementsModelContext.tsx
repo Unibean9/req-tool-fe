@@ -50,7 +50,6 @@ import type {
   RequirementsModelState,
   RequirementsViewMode,
 } from "./requirementsModelTypes";
-import { createDefaultNodeData } from "./requirementsModelDefaults";
 import {
   REQUIREMENT_EDGE_DEFAULT_OPTIONS,
   REQUIREMENT_INVALID_EDGE_STYLE,
@@ -76,6 +75,13 @@ import {
   isFeatureNodeData,
   isUserStoryNodeData,
 } from "./requirementsModelTypes";
+import {
+  createOptimisticEpicFlowNode,
+  createOptimisticFeatureFlowNode,
+  createOptimisticUserStoryFlowNode,
+  isOptimisticNodeId,
+  parentChildOptimisticEdge,
+} from "./requirementsModelOptimistic";
 import {
   findNodeAtFlowPosition,
   layoutRequirementTree,
@@ -274,6 +280,10 @@ export function RequirementsModelProvider({
   const pendingFeatureDeleteIdsRef = useRef<Set<string>>(new Set());
   /** User story đang chờ DELETE. */
   const pendingUserStoryDeleteIdsRef = useRef<Set<string>>(new Set());
+  /** Node optimistic đang chờ POST (id tạm). */
+  const pendingOptimisticIdsRef = useRef<Set<string>>(new Set());
+  /** Optimistic đã hủy trước khi POST xong — onSuccess sẽ xóa entity trên server. */
+  const cancelledOptimisticIdsRef = useRef<Set<string>>(new Set());
   /** Tắt persist sau 501 — endpoint canvas-layout thường optional trên BE. */
   const canvasLayoutPersistEnabledRef = useRef(true);
   const nodesRef = useRef(nodes);
@@ -385,6 +395,8 @@ export function RequirementsModelProvider({
     pendingEpicDeleteIdsRef.current.clear();
     pendingFeatureDeleteIdsRef.current.clear();
     pendingUserStoryDeleteIdsRef.current.clear();
+    pendingOptimisticIdsRef.current.clear();
+    cancelledOptimisticIdsRef.current.clear();
     canvasLayoutPersistEnabledRef.current = true;
     setNodes([]);
     setEdges([]);
@@ -414,8 +426,19 @@ export function RequirementsModelProvider({
         canvasLayout: savedLayout,
       });
       setActorMeta(graph.actorMeta);
-      setNodes(graph.nodes);
-      setEdges(graph.edges);
+      const optimisticIds = pendingOptimisticIdsRef.current;
+      if (optimisticIds.size === 0) {
+        setNodes(graph.nodes);
+        setEdges(graph.edges);
+      } else {
+        const idSet = new Set(optimisticIds);
+        const optimisticNodes = nodesRef.current.filter((n) => idSet.has(n.id));
+        const optimisticEdges = edgesRef.current.filter(
+          (e) => idSet.has(e.source) || idSet.has(e.target)
+        );
+        setNodes([...graph.nodes, ...optimisticNodes]);
+        setEdges([...graph.edges, ...optimisticEdges]);
+      }
       setGraphHydrated(true);
       for (const id of [...pendingEpicDeleteIdsRef.current]) {
         if (!requirementModel.epics.some((e) => e.id === id)) {
@@ -753,27 +776,23 @@ export function RequirementsModelProvider({
 
   const updateNodeData = useCallback(
     (id: string, patch: Partial<RequirementNodeData>) => {
-      let shouldPatchEpic = false;
-      let shouldPatchFeature = false;
-      let shouldPatchStory = false;
+      const node = nodesRef.current.find((n) => n.id === id);
+      if (!node) return;
+
       const lockedActorRef = actorMetaRef.current.name.trim() || "Actor";
+      let nextData = { ...node.data, ...patch } as RequirementNodeData;
+      if (isUserStoryNodeData(nextData)) {
+        nextData = { ...nextData, actor_ref: lockedActorRef };
+      }
 
       setNodes((nds) =>
-        nds.map((n) => {
-          if (n.id !== id) return n;
-          let nextData = { ...n.data, ...patch } as RequirementNodeData;
-          if (isUserStoryNodeData(nextData)) {
-            nextData = { ...nextData, actor_ref: lockedActorRef };
-          }
-          if (isEpicNodeData(nextData)) shouldPatchEpic = true;
-          if (isFeatureNodeData(nextData)) shouldPatchFeature = true;
-          if (isUserStoryNodeData(nextData)) shouldPatchStory = true;
-          return { ...n, data: nextData };
-        })
+        nds.map((n) => (n.id === id ? { ...n, data: nextData } : n))
       );
-      if (shouldPatchEpic) scheduleEpicPatch(id);
-      if (shouldPatchFeature) scheduleFeaturePatch(id);
-      if (shouldPatchStory) scheduleStoryPatch(id);
+
+      if (isOptimisticNodeId(id)) return;
+      if (isEpicNodeData(nextData)) scheduleEpicPatch(id);
+      if (isFeatureNodeData(nextData)) scheduleFeaturePatch(id);
+      if (isUserStoryNodeData(nextData)) scheduleStoryPatch(id);
     },
     [scheduleEpicPatch, scheduleFeaturePatch, scheduleStoryPatch, setNodes]
   );
@@ -826,9 +845,88 @@ export function RequirementsModelProvider({
     [nodes, setEdges]
   );
 
+  const appendOptimisticCreate = useCallback(
+    (node: RequirementNode, edge: RequirementEdge) => {
+      pendingOptimisticIdsRef.current.add(node.id);
+      setNodes((nds) => [
+        ...nds.map((n) => ({ ...n, selected: false })),
+        { ...node, selected: true },
+      ]);
+      setEdges((eds) => addEdge(edge, eds));
+      setSelectedNodeId(node.id);
+    },
+    [setEdges, setNodes]
+  );
+
+  const reconcileOptimisticCreate = useCallback(
+    (
+      tempId: string,
+      serverNode: RequirementNode,
+      parentId: string
+    ) => {
+      pendingOptimisticIdsRef.current.delete(tempId);
+      cancelledOptimisticIdsRef.current.delete(tempId);
+      const prev = nodesRef.current.find((n) => n.id === tempId);
+      const position = prev?.position ?? serverNode.position;
+      const collapsed = prev?.data.collapsed ?? serverNode.data.collapsed;
+
+      setNodes((nds) =>
+        nds
+          .filter((n) => n.id !== serverNode.id)
+          .map((n) => {
+            if (n.id !== tempId) {
+              return { ...n, selected: false };
+            }
+            return {
+              ...serverNode,
+              position,
+              selected: true,
+              data: { ...serverNode.data, collapsed },
+            };
+          })
+      );
+      setEdges((eds) =>
+        eds.map((e) => {
+          if (e.target !== tempId) return e;
+          return {
+            ...e,
+            id: `e-${parentId}-${serverNode.id}`,
+            source: parentId,
+            target: serverNode.id,
+            ...REQUIREMENT_EDGE_DEFAULT_OPTIONS,
+          };
+        })
+      );
+      setSelectedNodeId((cur) => (cur === tempId ? serverNode.id : cur));
+    },
+    [setEdges, setNodes]
+  );
+
+  const rollbackOptimisticCreate = useCallback(
+    (tempId: string, options?: { markCancelled?: boolean }) => {
+      if (options?.markCancelled) {
+        cancelledOptimisticIdsRef.current.add(tempId);
+      }
+      pendingOptimisticIdsRef.current.delete(tempId);
+      setNodes((nds) => nds.filter((n) => n.id !== tempId));
+      setEdges((eds) =>
+        eds.filter((e) => e.source !== tempId && e.target !== tempId)
+      );
+      setSelectedNodeId((cur) => (cur === tempId ? null : cur));
+    },
+    [setEdges, setNodes]
+  );
+
   const createFeatureUnderEpic = useCallback(
     (epicNodeId: string, position: { x: number; y: number }) => {
       if (!projectId?.trim()) return;
+
+      const optimisticNode = createOptimisticFeatureFlowNode(epicNodeId, position);
+      const tempId = optimisticNode.id;
+      appendOptimisticCreate(
+        optimisticNode,
+        parentChildOptimisticEdge(epicNodeId, tempId)
+      );
 
       createEpicFeatureMutation.mutate(
         {
@@ -845,36 +943,39 @@ export function RequirementsModelProvider({
         },
         {
           onSuccess: (res) => {
-            const newNode = actorFeatureToFlowNode(res.data, position);
-            setNodes((nds) => [
-              ...nds.map((n) => ({ ...n, selected: false })),
-              newNode,
-            ]);
-            setEdges((eds) =>
-              addEdge(
-                {
-                  id: `e-${epicNodeId}-${res.data.id}`,
-                  source: epicNodeId,
-                  target: res.data.id,
-                  ...REQUIREMENT_EDGE_DEFAULT_OPTIONS,
-                },
-                eds
-              )
+            if (cancelledOptimisticIdsRef.current.has(tempId)) {
+              cancelledOptimisticIdsRef.current.delete(tempId);
+              deleteFeatureMutation.mutate({
+                projectId,
+                actorId,
+                featureId: res.data.id,
+              });
+              return;
+            }
+            if (!pendingOptimisticIdsRef.current.has(tempId)) return;
+            reconcileOptimisticCreate(
+              tempId,
+              actorFeatureToFlowNode(res.data, position),
+              epicNodeId
             );
-            setSelectedNodeId(res.data.id);
             setViewMode((mode) => (mode === "epic" ? "full" : mode));
             scheduleLayoutSave();
+          },
+          onError: () => {
+            rollbackOptimisticCreate(tempId, { markCancelled: true });
           },
         }
       );
     },
     [
       actorId,
+      appendOptimisticCreate,
       createEpicFeatureMutation,
+      deleteFeatureMutation,
       projectId,
+      reconcileOptimisticCreate,
+      rollbackOptimisticCreate,
       scheduleLayoutSave,
-      setEdges,
-      setNodes,
       setViewMode,
     ]
   );
@@ -882,6 +983,18 @@ export function RequirementsModelProvider({
   const createUserStoryUnderFeature = useCallback(
     (featureNodeId: string, position: { x: number; y: number }) => {
       if (!projectId?.trim()) return;
+
+      const lockedActorRef = actorMeta.name.trim() || "Actor";
+      const optimisticNode = createOptimisticUserStoryFlowNode(
+        featureNodeId,
+        lockedActorRef,
+        position
+      );
+      const tempId = optimisticNode.id;
+      appendOptimisticCreate(
+        optimisticNode,
+        parentChildOptimisticEdge(featureNodeId, tempId)
+      );
 
       createFeatureUserStoryMutation.mutate(
         {
@@ -891,7 +1004,7 @@ export function RequirementsModelProvider({
           body: {
             title: "User Story mới",
             description: "",
-            actorRef: actorMeta.name.trim() || "Actor",
+            actorRef: lockedActorRef,
             actionText: "",
             goalText: "",
             priority: "medium",
@@ -901,35 +1014,32 @@ export function RequirementsModelProvider({
         },
         {
           onSuccess: (res) => {
-            const lockedActorRef =
-              actorMetaRef.current.name.trim() || "Actor";
+            if (cancelledOptimisticIdsRef.current.has(tempId)) {
+              cancelledOptimisticIdsRef.current.delete(tempId);
+              deleteUserStoryMutation.mutate({
+                projectId,
+                actorId,
+                userStoryId: res.data.id,
+              });
+              return;
+            }
+            if (!pendingOptimisticIdsRef.current.has(tempId)) return;
+
             const base = actorUserStoryToFlowNode(res.data, position);
-            const newNode: RequirementNode = isUserStoryNodeData(base.data)
+            const serverNode: RequirementNode = isUserStoryNodeData(base.data)
               ? {
                   ...base,
                   data: { ...base.data, actor_ref: lockedActorRef },
                 }
               : base;
-            setNodes((nds) => [
-              ...nds.map((n) => ({ ...n, selected: false })),
-              newNode,
-            ]);
-            setEdges((eds) =>
-              addEdge(
-                {
-                  id: `e-${featureNodeId}-${res.data.id}`,
-                  source: featureNodeId,
-                  target: res.data.id,
-                  ...REQUIREMENT_EDGE_DEFAULT_OPTIONS,
-                },
-                eds
-              )
-            );
-            setSelectedNodeId(res.data.id);
+            reconcileOptimisticCreate(tempId, serverNode, featureNodeId);
             setViewMode((mode) =>
               mode === "epic" || mode === "feature" ? "full" : mode
             );
             scheduleLayoutSave();
+          },
+          onError: () => {
+            rollbackOptimisticCreate(tempId, { markCancelled: true });
           },
         }
       );
@@ -937,11 +1047,13 @@ export function RequirementsModelProvider({
     [
       actorId,
       actorMeta.name,
+      appendOptimisticCreate,
       createFeatureUserStoryMutation,
+      deleteUserStoryMutation,
       projectId,
+      reconcileOptimisticCreate,
+      rollbackOptimisticCreate,
       scheduleLayoutSave,
-      setEdges,
-      setNodes,
       setViewMode,
     ]
   );
@@ -952,6 +1064,11 @@ export function RequirementsModelProvider({
 
       const node = nodesRef.current.find((n) => n.id === nodeId);
       if (!node) return;
+
+      if (isOptimisticNodeId(nodeId)) {
+        rollbackOptimisticCreate(nodeId, { markCancelled: true });
+        return;
+      }
 
       const epicPatchTimer = epicPatchTimersRef.current.get(nodeId);
       if (epicPatchTimer) {
@@ -1025,6 +1142,7 @@ export function RequirementsModelProvider({
       deleteUserStoryMutation,
       projectId,
       refetch,
+      rollbackOptimisticCreate,
       setEdges,
       setNodes,
     ]
@@ -1035,6 +1153,13 @@ export function RequirementsModelProvider({
       if (!projectId?.trim()) return;
 
       if (kind === "epic") {
+        const optimisticNode = createOptimisticEpicFlowNode(projectId, position);
+        const tempId = optimisticNode.id;
+        appendOptimisticCreate(
+          optimisticNode,
+          parentChildOptimisticEdge(actorId, tempId)
+        );
+
         createEpicMutation.mutate(
           {
             projectId,
@@ -1048,24 +1173,25 @@ export function RequirementsModelProvider({
           },
           {
             onSuccess: (res) => {
-              const newNode = actorEpicToFlowNode(res.data, position);
-              setNodes((nds) => [
-                ...nds.map((n) => ({ ...n, selected: false })),
-                newNode,
-              ]);
-              setEdges((eds) =>
-                addEdge(
-                  {
-                    id: `e-${actorId}-${res.data.id}`,
-                    source: actorId,
-                    target: res.data.id,
-                    ...REQUIREMENT_EDGE_DEFAULT_OPTIONS,
-                  },
-                  eds
-                )
+              if (cancelledOptimisticIdsRef.current.has(tempId)) {
+                cancelledOptimisticIdsRef.current.delete(tempId);
+                deleteEpicMutation.mutate({
+                  projectId,
+                  actorId,
+                  epicId: res.data.id,
+                });
+                return;
+              }
+              if (!pendingOptimisticIdsRef.current.has(tempId)) return;
+              reconcileOptimisticCreate(
+                tempId,
+                actorEpicToFlowNode(res.data, position),
+                actorId
               );
-              setSelectedNodeId(res.data.id);
               scheduleLayoutSave();
+            },
+            onError: () => {
+              rollbackOptimisticCreate(tempId, { markCancelled: true });
             },
           }
         );
@@ -1113,34 +1239,18 @@ export function RequirementsModelProvider({
         );
         return;
       }
-
-      const id = `node-${kind}-${crypto.randomUUID().slice(0, 8)}`;
-      const newNode: RequirementNode = {
-        id,
-        type: kind,
-        position,
-        selected: true,
-        data: createDefaultNodeData(kind, {
-          projectId,
-          actorRef: actorMeta.name,
-        }),
-      };
-      setNodes((nds) => [
-        ...nds.map((n) => ({ ...n, selected: false })),
-        newNode,
-      ]);
-      setSelectedNodeId(id);
     },
     [
       actorId,
-      actorMeta.name,
+      appendOptimisticCreate,
       createEpicMutation,
       createFeatureUnderEpic,
       createUserStoryUnderFeature,
+      deleteEpicMutation,
       projectId,
+      reconcileOptimisticCreate,
+      rollbackOptimisticCreate,
       scheduleLayoutSave,
-      setEdges,
-      setNodes,
     ]
   );
 
