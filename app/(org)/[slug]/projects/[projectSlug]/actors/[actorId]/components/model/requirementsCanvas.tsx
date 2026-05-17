@@ -42,11 +42,8 @@ function RequirementsCanvasInner() {
     setViewMode,
   } = useRequirementsModel();
 
-  const graphKey = useMemo(
-    () =>
-      `${viewMode}:${visibleNodes.map((n) => n.id).join(",")}:${visibleEdges.length}`,
-    [viewMode, visibleEdges.length, visibleNodes]
-  );
+  /** Chỉ fitView khi đổi góc nhìn — không khi thêm node (tránh nhảy viewport lúc thả palette). */
+  const fitViewKey = useMemo(() => viewMode, [viewMode]);
 
   const onDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -164,7 +161,7 @@ function RequirementsCanvasInner() {
             pannable
             zoomable
           />
-          <FitViewOnGraphChange graphKey={graphKey} />
+          <FitViewOnGraphChange graphKey={fitViewKey} />
         </ReactFlow>
       </div>
     </div>

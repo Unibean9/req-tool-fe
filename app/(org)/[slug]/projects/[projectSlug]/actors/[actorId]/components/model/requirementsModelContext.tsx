@@ -5,6 +5,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -65,6 +66,7 @@ import {
   buildModelExcludingPendingDeletes,
   buildRequirementGraphFromPayload,
   buildRequirementModelSignature,
+  mergeHydratedNodesWithLivePositions,
   epicNodeDataToUpdateRequest,
   featureNodeDataToUpdateRequest,
   mergeUserStoryNodeDataFromPatchResponse,
@@ -289,9 +291,12 @@ export function RequirementsModelProvider({
   const nodesRef = useRef(nodes);
   const edgesRef = useRef(edges);
   const actorMetaRef = useRef(actorMeta);
-  nodesRef.current = nodes;
-  edgesRef.current = edges;
-  actorMetaRef.current = actorMeta;
+
+  useLayoutEffect(() => {
+    nodesRef.current = nodes;
+    edgesRef.current = edges;
+    actorMetaRef.current = actorMeta;
+  }, [nodes, edges, actorMeta]);
 
   const saveCanvasLayoutMutation = useSaveActorCanvasLayout({
     onError: (error) => {
@@ -390,21 +395,6 @@ export function RequirementsModelProvider({
   });
 
   useEffect(() => {
-    setGraphHydrated(false);
-    requirementModelSigRef.current = null;
-    pendingEpicDeleteIdsRef.current.clear();
-    pendingFeatureDeleteIdsRef.current.clear();
-    pendingUserStoryDeleteIdsRef.current.clear();
-    pendingOptimisticIdsRef.current.clear();
-    cancelledOptimisticIdsRef.current.clear();
-    canvasLayoutPersistEnabledRef.current = true;
-    setNodes([]);
-    setEdges([]);
-    setSelectedNodeId(null);
-    setActorMeta({ id: actorId, name: "Actor", roleDescription: "" });
-  }, [actorId, projectId, setEdges, setNodes]);
-
-  useEffect(() => {
     if (!requirementModel || isCanvasLayoutLoading) return;
 
     const savedLayout =
@@ -427,16 +417,25 @@ export function RequirementsModelProvider({
       });
       setActorMeta(graph.actorMeta);
       const optimisticIds = pendingOptimisticIdsRef.current;
+      const { nodes: mergedNodes, consumedOptimisticIds } =
+        mergeHydratedNodesWithLivePositions(
+          graph.nodes,
+          nodesRef.current,
+          optimisticIds
+        );
       if (optimisticIds.size === 0) {
-        setNodes(graph.nodes);
+        setNodes(mergedNodes);
         setEdges(graph.edges);
       } else {
-        const idSet = new Set(optimisticIds);
-        const optimisticNodes = nodesRef.current.filter((n) => idSet.has(n.id));
-        const optimisticEdges = edgesRef.current.filter(
-          (e) => idSet.has(e.source) || idSet.has(e.target)
+        const optimisticNodes = nodesRef.current.filter(
+          (n) => optimisticIds.has(n.id) && !consumedOptimisticIds.has(n.id)
         );
-        setNodes([...graph.nodes, ...optimisticNodes]);
+        const optimisticNodeIds = new Set(optimisticNodes.map((n) => n.id));
+        const optimisticEdges = edgesRef.current.filter(
+          (e) =>
+            optimisticNodeIds.has(e.source) || optimisticNodeIds.has(e.target)
+        );
+        setNodes([...mergedNodes, ...optimisticNodes]);
         setEdges([...graph.edges, ...optimisticEdges]);
       }
       setGraphHydrated(true);
@@ -458,7 +457,10 @@ export function RequirementsModelProvider({
       return;
     }
 
-    if (savedLayout.length > 0) {
+    if (
+      savedLayout.length > 0 &&
+      pendingOptimisticIdsRef.current.size === 0
+    ) {
       setNodes((nds) => applyCanvasLayoutToNodes(nds, savedLayout));
     }
   }, [
@@ -854,8 +856,9 @@ export function RequirementsModelProvider({
       ]);
       setEdges((eds) => addEdge(edge, eds));
       setSelectedNodeId(node.id);
+      scheduleLayoutSave();
     },
-    [setEdges, setNodes]
+    [scheduleLayoutSave, setEdges, setNodes]
   );
 
   const reconcileOptimisticCreate = useCallback(
@@ -1210,13 +1213,7 @@ export function RequirementsModelProvider({
           );
           return;
         }
-        const siblingCount = edgesRef.current.filter(
-          (e) => e.source === epic.id && !e.data?.invalid
-        ).length;
-        createFeatureUnderEpic(
-          epic.id,
-          positionChildBelowParent(epic, "feature", siblingCount)
-        );
+        createFeatureUnderEpic(epic.id, position);
         return;
       }
 
@@ -1230,13 +1227,7 @@ export function RequirementsModelProvider({
           toast.message("Thả User Story lên thẻ Feature, hoặc bấm nút + trên Feature.");
           return;
         }
-        const siblingCount = edgesRef.current.filter(
-          (e) => e.source === feature.id && !e.data?.invalid
-        ).length;
-        createUserStoryUnderFeature(
-          feature.id,
-          positionChildBelowParent(feature, "userStory", siblingCount)
-        );
+        createUserStoryUnderFeature(feature.id, position);
         return;
       }
     },
