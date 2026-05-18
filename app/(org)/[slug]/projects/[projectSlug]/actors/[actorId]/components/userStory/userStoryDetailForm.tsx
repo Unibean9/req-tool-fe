@@ -7,9 +7,9 @@ import { Label } from "@/components/ui/label";
 
 import {
   DetailFieldRow,
+  DetailLabelTagsField,
   DetailPanelSection,
   DetailPrioritySelect,
-  DetailReadOnlyField,
   DetailStatusSelect,
   DetailTextAreaField,
   DetailTextField,
@@ -20,8 +20,6 @@ import {
   REQ_ACTION_TEXT_MAX_CHARS,
   REQ_DESCRIPTION_MAX_CHARS,
   REQ_GOAL_TEXT_MAX_CHARS,
-  REQ_LABELS_MAX_CHARS,
-  REQ_PREFIX_MAX_CHARS,
   REQ_STORY_POINTS_MAX,
   REQ_STORY_POINTS_MIN,
   REQ_TITLE_MAX_CHARS,
@@ -29,20 +27,31 @@ import {
   clampText,
 } from "../model/requirementDetailFormLimits";
 import type { AcceptanceCriterion, UserStoryNodeData } from "./storyTypes";
-import {
-  reindexAcceptanceCriteria,
-  STORY_PRIORITIES,
-  STORY_STATUSES,
-} from "./storyTypes";
+import { PANEL_EDITABLE_STATUSES } from "../model/requirementWorkItemLabels";
+import { reindexAcceptanceCriteria, STORY_PRIORITIES } from "./storyTypes";
 
+const REQ_BUSINESS_VALUE_MIN = 0;
+const REQ_BUSINESS_VALUE_MAX = 999;
+
+function clampBusinessValue(value: number): number {
+  if (!Number.isFinite(value)) return REQ_BUSINESS_VALUE_MIN;
+  return Math.min(
+    REQ_BUSINESS_VALUE_MAX,
+    Math.max(REQ_BUSINESS_VALUE_MIN, Math.round(value))
+  );
+}
+
+/**
+ * Chỉ các field trong PATCH `/user-stories/{id}`:
+ * title, description, action_text, goal_text, status, priority,
+ * labels, story_points, business_value, acceptance_criteria.
+ */
 export function UserStoryDetailForm({
   data,
   onChange,
-  lockedActorRef,
 }: {
   data: UserStoryNodeData;
   onChange: (patch: Partial<UserStoryNodeData>) => void;
-  lockedActorRef: string;
 }) {
   const criteria = data.acceptance_criteria;
   const canAddCriterion = criteria.length < REQ_ACCEPTANCE_CRITERIA_MAX_COUNT;
@@ -62,25 +71,7 @@ export function UserStoryDetailForm({
 
   return (
     <div className="space-y-6">
-      <DetailPanelSection title="Thông tin chung">
-        <DetailFieldRow>
-          <DetailTextField
-            id="story-prefix"
-            label="Mã (prefix)"
-            value={data.prefix}
-            onChange={(prefix) => onChange({ prefix })}
-            maxLength={REQ_PREFIX_MAX_CHARS}
-            placeholder="VD: US-01"
-            className="font-mono"
-          />
-          <DetailStatusSelect
-            id="story-status"
-            label="Trạng thái"
-            value={data.status}
-            options={STORY_STATUSES}
-            onChange={(status) => onChange({ status })}
-          />
-        </DetailFieldRow>
+      <DetailPanelSection title="User story">
         <DetailTextField
           id="story-title"
           label="Tiêu đề"
@@ -89,14 +80,58 @@ export function UserStoryDetailForm({
           maxLength={REQ_TITLE_MAX_CHARS}
           placeholder="VD: Đăng ký ca làm việc"
         />
+        <DetailTextAreaField
+          id="story-desc"
+          label="Mô tả"
+          value={data.description}
+          onChange={(description) => onChange({ description })}
+          maxLength={REQ_DESCRIPTION_MAX_CHARS}
+          rows={3}
+          placeholder="Ngữ cảnh, ràng buộc hoặc ghi chú thêm…"
+        />
+        <DetailTextAreaField
+          id="story-action"
+          label="Hành động (action_text)"
+          value={data.action_text}
+          onChange={(action_text) => onChange({ action_text })}
+          maxLength={REQ_ACTION_TEXT_MAX_CHARS}
+          rows={2}
+          placeholder="VD: đăng ký ca làm việc trên tuần tới"
+        />
+        <DetailTextAreaField
+          id="story-goal"
+          label="Mục tiêu (goal_text)"
+          value={data.goal_text}
+          onChange={(goal_text) => onChange({ goal_text })}
+          maxLength={REQ_GOAL_TEXT_MAX_CHARS}
+          rows={2}
+          placeholder="VD: quản lý được thời gian làm việc linh hoạt"
+        />
         <DetailFieldRow>
+          <DetailStatusSelect
+            id="story-status"
+            label="Trạng thái"
+            value={data.status}
+            options={PANEL_EDITABLE_STATUSES}
+            onChange={(status) => onChange({ status })}
+            colored
+          />
           <DetailPrioritySelect
             id="story-priority"
             label="Độ ưu tiên"
             value={data.priority}
             options={STORY_PRIORITIES}
             onChange={(priority) => onChange({ priority })}
+            colored
           />
+        </DetailFieldRow>
+        <DetailLabelTagsField
+          id="story-labels"
+          label="Label"
+          value={data.labels}
+          onChange={(labels) => onChange({ labels })}
+        />
+        <DetailFieldRow>
           <div className="space-y-2">
             <Label htmlFor="story-points" className="text-sm font-medium">
               Story points
@@ -107,72 +142,36 @@ export function UserStoryDetailForm({
               min={REQ_STORY_POINTS_MIN}
               max={REQ_STORY_POINTS_MAX}
               value={data.story_points}
-              placeholder="0"
               onChange={(e) =>
                 onChange({
                   story_points: clampStoryPoints(Number(e.target.value)),
                 })
               }
-              className="text-sm"
+              className="text-sm tabular-nums"
             />
-            <p className="text-[11px] text-muted-foreground">
-              Từ {REQ_STORY_POINTS_MIN} đến {REQ_STORY_POINTS_MAX}.
-            </p>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="story-business-value" className="text-sm font-medium">
+              Business value
+            </Label>
+            <Input
+              id="story-business-value"
+              type="number"
+              min={REQ_BUSINESS_VALUE_MIN}
+              max={REQ_BUSINESS_VALUE_MAX}
+              value={data.business_value}
+              onChange={(e) =>
+                onChange({
+                  business_value: clampBusinessValue(Number(e.target.value)),
+                })
+              }
+              className="text-sm tabular-nums"
+            />
           </div>
         </DetailFieldRow>
       </DetailPanelSection>
 
-      <DetailPanelSection
-        title="User story"
-        hint="Khớp Action / Goal hiển thị trên thẻ canvas."
-      >
-        <DetailReadOnlyField
-          id="story-actor"
-          label="Actor (vai trò)"
-          value={lockedActorRef}
-          hint="Gắn với actor của workspace này — không đổi trên story."
-        />
-        <DetailTextAreaField
-          id="story-action"
-          label="Hành động (I want to…)"
-          value={data.action_text}
-          onChange={(action_text) => onChange({ action_text })}
-          maxLength={REQ_ACTION_TEXT_MAX_CHARS}
-          rows={2}
-          placeholder="VD: đăng ký ca làm việc trên tuần tới"
-        />
-        <DetailTextAreaField
-          id="story-goal"
-          label="Mục tiêu (so that…)"
-          value={data.goal_text}
-          onChange={(goal_text) => onChange({ goal_text })}
-          maxLength={REQ_GOAL_TEXT_MAX_CHARS}
-          rows={2}
-          placeholder="VD: quản lý được thời gian làm việc linh hoạt"
-        />
-        <DetailTextAreaField
-          id="story-desc"
-          label="Mô tả bổ sung"
-          value={data.description}
-          onChange={(description) => onChange({ description })}
-          maxLength={REQ_DESCRIPTION_MAX_CHARS}
-          rows={2}
-          placeholder="Ngữ cảnh, ràng buộc hoặc ghi chú thêm…"
-        />
-        <DetailTextField
-          id="story-labels"
-          label="Nhãn"
-          value={data.labels}
-          onChange={(labels) => onChange({ labels })}
-          maxLength={REQ_LABELS_MAX_CHARS}
-          placeholder="VD: sprint-1, must-have"
-        />
-      </DetailPanelSection>
-
-      <DetailPanelSection
-        title="Tiêu chí nghiệm thu"
-        hint={`Tối đa ${REQ_ACCEPTANCE_CRITERIA_MAX_COUNT} tiêu chí — tự lưu sau vài giây (mô tả + thứ tự).`}
-      >
+      <DetailPanelSection title="Acceptance Criteria">
         {criteria.length === 0 ? (
           <p className="text-[11px] text-muted-foreground">
             Chưa có tiêu chí. Bấm &quot;Thêm tiêu chí&quot; bên dưới.
@@ -183,27 +182,27 @@ export function UserStoryDetailForm({
             <li key={item.id} className="flex items-start gap-2">
               <span
                 className="mt-2 flex size-6 shrink-0 items-center justify-center rounded-md border border-border bg-muted/50 text-[10px] font-medium tabular-nums text-muted-foreground"
-                title="Thứ tự"
+                title="Thứ tự (order)"
               >
                 {item.order + 1}
               </span>
               <div className="min-w-0 flex-1 space-y-1">
                 <Input
-                  value={item.description}
+                  value={item.label}
                   maxLength={REQ_ACCEPTANCE_CRITERION_MAX_CHARS}
                   onChange={(e) =>
                     updateCriterion(i, {
-                      description: clampText(
+                      label: clampText(
                         e.target.value,
                         REQ_ACCEPTANCE_CRITERION_MAX_CHARS
                       ),
                     })
                   }
-                  placeholder={`Tiêu chí ${i + 1} — VD: Hiển thị lỗi khi trùng ca`}
+                  placeholder={`Tiêu chí ${i + 1}`}
                   className="text-sm"
                 />
                 <p className="text-[10px] tabular-nums text-muted-foreground">
-                  {item.description.length}/{REQ_ACCEPTANCE_CRITERION_MAX_CHARS}
+                  {item.label.length}/{REQ_ACCEPTANCE_CRITERION_MAX_CHARS}
                 </p>
               </div>
               <Button
@@ -232,7 +231,7 @@ export function UserStoryDetailForm({
               ...criteria,
               {
                 id: crypto.randomUUID(),
-                description: "",
+                label: "",
                 order: criteria.length,
               },
             ])

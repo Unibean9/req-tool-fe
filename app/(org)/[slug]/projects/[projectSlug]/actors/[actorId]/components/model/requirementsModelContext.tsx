@@ -941,7 +941,6 @@ export function RequirementsModelProvider({
             description: "",
             priority: "medium",
             labels: [],
-            nfrNote: "",
           },
         },
         {
@@ -1013,6 +1012,7 @@ export function RequirementsModelProvider({
             priority: "medium",
             labels: [],
             storyPoints: 0,
+            businessValue: 0,
           },
         },
         {

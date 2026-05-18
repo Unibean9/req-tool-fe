@@ -1,5 +1,6 @@
-export const FEATURE_STATUSES = ["draft", "active", "done", "archived"] as const;
-export type FeatureStatus = (typeof FEATURE_STATUSES)[number];
+import type { FeatureStatus } from "@/lib/api/services/fetchFeature";
+
+export { FEATURE_STATUSES, type FeatureStatus } from "@/lib/api/services/fetchFeature";
 
 export const FEATURE_PRIORITIES = ["low", "medium", "high", "critical"] as const;
 export type FeaturePriority = (typeof FEATURE_PRIORITIES)[number];
@@ -16,6 +17,9 @@ export type FeatureRecord = {
   nfr_note: string;
   references: string;
   warnings: string[];
+  total_story_points: number;
+  total_business_value: number;
+  story_count: number;
   created_at: string;
   updated_at: string;
 };
@@ -33,11 +37,14 @@ export function createDefaultFeatureRecord(epicId: string): FeatureRecord {
     title: "Feature mới",
     description: "",
     status: "draft",
-    priority: "low",
+    priority: "medium",
     labels: "",
     nfr_note: "",
     references: "",
     warnings: [],
+    total_story_points: 0,
+    total_business_value: 0,
+    story_count: 0,
     created_at: now,
     updated_at: now,
   };

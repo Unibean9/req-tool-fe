@@ -5,6 +5,7 @@ import { Dialog as DialogPrimitive } from "@base-ui/react/dialog"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
+import { uiModalPopupClasses, uiOverlayClasses } from "@/components/ui/ui-motion"
 import { XIcon } from "lucide-react"
 
 function Dialog({ ...props }: DialogPrimitive.Root.Props) {
@@ -33,8 +34,7 @@ function DialogOverlay({
       data-slot="dialog-overlay"
       className={cn(
         "fixed inset-0 isolate z-[200] bg-brand-dark/60 backdrop-blur-md",
-        "transition-opacity duration-200 ease-out",
-        "data-starting-style:opacity-0 data-ending-style:opacity-0 data-open:opacity-100",
+        uiOverlayClasses(),
         className
       )}
       {...props}
@@ -57,10 +57,7 @@ function DialogContent({
         data-slot="dialog-content"
         className={cn(
           "fixed top-1/2 left-1/2 z-[210] w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-primary/15 bg-popover p-0 text-sm text-popover-foreground shadow-2xl shadow-primary/15 outline-none sm:max-w-lg",
-          "transition-[transform,opacity] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform",
-          "data-starting-style:scale-95 data-starting-style:opacity-0",
-          "data-ending-style:scale-95 data-ending-style:opacity-0",
-          "data-open:scale-100 data-open:opacity-100",
+          uiModalPopupClasses(),
           className
         )}
         {...props}

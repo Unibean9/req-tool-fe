@@ -11,7 +11,11 @@ import { useCachedGet } from "@/hooks/useCachedGet";
 import { getApiErrorMessage } from "@/lib/api/getApiErrorMessage";
 import { fetchProject } from "@/lib/api/services/fetchProject";
 import { getNextProjectSlugAfterDelete } from "@/lib/project/projectListNav";
-import { orgProjectQueryKey, orgProjectsQueryKey } from "@/lib/query/query-keys";
+import {
+  orgProjectQueryKey,
+  orgProjectsQueryKey,
+  projectSetupProgressQueryKey,
+} from "@/lib/query/query-keys";
 
 import type {
   CreateOrgProjectRequest,
@@ -21,6 +25,8 @@ import type {
   OrgProject,
   OrgProjectDetailResponse,
   OrgProjectsListResponse,
+  ProjectSetupProgress,
+  ProjectSetupProgressResponse,
   UpdateOrgProjectRequest,
   UpdateOrgProjectResponse,
 } from "@/lib/api/services/fetchProject";
@@ -44,7 +50,7 @@ export type DeleteOrgProjectMutationContext = {
 };
 
 /**
- * GET /api/v1/orgs/{org_id}/projects — danh sách dự án (đủ field: context, problems, …).
+ * GET /api/v1/orgs/{org_id}/projects — danh sách dự án.
  * `orgId` rỗng thì `enabled: false`.
  */
 export function useOrgProjects(
@@ -126,6 +132,41 @@ export function useOrgProject(
   });
 }
 
+/**
+ * GET /api/v1/projects/{project_id}/setup-progress — thiếu `projectId` thì `enabled: false`.
+ */
+export function useProjectSetupProgress(
+  projectId: string | null | undefined,
+  options?: { enabled?: boolean }
+) {
+  const pid = projectId?.trim() ?? "";
+  const enabled = Boolean(pid) && (options?.enabled ?? true);
+
+  return useCachedGet<ProjectSetupProgressResponse, Error, ProjectSetupProgress>(
+    {
+      queryKey: projectSetupProgressQueryKey(pid),
+      queryFn: async () => fetchProject.getSetupProgress(pid),
+      select: (res) => res.data,
+      enabled,
+    }
+  );
+}
+
+/** Cùng GET setup-progress; trả full envelope `{ success, data, message }`. */
+export function useProjectSetupProgressFull(
+  projectId: string | null | undefined,
+  options?: { enabled?: boolean }
+) {
+  const pid = projectId?.trim() ?? "";
+  const enabled = Boolean(pid) && (options?.enabled ?? true);
+
+  return useCachedGet({
+    queryKey: projectSetupProgressQueryKey(pid),
+    queryFn: () => fetchProject.getSetupProgress(pid),
+    enabled,
+  });
+}
+
 /** Cùng GET detail; trả full envelope `{ success, data, message }`. */
 export function useOrgProjectFull(
   orgIdOrParams: UseOrgProjectArg,
@@ -147,8 +188,8 @@ export function useOrgProjectFull(
 }
 
 /**
- * POST /api/v1/orgs/:org_id/projects
- * Body: name, description, context + các trường danh sách (problems, stakeholders, …).
+ * POST /api/v1/orgs/{org_id}/projects
+ * Body: name, description, context, problems, proposed_solutions.
  * Invalidate danh sách dự án theo org sau khi tạo.
  */
 export function useCreateOrgProject(
@@ -205,7 +246,8 @@ export function useCreateOrgProject(
 }
 
 /**
- * PATCH /api/v1/orgs/:org_id/projects/:project_id — invalidate list + detail.
+ * PATCH /api/v1/orgs/{org_id}/projects/{project_id}
+ * Body: name, description, context, problems, proposed_solutions — invalidate list + detail.
  */
 export function useUpdateOrgProject(
   options?: Omit<
@@ -337,6 +379,8 @@ export type {
   OrgProjectApiRow,
   OrgProjectDetailResponse,
   OrgProjectsListResponse,
+  ProjectSetupProgress,
+  ProjectSetupProgressResponse,
   UpdateOrgProjectRequest,
   UpdateOrgProjectResponse,
 } from "@/lib/api/services/fetchProject";

@@ -4,6 +4,9 @@ import { SITE, getSiteUrl } from "./site";
 
 const BRAND = "REQ-Bean9";
 
+/** Default social preview image (under `public/`). */
+const DEFAULT_OG_IMAGE_PATH = "/Logo.png";
+
 function socialTitle(title: string): string {
   return title.includes(BRAND) ? title : `${title} | ${BRAND}`;
 }
@@ -27,6 +30,7 @@ export function buildPageMetadata({
   const normalizedPath = path.startsWith("/") ? path : `/${path}`;
   const canonicalPath = normalizedPath;
   const pageUrl = `${siteUrl}${canonicalPath === "/" ? "" : canonicalPath}`;
+  const ogImageUrl = `${siteUrl}${DEFAULT_OG_IMAGE_PATH}`;
 
   return {
     title,
@@ -40,11 +44,13 @@ export function buildPageMetadata({
       title: socialTitle(title),
       description,
       siteName: SITE.name,
+      images: [{ url: ogImageUrl, alt: SITE.name }],
     },
     twitter: {
       card: "summary_large_image",
       title: socialTitle(title),
       description,
+      images: [ogImageUrl],
     },
   };
 }

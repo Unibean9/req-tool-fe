@@ -67,6 +67,17 @@ export const ACTOR_EPIC_STATUSES = [
 ] as const;
 export type ActorEpicStatus = (typeof ACTOR_EPIC_STATUSES)[number];
 
+export const FEATURE_STATUSES = [
+  "draft",
+  "in_progress",
+  "done",
+  "rejected",
+  "duplicate",
+  "wont_fix",
+  "deferred",
+] as const;
+export type FeatureStatus = (typeof FEATURE_STATUSES)[number];
+
 interface ActorEpicRowApi {
   id: string;
   project_id: string;
@@ -135,15 +146,19 @@ interface ActorFeatureRowApi {
   status: string;
   priority: string;
   labels: unknown;
-  nfr_note: string;
+  nfr_note?: string;
   references: unknown;
   warnings: string[];
+  total_story_points?: number;
+  total_business_value?: number;
+  story_count?: number;
   created_at: string;
   updated_at: string;
 }
 
 interface AcceptanceCriterionApi {
   id?: string;
+  label?: string;
   description?: string;
   order?: number;
   /** Legacy wire — một số endpoint cũ */
@@ -165,6 +180,7 @@ interface ActorUserStoryRowApi {
   labels: unknown;
   references: unknown;
   story_points: number;
+  business_value?: number;
   acceptance_criteria: AcceptanceCriterionApi[];
   created_at: string;
   updated_at: string;
@@ -198,19 +214,22 @@ export interface ActorFeature {
   prefix: string;
   title: string;
   description: string;
-  status: ActorEpicStatus;
+  status: FeatureStatus;
   priority: ActorEpicPriority;
   labels: string;
   nfrNote: string;
   references: string;
   warnings: string[];
+  totalStoryPoints: number;
+  totalBusinessValue: number;
+  storyCount: number;
   createdAt: string;
   updatedAt: string;
 }
 
 export interface ActorAcceptanceCriterion {
   id: string;
-  description: string;
+  label: string;
   order: number;
 }
 
@@ -223,11 +242,12 @@ export interface ActorUserStory {
   actorRef: string;
   actionText: string;
   goalText: string;
-  status: ActorEpicStatus;
+  status: FeatureStatus;
   priority: ActorEpicPriority;
   labels: string;
   references: string;
   storyPoints: number;
+  businessValue: number;
   acceptanceCriteria: ActorAcceptanceCriterion[];
   createdAt: string;
   updatedAt: string;
@@ -410,6 +430,12 @@ function parseActorEpicPriority(priority: string): ActorEpicPriority {
     : "medium";
 }
 
+export function parseFeatureStatus(status: string): FeatureStatus {
+  return (FEATURE_STATUSES as readonly string[]).includes(status)
+    ? (status as FeatureStatus)
+    : "draft";
+}
+
 function mapActorEpicRow(row: ActorEpicRowApi): ActorEpic {
   return {
     id: row.id,
@@ -464,12 +490,15 @@ function mapActorFeatureRow(row: ActorFeatureRowApi): ActorFeature {
     prefix: row.prefix,
     title: row.title,
     description: row.description,
-    status: parseActorEpicStatus(row.status),
+    status: parseFeatureStatus(row.status),
     priority: parseActorEpicPriority(row.priority),
     labels: normalizeWireTextListField(row.labels),
-    nfrNote: row.nfr_note,
+    nfrNote: row.nfr_note ?? "",
     references: normalizeWireTextListField(row.references),
     warnings: row.warnings ?? [],
+    totalStoryPoints: Number(row.total_story_points) || 0,
+    totalBusinessValue: Number(row.total_business_value) || 0,
+    storyCount: Number(row.story_count) || 0,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -479,19 +508,21 @@ function mapAcceptanceCriterion(
   row: AcceptanceCriterionApi,
   index: number
 ): ActorAcceptanceCriterion {
-  const description =
-    typeof row.description === "string" && row.description.trim()
-      ? row.description.trim()
-      : typeof row.text === "string"
-        ? row.text.trim()
-        : "";
+  const label =
+    typeof row.label === "string" && row.label.trim()
+      ? row.label.trim()
+      : typeof row.description === "string" && row.description.trim()
+        ? row.description.trim()
+        : typeof row.text === "string"
+          ? row.text.trim()
+          : "";
   const order =
     typeof row.order === "number" && Number.isFinite(row.order)
       ? row.order
       : index;
   return {
     id: row.id ?? `ac-${index}`,
-    description,
+    label,
     order,
   };
 }
@@ -506,11 +537,12 @@ function mapActorUserStoryRow(row: ActorUserStoryRowApi): ActorUserStory {
     actorRef: row.actor_ref,
     actionText: row.action_text,
     goalText: row.goal_text,
-    status: parseActorEpicStatus(row.status),
+    status: parseFeatureStatus(row.status),
     priority: parseActorEpicPriority(row.priority),
     labels: normalizeWireTextListField(row.labels),
     references: normalizeWireTextListField(row.references),
-    storyPoints: row.story_points,
+    storyPoints: Number(row.story_points) || 0,
+    businessValue: Number(row.business_value) || 0,
     acceptanceCriteria: (row.acceptance_criteria ?? []).map(mapAcceptanceCriterion),
     createdAt: row.created_at,
     updatedAt: row.updated_at,

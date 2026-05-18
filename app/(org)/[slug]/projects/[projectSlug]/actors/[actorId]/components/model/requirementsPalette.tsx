@@ -37,6 +37,7 @@ export function RequirementsPalette({
   onOpenChange,
 }: RequirementsPaletteProps) {
   return (
+    // eslint-disable-next-line jsx-a11y/role-supports-aria-props
     <aside
       className={cn(
         "flex shrink-0 flex-col border-r border-border/80 bg-card/40 transition-[width] duration-200 ease-out",
@@ -81,7 +82,7 @@ export function RequirementsPalette({
       {open ? (
         <>
           <p className="shrink-0 px-3 pb-2 pt-2 text-[11px] leading-snug text-muted-foreground">
-            Epic, Feature, User Story — actor cố định theo trang
+            Thêm mới thành phần yêu cầu
           </p>
           <ul className="flex flex-1 flex-col gap-2 overflow-y-auto p-3 pt-0">
             {PALETTE_ITEMS.map(({ kind, icon: Icon, hint }) => {

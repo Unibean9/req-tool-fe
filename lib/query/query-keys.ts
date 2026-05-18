@@ -21,6 +21,131 @@ export function projectActorsQueryKey(projectId: string) {
   return [...PROJECTS_ROOT, "actors", projectId] as const;
 }
 
+/** Key danh sách stakeholders theo `project_id`. */
+export function projectStakeholdersQueryKey(projectId: string) {
+  return [...PROJECTS_ROOT, "stakeholders", projectId] as const;
+}
+
+/** Key chi tiết một stakeholder. */
+export function projectStakeholderQueryKey(
+  projectId: string,
+  stakeholderId: string
+) {
+  return [
+    ...PROJECTS_ROOT,
+    "stakeholders",
+    projectId,
+    stakeholderId,
+  ] as const;
+}
+
+/** Key danh sách flows theo `project_id`. */
+export function projectFlowsQueryKey(projectId: string) {
+  return [...PROJECTS_ROOT, "flows", projectId] as const;
+}
+
+/** Key danh sách goals theo `project_id`. */
+export function projectGoalsQueryKey(projectId: string) {
+  return [...PROJECTS_ROOT, "goals", projectId] as const;
+}
+
+/** Key danh sách rules theo `project_id`. */
+export function projectRulesQueryKey(projectId: string) {
+  return [...PROJECTS_ROOT, "rules", projectId] as const;
+}
+
+/** Key danh sách NFR theo `project_id` (+ filter `category` / `priority`). */
+export function projectNfrsQueryKey(
+  projectId: string,
+  params?: { category?: string; priority?: string }
+) {
+  return [
+    ...PROJECTS_ROOT,
+    "nfrs",
+    projectId,
+    params?.category ?? "",
+    params?.priority ?? "",
+  ] as const;
+}
+
+/** Key chi tiết một NFR. */
+export function projectNfrQueryKey(projectId: string, nfrId: string) {
+  return [...PROJECTS_ROOT, "nfrs", projectId, nfrId] as const;
+}
+
+/** Key danh sách features theo `project_id` (+ filter query). */
+export function projectFeaturesQueryKey(
+  projectId: string,
+  params?: {
+    epicId?: string;
+    status?: string;
+    limit?: number;
+    offset?: number;
+  }
+) {
+  return [
+    ...PROJECTS_ROOT,
+    "features",
+    projectId,
+    params?.epicId ?? "",
+    params?.status ?? "",
+    params?.limit ?? "",
+    params?.offset ?? "",
+  ] as const;
+}
+
+/** Key chi tiết một feature. */
+export function projectFeatureQueryKey(projectId: string, featureId: string) {
+  return [...PROJECTS_ROOT, "features", projectId, featureId] as const;
+}
+
+/** Infinite scroll features — không gắn `offset` vào key. */
+export function projectFeaturesInfiniteQueryKey(
+  projectId: string,
+  params?: { epicId?: string; status?: string; limit?: number }
+) {
+  return [
+    ...PROJECTS_ROOT,
+    "features",
+    projectId,
+    "infinite",
+    params?.epicId ?? "",
+    params?.status ?? "",
+    params?.limit ?? "",
+  ] as const;
+}
+
+/** Key danh sách user stories theo `project_id` (+ filter query). */
+export function projectStoriesQueryKey(
+  projectId: string,
+  params?: {
+    featureId?: string;
+    status?: string;
+    limit?: number;
+    offset?: number;
+  }
+) {
+  return [
+    ...PROJECTS_ROOT,
+    "stories",
+    projectId,
+    params?.featureId ?? "",
+    params?.status ?? "",
+    params?.limit ?? "",
+    params?.offset ?? "",
+  ] as const;
+}
+
+/** Key chi tiết một user story (GET .../stories/{id}). */
+export function projectStoryQueryKey(projectId: string, userStoryId: string) {
+  return [...PROJECTS_ROOT, "stories", projectId, userStoryId] as const;
+}
+
+/** Key tiến độ setup workspace dự án. */
+export function projectSetupProgressQueryKey(projectId: string) {
+  return [...PROJECTS_ROOT, projectId, "setup-progress"] as const;
+}
+
 /** Key mô hình yêu cầu (epic / feature / story) theo actor. */
 export function actorRequirementModelQueryKey(projectId: string, actorId: string) {
   return [
@@ -92,6 +217,19 @@ export const queryKeys = {
   projects: {
     all: PROJECTS_ROOT,
     actors: projectActorsQueryKey,
+    stakeholders: projectStakeholdersQueryKey,
+    stakeholder: projectStakeholderQueryKey,
+    flows: projectFlowsQueryKey,
+    goals: projectGoalsQueryKey,
+    rules: projectRulesQueryKey,
+    nfrs: projectNfrsQueryKey,
+    nfr: projectNfrQueryKey,
+    features: projectFeaturesQueryKey,
+    featuresInfinite: projectFeaturesInfiniteQueryKey,
+    feature: projectFeatureQueryKey,
+    stories: projectStoriesQueryKey,
+    story: projectStoryQueryKey,
+    setupProgress: projectSetupProgressQueryKey,
   },
   users: {
     all: ["users"] as const,

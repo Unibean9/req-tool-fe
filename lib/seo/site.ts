@@ -7,7 +7,7 @@ export const SITE = {
   name: "REQ-Bean9",
   shortName: "REQ-Bean9",
   defaultDescription:
-    "Nền tảng học tập và luyện đề — nội dung công khai, SEO-friendly, App Router.",
+    "REQ-Bean9 — công cụ quản lý yêu cầu, actor, epic, feature và NFR cho dự án phần mềm.",
   locale: "vi_VN" as const,
 };
 

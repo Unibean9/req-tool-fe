@@ -1,11 +1,10 @@
 "use client";
 
+import { GitBranch, Target, Users } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Phone, Star } from "lucide-react";
 import { Suspense, type ReactNode } from "react";
 
-import { Card } from "@/components/ui/card";
 import { SafeImage } from "@/components/ui/safe-image";
 import { useGithubOAuthPopupResult } from "@/hooks/useGithub";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -28,71 +27,167 @@ function AuthBrandMark({ className }: { className?: string }) {
     <Link
       href="/"
       className={cn(
-        "inline-flex shrink-0 items-center gap-3 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card",
+        "inline-flex shrink-0 items-center gap-3 rounded-md outline-none",
+        "transition-opacity duration-200 hover:opacity-85",
+        "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
         className
       )}
     >
-      <span className="relative flex size-17 shrink-0 items-center justify-center overflow-hidden">
+      <span className="relative flex size-14 shrink-0 items-center justify-center sm:size-16">
         <SafeImage
           src="/Logo.png"
           alt="REQ-Bean9"
           fill
           priority
-          sizes="44px"
+          sizes="64px"
           className="object-contain"
         />
       </span>
-      <span className="font-heading text-xl font-semibold tracking-tight text-foreground">
+      <span className="font-heading text-lg font-semibold tracking-tight text-foreground sm:text-xl">
         REQ-Bean9
       </span>
     </Link>
   );
 }
 
+const features = [
+  {
+    icon: GitBranch,
+    tone: "jade" as const,
+    title: "Actor → Story",
+    body: "Epic đến Acceptance Criteria.",
+  },
+  {
+    icon: Users,
+    tone: "blue" as const,
+    title: "Workspace",
+    body: "Phân quyền theo thành viên.",
+  },
+  {
+    icon: Target,
+    tone: "violet" as const,
+    title: "Goals & NFR",
+    body: "Mục tiêu và luồng nghiệp vụ.",
+  },
+] as const;
+
+const featureIconToneClass = {
+  jade: "bg-brand-jade/20 text-brand-mint",
+  blue: "bg-sky-500/20 text-sky-300",
+  violet: "bg-violet-500/20 text-violet-300",
+} as const;
+
+const studentAvatars = [
+  { initials: "TL", className: "bg-emerald-700" },
+  { initials: "MH", className: "bg-sky-700" },
+  { initials: "NA", className: "bg-violet-700" },
+  { initials: "BT", className: "bg-amber-800" },
+] as const;
+
 function AuthMarketingAside() {
   return (
-    <div className="flex h-full min-h-0 flex-col justify-between gap-8 px-6 py-10 sm:px-8 sm:py-12 lg:px-12 lg:py-14">
-      <div className="flex flex-col gap-8 lg:flex-row lg:items-start lg:justify-between lg:gap-10">
-        <p className="max-w-lg text-pretty text-base font-medium leading-snug text-foreground sm:text-lg lg:text-xl lg:leading-relaxed">
-          &ldquo;Giao diện nhanh, ổn định và dễ dùng — đội hỗ trợ luôn sẵn sàng khi cần.&rdquo;
+    <div className="relative z-10 flex h-full min-h-0 w-full flex-col gap-5 overflow-hidden px-6 py-8 lg:gap-6 lg:px-10 lg:py-10 xl:px-12 2xl:px-14">
+      <header className="w-full shrink-0">
+        <p className="text-[11px] font-semibold tracking-[0.12em] text-brand-mint">
+          Công cụ yêu cầu
         </p>
-        <div className="flex shrink-0 flex-row flex-wrap items-center gap-3">
-          <div className="flex -space-x-2" aria-hidden>
-            {["LK", "HT", "MA"].map((initials) => (
-              <span
-                key={initials}
-                className="flex size-10 items-center justify-center rounded-full border border-border/80 bg-muted text-xs font-semibold text-muted-foreground shadow-sm"
+        <h2 className="mt-2 max-w-2xl text-pretty font-heading text-xl font-semibold leading-snug tracking-tight text-foreground lg:text-[1.5rem] lg:leading-tight xl:text-[1.625rem]">
+          Một nơi cho toàn bộ nội dung{" "}
+          <span className="text-brand-mint">kỹ thuật</span> dự án.
+        </h2>
+      </header>
+
+      <div className="relative flex min-h-0 w-full flex-1 flex-col gap-5">
+        <div className="relative flex min-h-0 w-full flex-1 items-center justify-center">
+          <div
+            className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_90%_75%_at_50%_45%,color-mix(in_oklab,var(--brand-jade)_18%,transparent),transparent_72%)]"
+            aria-hidden
+          />
+          <div className="relative h-full min-h-[min(42vh,22rem)] w-full xl:min-h-[min(48vh,26rem)]">
+            <SafeImage
+              src="/auth-image.png"
+              alt="Minh họa làm việc với REQ-Bean9"
+              fill
+              priority
+              sizes="(max-width: 1024px) 50vw, 640px"
+              className="object-contain object-center xl:scale-110 2xl:scale-[1.15]"
+            />
+          </div>
+        </div>
+
+        <ul className="grid w-full shrink-0 grid-cols-1 gap-3 sm:grid-cols-3" role="list">
+          {features.map((feature) => {
+            const Icon = feature.icon;
+            return (
+              <li
+                key={feature.title}
+                className="rounded-lg border border-border/40 bg-card/30 px-3 py-2.5 backdrop-blur-sm"
               >
-                {initials}
+                <div className="flex items-start gap-2.5">
+                  <span
+                    className={cn(
+                      "mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-md",
+                      featureIconToneClass[feature.tone]
+                    )}
+                  >
+                    <Icon className="size-3.5" strokeWidth={2} aria-hidden />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-semibold leading-tight text-foreground">
+                      {feature.title}
+                    </p>
+                    <p className="mt-0.5 text-[11px] leading-snug text-muted-foreground">
+                      {feature.body}
+                    </p>
+                  </div>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
+
+      <div className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-t border-border/30 pt-4">
+        <div className="flex min-w-0 items-center gap-3">
+          <div className="flex shrink-0" aria-hidden>
+            {studentAvatars.map((avatar) => (
+              <span
+                key={avatar.initials}
+                className={cn(
+                  "-ml-1.5 flex size-7 items-center justify-center rounded-full border-2 border-background/80 text-[9px] font-bold text-foreground first:ml-0",
+                  avatar.className
+                )}
+              >
+                {avatar.initials}
               </span>
             ))}
           </div>
-          <div className="flex items-center gap-0.5 text-brand-mint" aria-label="5 / 5 sao">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <Star key={i} className="size-4 fill-current" strokeWidth={0} />
-            ))}
-          </div>
+          <p className="text-[11px] text-muted-foreground">
+            Đang được dùng bởi các nhóm sinh viên
+          </p>
+        </div>
+        <div className="flex gap-2" aria-hidden>
+          {["Epic", "Actor", "Goals"].map((tag) => (
+            <span
+              key={tag}
+              className="rounded-full border border-brand-jade/25 bg-brand-jade/10 px-2 py-0.5 text-[10px] font-medium text-brand-mint"
+            >
+              {tag}
+            </span>
+          ))}
         </div>
       </div>
-
-      <div className="flex min-h-0 flex-1 flex-col items-center justify-center py-2">
-        <div className="relative mx-auto h-[380px] w-full max-w-[min(100%,800px)] sm:h-[448px] md:h-[520px]">
-          <SafeImage
-            src="/auth-image.png"
-            alt=""
-            fill
-            priority
-            sizes="(max-width: 768px) 100vw, 800px"
-            className="object-contain object-center"
-          />
-        </div>
-      </div>
-
-      <p className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-        <Phone className="size-4 shrink-0 text-brand-mint" strokeWidth={1.75} aria-hidden />
-        <span>Có thắc mắc? Gọi hotline hoặc liên hệ team kỹ thuật.</span>
-      </p>
     </div>
+  );
+}
+
+function AuthLegalFooter() {
+  return (
+    <p className="max-w-sm text-[11px] leading-relaxed text-muted-foreground">
+      Bằng cách đăng nhập, bạn đồng ý với{" "}
+      <span className="font-semibold text-foreground">Điều khoản dịch vụ</span> và{" "}
+      <span className="font-semibold text-foreground">Chính sách bảo mật</span>.
+    </p>
   );
 }
 
@@ -100,45 +195,45 @@ export default function AuthRouteGroupLayout({ children }: { children: ReactNode
   const isMobile = useIsMobile();
 
   return (
-    <div className="flex min-h-svh w-full flex-1 items-center justify-center bg-background px-3 py-4 sm:px-5 sm:py-6 md:px-8 md:py-8">
-      <Card
-        className={cn(
-          "flex w-full max-w-[min(96rem,calc(100vw-1.5rem))] flex-col gap-0 overflow-hidden rounded-2xl border-border/70 p-0 shadow-xl",
-          "min-h-[calc(100svh-2rem)] sm:min-h-[calc(100svh-2.5rem)] md:min-h-[calc(100svh-4rem)]",
-          "dark:shadow-primary/15"
-        )}
-      >
-        <div className="flex min-h-0 flex-1 flex-col md:flex-row">
-          <div
-            className={cn(
-              "relative z-0 flex w-full flex-1 flex-col border-border/30 md:w-1/2 md:min-h-0 md:border-r",
-              !isMobile && "border-b md:border-b-0"
-            )}
-          >
-            <div className="mx-auto flex w-full max-w-[29rem] flex-1 flex-col gap-10 px-6 py-10 sm:gap-12 sm:px-8 sm:py-12 lg:px-10 lg:py-14">
-              <AuthBrandMark />
-              <div className="flex min-h-0 flex-1 flex-col">
-                <Suspense
-                  fallback={
-                    <p className="text-muted-foreground mt-4 text-sm" role="status">
-                      Đang tải…
-                    </p>
-                  }
-                >
-                  <AuthGithubOAuthListener />
-                  {children}
-                </Suspense>
-              </div>
-            </div>
-          </div>
+    <div className="relative isolate h-dvh w-full overflow-hidden bg-background">
+      <div className="relative z-10 flex h-full w-full flex-col md:flex-row">
+        <main className="flex h-full min-h-0 flex-1 flex-col bg-[color-mix(in_oklab,var(--card)_88%,var(--background))] md:w-[46%] md:max-w-none lg:w-[44%] xl:w-[42%]">
+          <div className="mx-auto flex h-full w-full max-w-lg min-h-0 flex-col px-6 py-8 sm:px-10 sm:py-10 lg:px-14">
+            <AuthBrandMark className="shrink-0" />
 
-          {!isMobile && (
-            <div className="relative isolate flex min-h-[42vh] w-full flex-1 flex-col overflow-hidden md:min-h-0 md:w-1/2">
-              <AuthMarketingAside />
+            <div className="flex min-h-0 flex-1 flex-col justify-center py-8">
+              <Suspense
+                fallback={
+                  <p className="text-sm text-muted-foreground" role="status">
+                    Đang tải…
+                  </p>
+                }
+              >
+                <AuthGithubOAuthListener />
+                {children}
+              </Suspense>
             </div>
-          )}
-        </div>
-      </Card>
+
+            <footer className="shrink-0 pt-4">
+              <AuthLegalFooter />
+            </footer>
+          </div>
+        </main>
+
+        {!isMobile ? (
+          <aside className="relative hidden h-full min-h-0 min-w-0 flex-1 bg-[color-mix(in_oklab,var(--brand-dark)_35%,#0a0a0a)] md:flex md:w-[54%] lg:w-[56%] xl:w-[58%]">
+            <div
+              className="pointer-events-none absolute -top-20 -right-16 size-[17.5rem] rounded-full bg-brand-jade/20 blur-[80px]"
+              aria-hidden
+            />
+            <div
+              className="pointer-events-none absolute -bottom-10 left-[20%] size-[13.75rem] rounded-full bg-sky-500/15 blur-[80px]"
+              aria-hidden
+            />
+            <AuthMarketingAside />
+          </aside>
+        ) : null}
+      </div>
     </div>
   );
 }

@@ -54,7 +54,7 @@ export function ProjectNewSidebar({
         aria-label="Các bước tạo dự án"
         className="flex min-h-0 flex-1 flex-col px-6 py-6"
       >
-        <ol className="grid h-full min-h-0 flex-1 grid-rows-5">
+        <ol className="grid h-full min-h-0 flex-1 grid-rows-3">
           {PROJECT_NEW_STEPS.map((step, index) => {
             const isComplete = index < currentStepIndex;
             const isActive = index === currentStepIndex;

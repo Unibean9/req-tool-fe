@@ -15,9 +15,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 
 import { clampText } from "./requirementDetailFormLimits";
+import { parseWorkItemLabels } from "./requirementWorkItemCard";
 import {
   workItemPriorityLabel,
+  workItemPriorityPillClass,
   workItemStatusLabel,
+  workItemStatusPillClass,
+  WorkItemColoredPill,
 } from "./requirementWorkItemLabels";
 
 /** Tiêu đề nhóm field trong sidebar — phẳng, không bọc card. */
@@ -207,32 +211,163 @@ export function DetailTextAreaField({
   );
 }
 
+export function DetailLabelTagsField({
+  id,
+  label,
+  value,
+  onChange,
+  maxTagLength = 48,
+  maxTags = 12,
+  placeholder = "Gõ label rồi Enter…",
+}: {
+  id: string;
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  maxTagLength?: number;
+  maxTags?: number;
+  placeholder?: string;
+}) {
+  const tags = parseWorkItemLabels(value);
+
+  function commitTags(next: string[]) {
+    onChange(next.join(", "));
+  }
+
+  function removeTag(index: number) {
+    commitTags(tags.filter((_, i) => i !== index));
+  }
+
+  function tryAddTag(raw: string) {
+    const parts = raw
+      .split(/[,;]/)
+      .map((s) => s.trim().slice(0, maxTagLength))
+      .filter(Boolean);
+    if (parts.length === 0) return;
+    const merged = [...tags];
+    for (const part of parts) {
+      if (merged.length >= maxTags) break;
+      if (!merged.some((t) => t.toLowerCase() === part.toLowerCase())) {
+        merged.push(part);
+      }
+    }
+    commitTags(merged);
+  }
+
+  return (
+    <div className="space-y-2">
+      <Label htmlFor={id} className="text-sm font-medium">
+        {label}
+      </Label>
+      <div className="flex min-h-10 flex-wrap items-center gap-1.5 rounded-md border border-border/80 bg-muted/30 px-2 py-1.5">
+        {tags.map((tag, index) => (
+          <span
+            key={`${tag}-${index}`}
+            className="inline-flex max-w-full items-center gap-1 rounded-md border border-border/80 bg-background px-2 py-0.5 text-xs text-foreground"
+          >
+            <span className="truncate">{tag}</span>
+            <button
+              type="button"
+              className="shrink-0 rounded-sm text-muted-foreground hover:text-foreground"
+              aria-label={`Xóa label ${tag}`}
+              onClick={() => removeTag(index)}
+            >
+              ×
+            </button>
+          </span>
+        ))}
+        {tags.length < maxTags ? (
+          <input
+            id={id}
+            type="text"
+            className="min-w-[7rem] flex-1 border-0 bg-transparent px-1 py-0.5 text-sm outline-none placeholder:text-muted-foreground"
+            placeholder={tags.length === 0 ? placeholder : "Thêm…"}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === ",") {
+                e.preventDefault();
+                tryAddTag((e.target as HTMLInputElement).value);
+                (e.target as HTMLInputElement).value = "";
+              }
+              if (
+                e.key === "Backspace" &&
+                (e.target as HTMLInputElement).value === "" &&
+                tags.length > 0
+              ) {
+                removeTag(tags.length - 1);
+              }
+            }}
+            onBlur={(e) => {
+              const v = e.target.value.trim();
+              if (v) {
+                tryAddTag(v);
+                e.target.value = "";
+              }
+            }}
+          />
+        ) : null}
+      </div>
+      <p className="text-[11px] text-muted-foreground">
+        Enter hoặc dấu phẩy để thêm. Tối đa {maxTags} label.
+      </p>
+    </div>
+  );
+}
+
 export function DetailStatusSelect<T extends string>({
   id,
   label,
   value,
   options,
   onChange,
+  colored = false,
 }: {
   id: string;
   label: string;
   value: T;
   options: readonly T[];
   onChange: (value: T) => void;
+  colored?: boolean;
 }) {
   return (
     <div className="space-y-2">
       <Label htmlFor={id} className="text-sm font-medium">
         {label}
       </Label>
-      <Select value={value} onValueChange={(v) => onChange(v as T)}>
+      <Select
+        value={
+          (options as readonly string[]).includes(value) ? value : undefined
+        }
+        onValueChange={(v) => {
+          if (v != null) onChange(v as T);
+        }}
+      >
         <SelectTrigger id={id} className="w-full text-sm">
-          <SelectValue placeholder="Chọn trạng thái" />
+          <SelectValue placeholder="Chọn trạng thái">
+            {colored ? (
+              <WorkItemColoredPill
+                text={workItemStatusLabel(value)}
+                colorClass={workItemStatusPillClass(value)}
+              />
+            ) : (
+              workItemStatusLabel(value)
+            )}
+          </SelectValue>
         </SelectTrigger>
         <SelectContent>
           {options.map((s) => (
-            <SelectItem key={s} value={s}>
-              {workItemStatusLabel(s)}
+            <SelectItem
+              key={s}
+              value={s}
+              label={workItemStatusLabel(s)}
+            >
+              {colored ? (
+                <WorkItemColoredPill
+                  text={workItemStatusLabel(s)}
+                  colorClass={workItemStatusPillClass(s)}
+                />
+              ) : (
+                workItemStatusLabel(s)
+              )}
             </SelectItem>
           ))}
         </SelectContent>
@@ -247,12 +382,14 @@ export function DetailPrioritySelect<T extends string>({
   value,
   options,
   onChange,
+  colored = false,
 }: {
   id: string;
   label: string;
   value: T;
   options: readonly T[];
   onChange: (value: T) => void;
+  colored?: boolean;
 }) {
   return (
     <div className="space-y-2">
@@ -261,12 +398,30 @@ export function DetailPrioritySelect<T extends string>({
       </Label>
       <Select value={value} onValueChange={(v) => onChange(v as T)}>
         <SelectTrigger id={id} className="w-full text-sm">
-          <SelectValue placeholder="Chọn độ ưu tiên" />
+          <SelectValue placeholder="Chọn độ ưu tiên">
+            {colored ? (
+              <WorkItemColoredPill
+                text={workItemPriorityLabel(value)}
+                colorClass={workItemPriorityPillClass(value)}
+              />
+            ) : null}
+          </SelectValue>
         </SelectTrigger>
         <SelectContent>
           {options.map((p) => (
-            <SelectItem key={p} value={p}>
-              {workItemPriorityLabel(p)}
+            <SelectItem
+              key={p}
+              value={p}
+              label={workItemPriorityLabel(p)}
+            >
+              {colored ? (
+                <WorkItemColoredPill
+                  text={workItemPriorityLabel(p)}
+                  colorClass={workItemPriorityPillClass(p)}
+                />
+              ) : (
+                workItemPriorityLabel(p)
+              )}
             </SelectItem>
           ))}
         </SelectContent>

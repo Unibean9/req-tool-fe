@@ -16,6 +16,7 @@ import {
   type UpdateEpicResponse,
 } from "@/lib/api/services/fetchEpic";
 import { invalidateActorWorkspaceQueries } from "@/lib/query/invalidateActorWorkspace";
+import { invalidateProjectFeatureListCaches } from "@/lib/query/invalidateProjectFeatures";
 import { mergeActorRequirementModelCache } from "@/lib/query/patchActorRequirementModelCache";
 
 type UpdateEpicVariables = {
@@ -201,6 +202,7 @@ export function useCreateEpicFeature(options?: UseCreateEpicFeatureOptions) {
       return result;
     },
     onSuccess: (data, variables, onMutateResult, context) => {
+      invalidateProjectFeatureListCaches(queryClient, variables.projectId);
       if (invalidateRequirementModel || invalidateCanvasLayout) {
         invalidateActorWorkspaceQueries(
           queryClient,

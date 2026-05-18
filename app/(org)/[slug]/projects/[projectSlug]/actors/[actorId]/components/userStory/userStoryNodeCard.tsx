@@ -39,7 +39,7 @@ function UserStoryNodeCardComponent({
       : "");
 
   const acTexts = data.acceptance_criteria
-    .map((c) => c.description)
+    .map((c) => c.label)
     .filter(Boolean);
   const hasBody =
     Boolean(data.action_text.trim()) ||

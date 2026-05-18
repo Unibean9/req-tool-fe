@@ -5,12 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import type { CreateOrgProjectRequest } from "@/lib/api/services/fetchProject";
 
-import {
-  PROJECT_CONTEXT_MAX_CHARS,
-  PROJECT_MIN_TEXT_CHARS,
-  PROJECT_PROBLEMS_LIST_VIEWPORT_CLASS,
-  PROJECT_PROBLEMS_LIST_VIEWPORT_HEIGHT,
-} from "../projectFormLimits";
+import { PROJECT_CONTEXT_MAX_CHARS, PROJECT_MIN_TEXT_CHARS } from "../projectFormLimits";
 import { ProjectNewFieldError } from "../projectNewFieldError";
 import { resolveProjectNewTextFieldError } from "../projectNewFieldValidation";
 import type { ProjectNewFormErrors } from "../projectNewFormSchema";
@@ -37,8 +32,8 @@ export function ProjectNewStepContext({
   );
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden">
-      <div className="shrink-0">
+    <div className="flex flex-col gap-6">
+      <div>
         <h2 className="font-heading text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
           Ngữ cảnh và vấn đề
         </h2>
@@ -48,12 +43,12 @@ export function ProjectNewStepContext({
         </p>
       </div>
 
-      <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-hidden">
-        <div className="flex min-h-0 min-h-24 flex-1 flex-col gap-2 overflow-hidden">
-          <Label htmlFor="pn-context" className="shrink-0 text-sm font-semibold">
+      <div className="grid gap-6">
+        <div className="grid gap-2">
+          <Label htmlFor="pn-context" className="text-sm font-semibold">
             Ngữ cảnh <span className="text-destructive">*</span>
           </Label>
-          <div className="relative min-h-0 flex-1">
+          <div className="relative">
             <Textarea
               id="pn-context"
               aria-invalid={Boolean(contextError)}
@@ -67,7 +62,7 @@ export function ProjectNewStepContext({
               disabled={disabled}
               maxLength={PROJECT_CONTEXT_MAX_CHARS}
               className={cn(
-                "h-full min-h-0 resize-none border-2 border-border/90 pb-8 dark:border-zinc-600",
+                "min-h-36 resize-y border-2 border-border/90 pb-8 sm:min-h-40 dark:border-zinc-600",
                 contextError && "border-destructive"
               )}
             />
@@ -92,12 +87,8 @@ export function ProjectNewStepContext({
           disabled={disabled}
           addLabel="Thêm vấn đề"
           addButtonInHeader
-          scrollable
-          listViewportClassName={PROJECT_PROBLEMS_LIST_VIEWPORT_CLASS}
-          listViewportHeight={PROJECT_PROBLEMS_LIST_VIEWPORT_HEIGHT}
           showSubmitErrors={showSubmitErrors}
           errors={errors}
-          className="shrink-0"
         />
       </div>
     </div>

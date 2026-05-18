@@ -1,6 +1,6 @@
 "use client";
 
-import { useSearchParams } from "next/navigation";
+import { Loader2 } from "lucide-react";
 import * as React from "react";
 import { toast } from "sonner";
 
@@ -8,67 +8,48 @@ import { Button } from "@/components/ui/button";
 import { useGithubOAuth } from "@/hooks/useGithub";
 import { cn } from "@/lib/utils";
 
-import { WorkspaceAuthHint } from "@/app/(org)/[slug]/components/workspaceAuthHint";
-
 import { GitHubMark } from "./components/github-mark";
 import { LoginCard } from "./components/login-card";
 
-function safeFromSearchParam(raw: string | null): string | undefined {
-  if (!raw || !raw.startsWith("/") || raw.startsWith("//")) return undefined;
-  return raw;
-}
-
 const githubCtaClass = cn(
-  "relative h-12 w-full gap-2.5 rounded-xl text-base font-semibold tracking-tight",
-  "border border-white/10 bg-[#24292f] text-white shadow-lg shadow-black/25",
-  "transition-[transform,box-shadow,background-color,border-color]",
-  "hover:-translate-y-0.5 hover:border-white/15 hover:bg-[#2d333b] hover:shadow-xl hover:shadow-black/30",
-  "active:translate-y-0 active:shadow-md",
-  "dark:border-white/12 dark:bg-zinc-100 dark:text-zinc-900 dark:shadow-zinc-900/20",
-  "dark:hover:border-white/25 dark:hover:bg-white dark:hover:shadow-lg"
+  "h-12 w-full gap-2.5 rounded-lg text-sm font-semibold text-white shadow-none",
+  "border border-white/15 bg-[#24292f]",
+  "transition-[transform,background-color,border-color] duration-200 ease-out",
+  "hover:-translate-y-px hover:border-white/25 hover:bg-[#2d333b]",
+  "active:translate-y-px",
+  "focus-visible:ring-2 focus-visible:ring-brand-mint/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+  "disabled:pointer-events-none disabled:opacity-55",
+  "[&_svg]:text-white"
 );
 
 export default function LoginPage() {
-  const searchParams = useSearchParams();
-  const from = safeFromSearchParam(searchParams.get("from"));
   const { openOAuth } = useGithubOAuth();
   const [popupBusy, setPopupBusy] = React.useState(false);
 
   return (
-    <div className="flex min-h-0 w-full flex-1 flex-col">
-      <div className="flex min-h-0 flex-1 flex-col justify-center py-2 sm:py-4">
-        <LoginCard
-          fromRedirect={from}
-          footer={
-            <WorkspaceAuthHint className="mx-auto max-w-sm text-center text-xs leading-relaxed text-muted-foreground" />
+    <LoginCard>
+      <Button
+        type="button"
+        className={githubCtaClass}
+        disabled={popupBusy}
+        onClick={() => {
+          setPopupBusy(true);
+          const ok = openOAuth();
+          if (!ok) {
+            toast.error("Không mở được cửa sổ đăng nhập.", {
+              description: "Cho phép popup cho site này rồi thử lại.",
+            });
           }
-        >
-          <div className="flex flex-col gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              className={githubCtaClass}
-              disabled={popupBusy}
-              onClick={() => {
-                setPopupBusy(true);
-                const ok = openOAuth();
-                if (!ok) {
-                  toast.error("Không mở được cửa sổ đăng nhập.", {
-                    description: "Cho phép popup cho site này rồi thử lại.",
-                  });
-                }
-                window.setTimeout(() => setPopupBusy(false), 800);
-              }}
-            >
-              <GitHubMark className="size-[1.15rem] shrink-0 opacity-95" />
-              Tiếp tục với GitHub
-            </Button>
-            <p className="text-center text-[11px] text-muted-foreground/90">
-              Mở cửa sổ mới — an toàn, không gửi mật khẩu qua trang này.
-            </p>
-          </div>
-        </LoginCard>
-      </div>
-    </div>
+          window.setTimeout(() => setPopupBusy(false), 800);
+        }}
+      >
+        {popupBusy ? (
+          <Loader2 className="size-4 shrink-0 animate-spin" aria-hidden />
+        ) : (
+          <GitHubMark className="size-[1.05rem] shrink-0" />
+        )}
+        {popupBusy ? "Đang mở…" : "Tiếp tục với GitHub"}
+      </Button>
+    </LoginCard>
   );
 }

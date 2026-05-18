@@ -24,7 +24,7 @@ function RequirementsModelWorkspace() {
 
   if (isLoading) {
     return (
-      <div className="relative mt-4 flex min-h-105 min-h-0 flex-1 flex-col gap-3 overflow-hidden rounded-xl border border-border/80 p-4 sm:mt-6">
+      <div className="relative mt-4 flex min-h-105 flex-1 flex-col gap-3 overflow-hidden rounded-xl border border-border/80 p-4 sm:mt-6">
         <Skeleton className="h-11 w-full max-w-md" />
         <Skeleton className="min-h-80 flex-1 rounded-lg" />
       </div>
@@ -33,7 +33,7 @@ function RequirementsModelWorkspace() {
 
   if (isError) {
     return (
-      <div className="relative mt-4 flex min-h-105 min-h-0 flex-1 flex-col items-center justify-center gap-3 rounded-xl border border-border/80 p-6 sm:mt-6">
+      <div className="relative mt-4 flex min-h-105 flex-1 flex-col items-center justify-center gap-3 rounded-xl border border-border/80 p-6 sm:mt-6">
         <p className="max-w-md text-center text-sm text-muted-foreground">
           {error?.message ?? "Không tải được mô hình yêu cầu."}
         </p>
@@ -45,7 +45,7 @@ function RequirementsModelWorkspace() {
   }
 
   return (
-    <div className="relative mt-4 flex min-h-105 min-h-0 flex-1 overflow-hidden rounded-xl border border-border/80 sm:mt-6">
+    <div className="relative mt-4 flex min-h-105 flex-1 overflow-hidden rounded-xl border border-border/80 sm:mt-6">
       <RequirementsPalette open={paletteOpen} onOpenChange={setPaletteOpen} />
       <RequirementsCanvas className="min-h-105 flex-1 rounded-none border-0" />
       <RequirementsDetailPanel />
@@ -63,9 +63,7 @@ function RequirementsModelPageContent() {
           Mô hình yêu cầu · {actorMeta.name || "Actor"}
         </h1>
         <p className="max-w-2xl text-sm text-muted-foreground sm:text-base">
-          Click Epic để sửa panel phải (tự lưu API). Xóa Epic: nút đỏ trong panel
-          hoặc phím Delete. Feature: thả lên thẻ Epic hoặc nút + trên Epic — chọn
-          &quot;Full tree&quot; nếu không thấy node mới.
+          Tạo và quản lý mô hình yêu cầu cho actor
         </p>
       </header>
 

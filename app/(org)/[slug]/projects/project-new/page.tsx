@@ -3,7 +3,6 @@
 import { useCallback, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
-import { cn } from "@/lib/utils";
 import type { CreateOrgProjectRequest } from "@/lib/api/services/fetchProject";
 import { useCreateOrgProject } from "@/hooks/useProject";
 
@@ -20,9 +19,7 @@ import {
 } from "./components/projectNewFormSchema";
 import { ProjectNewStepBasics } from "./components/steps/projectNewStepBasics";
 import { ProjectNewStepContext } from "./components/steps/projectNewStepContext";
-import { ProjectNewStepFlowsRules } from "./components/steps/projectNewStepFlowsRules";
 import { ProjectNewStepSolution } from "./components/steps/projectNewStepSolution";
-import { ProjectNewStepStakeholders } from "./components/steps/projectNewStepStakeholders";
 
 function emptyCreateProjectForm(): CreateOrgProjectRequest {
   return {
@@ -30,10 +27,6 @@ function emptyCreateProjectForm(): CreateOrgProjectRequest {
     description: "",
     context: "",
     problems: [],
-    stakeholders: [],
-    businessGoals: [],
-    businessFlows: [],
-    businessRules: [],
     proposedSolutions: [],
   };
 }
@@ -70,7 +63,6 @@ export default function OrgProjectNewPage() {
     router.replace(projectsBase);
   }, [router, projectsBase]);
 
-  const isFillHeightStep = step === 0 || step === 1 || step === 2;
   const isLast = step === PROJECT_NEW_TOTAL_STEPS - 1;
   const stepValid = isProjectNewStepValid(step, form);
   const formValid = isProjectNewFormValid(form);
@@ -130,24 +122,6 @@ export default function OrgProjectNewPage() {
         );
       case 2:
         return (
-          <ProjectNewStepStakeholders
-            form={form}
-            onPatch={patchForm}
-            disabled={createProject.isPending}
-            {...stepValidationProps}
-          />
-        );
-      case 3:
-        return (
-          <ProjectNewStepFlowsRules
-            form={form}
-            onPatch={patchForm}
-            disabled={createProject.isPending}
-            {...stepValidationProps}
-          />
-        );
-      case 4:
-        return (
           <ProjectNewStepSolution
             form={form}
             onPatch={patchForm}
@@ -176,21 +150,8 @@ export default function OrgProjectNewPage() {
           onExit={exitWizard}
         />
 
-        <div
-          className={cn(
-            isFillHeightStep
-              ? "flex min-h-0 flex-1 flex-col overflow-hidden px-5 pb-4 sm:px-8 sm:pb-5 lg:px-10 lg:pb-6"
-              : "min-h-0 flex-1 overflow-y-auto px-6 pb-8 sm:px-10 sm:pb-10 lg:px-14 lg:pb-12"
-          )}
-        >
-          <div
-            className={cn(
-              "w-full max-w-5xl mx-auto",
-              isFillHeightStep && "flex min-h-0 flex-1 flex-col"
-            )}
-          >
-            {stepContent}
-          </div>
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pb-4 sm:px-8 sm:pb-5 lg:px-10 lg:pb-6">
+          <div className="mx-auto w-full max-w-5xl py-1">{stepContent}</div>
         </div>
 
         <ProjectNewFooter

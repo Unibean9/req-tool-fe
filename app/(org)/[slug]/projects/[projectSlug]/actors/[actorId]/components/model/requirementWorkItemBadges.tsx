@@ -5,17 +5,11 @@ import { cn } from "@/lib/utils";
 
 import {
   workItemPriorityLabel,
+  workItemPriorityPillClass,
   workItemStatusLabel,
+  workItemStatusPillClass,
+  WorkItemColoredPill,
 } from "./requirementWorkItemLabels";
-
-const PRIORITY_PILL_CLASS: Record<string, string> = {
-  low: "border-border/70 bg-muted/60 text-muted-foreground",
-  medium:
-    "border-amber-500/30 bg-amber-500/15 text-amber-800 dark:text-amber-300",
-  high: "border-red-500/35 bg-red-500/15 text-red-700 dark:text-red-300",
-  critical:
-    "border-red-500/50 bg-red-500/25 font-semibold text-red-800 dark:text-red-200",
-};
 
 export function RequirementPrefixCode({ prefix }: { prefix: string }) {
   const code = prefix.trim();
@@ -29,22 +23,19 @@ export function RequirementPrefixCode({ prefix }: { prefix: string }) {
 
 export function RequirementPriorityPill({ priority }: { priority: string }) {
   return (
-    <span
-      className={cn(
-        "inline-flex shrink-0 items-center rounded-md border px-2 py-0.5 text-[10px] font-semibold",
-        PRIORITY_PILL_CLASS[priority] ?? PRIORITY_PILL_CLASS.low
-      )}
-    >
-      {workItemPriorityLabel(priority)}
-    </span>
+    <WorkItemColoredPill
+      text={workItemPriorityLabel(priority)}
+      colorClass={workItemPriorityPillClass(priority)}
+    />
   );
 }
 
 export function RequirementStatusPill({ status }: { status: string }) {
   return (
-    <span className="inline-flex shrink-0 items-center rounded-md border border-border/70 bg-muted/50 px-2 py-0.5 text-[10px] font-medium text-foreground/90">
-      {workItemStatusLabel(status)}
-    </span>
+    <WorkItemColoredPill
+      text={workItemStatusLabel(status)}
+      colorClass={workItemStatusPillClass(status)}
+    />
   );
 }
 

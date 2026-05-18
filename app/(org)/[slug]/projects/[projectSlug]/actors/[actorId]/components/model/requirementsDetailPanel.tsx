@@ -101,7 +101,6 @@ export function RequirementsDetailPanel() {
             <UserStoryDetailForm
               data={node.data}
               onChange={(patch) => updateNodeData(node.id, patch)}
-              lockedActorRef={actorMeta.name.trim() || "Actor"}
             />
           ) : null}
         </div>
