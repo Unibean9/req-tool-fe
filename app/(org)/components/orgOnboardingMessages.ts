@@ -1,7 +1,38 @@
-export const ORG_ONBOARDING_MESSAGES = [
-  "🚀 Chào mừng đến với ReqFlow — nơi requirements được tổ chức đúng cách ngay từ ngày đầu tiên.",
-  "🧩 Biến backlog hỗn loạn thành hệ thống có cấu trúc với Agile + GitHub-first workflow.",
-  "⚡ Bắt đầu project của bạn với hierarchy rõ ràng, conventions nhất quán và GitHub sync tự động.",
-  "📋 ReqFlow giúp team của bạn phân tích, tổ chức và triển khai requirements hiệu quả hơn.",
-  "🌱 Từ Business Capability đến Technical Task — mọi thứ đều được kết nối trong một flow thống nhất.",
+export type OrgOnboardingSlide = {
+  kicker: string;
+  headline: string;
+  detail: string;
+};
+
+export const ORG_ONBOARDING_SLIDES: readonly OrgOnboardingSlide[] = [
+  {
+    kicker: "Workspace",
+    headline: "Chào mừng đến ReqFlow",
+    detail:
+      "Nơi requirements được tổ chức đúng cách ngay từ ngày đầu — không còn nằm rải rác trong sheet và chat.",
+  },
+  {
+    kicker: "Cấu trúc",
+    headline: "Backlog thành hệ thống",
+    detail:
+      "Agile và GitHub-first workflow: mọi mục đều có chỗ, có owner và có trace tới code.",
+  },
+  {
+    kicker: "Khởi động",
+    headline: "Project sẵn sàng làm việc",
+    detail:
+      "Hierarchy rõ ràng, conventions nhất quán và đồng bộ GitHub tự động khi team bắt đầu sprint.",
+  },
+  {
+    kicker: "Phối hợp",
+    headline: "Requirements có lộ trình",
+    detail:
+      "Phân tích, tổ chức và triển khai cùng một nguồn sự thật — team bám scope và tiến độ chặt hơn.",
+  },
+  {
+    kicker: "Kết nối",
+    headline: "Một flow thống nhất",
+    detail:
+      "Từ Business Capability đến Technical Task — không còn khoảng trống giữa nghiệp vụ và kỹ thuật.",
+  },
 ] as const;

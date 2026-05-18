@@ -3,18 +3,30 @@
 import {
   useMutation,
   useQueryClient,
+  type QueryClient,
   type UseMutationOptions,
 } from "@tanstack/react-query";
 import { toast } from "sonner";
 
+import { useCachedGet } from "@/hooks/useCachedGet";
 import { getApiErrorMessage } from "@/lib/api/getApiErrorMessage";
+import type { ActorUserStory } from "@/lib/api/services/fetchActor";
 import {
   fetchStory,
+  type ListProjectStoriesParams,
+  type ProjectStoriesListResponse,
+  type ProjectUserStoryDetailResponse,
   type UpdateUserStoryRequest,
   type UpdateUserStoryResponse,
 } from "@/lib/api/services/fetchStory";
 import { invalidateActorWorkspaceQueries } from "@/lib/query/invalidateActorWorkspace";
 import { mergeActorRequirementModelCache } from "@/lib/query/patchActorRequirementModelCache";
+import {
+  projectStoriesQueryKey,
+  projectStoryQueryKey,
+} from "@/lib/query/query-keys";
+
+const PROJECTS_ROOT = ["projects"] as const;
 
 type UpdateUserStoryVariables = {
   projectId: string;
@@ -37,6 +49,98 @@ type ActorWorkspaceInvalidateOptions = {
   /** Mặc định true */
   showSuccessToast?: boolean;
 };
+
+function invalidateProjectStoryListCaches(
+  queryClient: QueryClient,
+  projectId: string
+) {
+  void queryClient.invalidateQueries({
+    queryKey: [...PROJECTS_ROOT, "stories", projectId],
+  });
+}
+
+function invalidateUserStoryMutationCaches(
+  queryClient: QueryClient,
+  projectId: string,
+  userStoryId: string
+) {
+  invalidateProjectStoryListCaches(queryClient, projectId);
+  void queryClient.invalidateQueries({
+    queryKey: projectStoryQueryKey(projectId, userStoryId),
+  });
+}
+
+/**
+ * GET /api/v1/projects/{project_id}/stories — thiếu `projectId` thì `enabled: false`.
+ */
+export function useProjectStories(
+  projectId: string | null | undefined,
+  params?: ListProjectStoriesParams,
+  options?: { enabled?: boolean }
+) {
+  const pid = projectId?.trim() ?? "";
+  const enabled = Boolean(pid) && (options?.enabled ?? true);
+
+  return useCachedGet<ProjectStoriesListResponse, Error, ActorUserStory[]>({
+    queryKey: projectStoriesQueryKey(pid, params),
+    queryFn: async () => fetchStory.list(pid, params),
+    select: (res) => res.data,
+    enabled,
+  });
+}
+
+/** Cùng GET list; trả full envelope `{ success, data, message }`. */
+export function useProjectStoriesFull(
+  projectId: string | null | undefined,
+  params?: ListProjectStoriesParams,
+  options?: { enabled?: boolean }
+) {
+  const pid = projectId?.trim() ?? "";
+  const enabled = Boolean(pid) && (options?.enabled ?? true);
+
+  return useCachedGet({
+    queryKey: projectStoriesQueryKey(pid, params),
+    queryFn: () => fetchStory.list(pid, params),
+    enabled,
+  });
+}
+
+/**
+ * GET /api/v1/projects/{project_id}/stories/{user_story_id}
+ */
+export function useProjectStory(
+  projectId: string | null | undefined,
+  userStoryId: string | null | undefined,
+  options?: { enabled?: boolean }
+) {
+  const pid = projectId?.trim() ?? "";
+  const sid = userStoryId?.trim() ?? "";
+  const enabled = Boolean(pid) && Boolean(sid) && (options?.enabled ?? true);
+
+  return useCachedGet<ProjectUserStoryDetailResponse, Error, ActorUserStory>({
+    queryKey: projectStoryQueryKey(pid, sid),
+    queryFn: async () => fetchStory.get(pid, sid),
+    select: (res) => res.data,
+    enabled,
+  });
+}
+
+/** Cùng GET detail; trả full envelope `{ success, data, message }`. */
+export function useProjectStoryFull(
+  projectId: string | null | undefined,
+  userStoryId: string | null | undefined,
+  options?: { enabled?: boolean }
+) {
+  const pid = projectId?.trim() ?? "";
+  const sid = userStoryId?.trim() ?? "";
+  const enabled = Boolean(pid) && Boolean(sid) && (options?.enabled ?? true);
+
+  return useCachedGet({
+    queryKey: projectStoryQueryKey(pid, sid),
+    queryFn: () => fetchStory.get(pid, sid),
+    enabled,
+  });
+}
 
 /**
  * PATCH /api/v1/projects/:project_id/user-stories/:user_story_id
@@ -65,13 +169,14 @@ export function useUpdateUserStory(options?: UseUpdateUserStoryOptions) {
       userStoryId,
       body,
     }: UpdateUserStoryVariables): Promise<UpdateUserStoryResponse> => {
-      const result = await fetchStory.update(projectId, userStoryId, body);
-      if (!result.success) {
-        throw new Error(result.message ?? "Cập nhật user story thất bại");
-      }
-      return result;
+      return fetchStory.update(projectId, userStoryId, body);
     },
     onSuccess: (data, variables, onMutateResult, context) => {
+      invalidateUserStoryMutationCaches(
+        queryClient,
+        variables.projectId,
+        variables.userStoryId
+      );
       if (invalidateRequirementModel || invalidateCanvasLayout) {
         invalidateActorWorkspaceQueries(
           queryClient,
@@ -131,6 +236,11 @@ export function useDeleteUserStory(options?: UseDeleteUserStoryOptions) {
       await fetchStory.delete(projectId, userStoryId);
     },
     onSuccess: (data, variables, onMutateResult, context) => {
+      invalidateUserStoryMutationCaches(
+        queryClient,
+        variables.projectId,
+        variables.userStoryId
+      );
       if (invalidateRequirementModel || invalidateCanvasLayout) {
         invalidateActorWorkspaceQueries(
           queryClient,
@@ -155,6 +265,10 @@ export function useDeleteUserStory(options?: UseDeleteUserStoryOptions) {
 }
 
 export type {
+  FeatureStatus,
+  ListProjectStoriesParams,
+  ProjectStoriesListResponse,
+  ProjectUserStoryDetailResponse,
   UpdateUserStoryAcceptanceCriterion,
   UpdateUserStoryRequest,
   UpdateUserStoryResponse,
@@ -162,6 +276,5 @@ export type {
 
 export type {
   ActorEpicPriority,
-  ActorEpicStatus,
   ActorUserStory,
 } from "@/lib/api/services/fetchActor";

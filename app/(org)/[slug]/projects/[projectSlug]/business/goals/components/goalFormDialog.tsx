@@ -109,7 +109,7 @@ function GoalFormDialogBody({
         </DialogTitle>
         <DialogDescription>
           {isEdit
-            ? "Cập nhật mô tả và thứ tự hiển thị của goal."
+            ? "Cập nhật mô tả goal."
             : "Mô tả mục tiêu kinh doanh hoặc tiêu chí thành công."}
         </DialogDescription>
       </DialogHeader>

@@ -1,13 +1,15 @@
-export const STORY_STATUSES = ["draft", "active", "done", "archived"] as const;
-export type StoryStatus = (typeof STORY_STATUSES)[number];
+import type { FeatureStatus } from "@/lib/api/services/fetchActor";
+
+export { FEATURE_STATUSES as STORY_STATUSES } from "@/lib/api/services/fetchActor";
+export type StoryStatus = FeatureStatus;
 
 export const STORY_PRIORITIES = ["low", "medium", "high", "critical"] as const;
 export type StoryPriority = (typeof STORY_PRIORITIES)[number];
 
-/** Một dòng tiêu chí nghiệm thu — khớp API (`description`, `order`). */
+/** Một dòng tiêu chí nghiệm thu — khớp API (`label`, `order`). */
 export type AcceptanceCriterion = {
   id: string;
-  description: string;
+  label: string;
   order: number;
 };
 
@@ -31,6 +33,7 @@ export type UserStoryRecord = {
   labels: string;
   references: string;
   story_points: number;
+  business_value: number;
   sprint_id: string | null;
   acceptance_criteria: AcceptanceCriterion[];
   created_at: string;
@@ -57,6 +60,7 @@ export function createDefaultUserStoryRecord(featureId: string): UserStoryRecord
     labels: "",
     references: "",
     story_points: 0,
+    business_value: 0,
     sprint_id: null,
     acceptance_criteria: [],
     created_at: now,

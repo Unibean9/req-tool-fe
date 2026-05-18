@@ -2,14 +2,13 @@ import apiService from "../core";
 
 import type {
   ActorEpicPriority,
-  ActorEpicStatus,
   ActorFeature,
   ActorUserStory,
+  FeatureStatus,
 } from "./fetchActor";
-import {
-  ACTOR_EPIC_PRIORITIES,
-  ACTOR_EPIC_STATUSES,
-} from "./fetchActor";
+import { ACTOR_EPIC_PRIORITIES, parseFeatureStatus } from "./fetchActor";
+
+export { FEATURE_STATUSES, type FeatureStatus } from "./fetchActor";
 
 interface ActorFeatureRowApi {
   id: string;
@@ -20,15 +19,30 @@ interface ActorFeatureRowApi {
   status: string;
   priority: string;
   labels: unknown;
-  nfr_note: string;
   references: unknown;
   warnings: string[];
+  total_story_points?: number;
+  total_business_value?: number;
+  story_count?: number;
   created_at: string;
   updated_at: string;
 }
 
+interface ListProjectFeaturesApiResponse {
+  success: boolean;
+  data: ActorFeatureRowApi[];
+  message: string | null;
+}
+
+interface FeatureMutationApiResponse {
+  success: boolean;
+  data: ActorFeatureRowApi;
+  message: string | null;
+}
+
 interface AcceptanceCriterionApi {
   id?: string;
+  label?: string;
   description?: string;
   order?: number;
   text?: string;
@@ -49,15 +63,10 @@ interface ActorUserStoryRowApi {
   labels: unknown;
   references: unknown;
   story_points: number;
+  business_value?: number;
   acceptance_criteria: AcceptanceCriterionApi[];
   created_at: string;
   updated_at: string;
-}
-
-interface FeatureMutationApiResponse {
-  success: boolean;
-  data: ActorFeatureRowApi;
-  message: string | null;
 }
 
 interface CreateFeatureUserStoryApiResponse {
@@ -66,14 +75,32 @@ interface CreateFeatureUserStoryApiResponse {
   message: string | null;
 }
 
+export interface ListProjectFeaturesParams {
+  epicId?: string;
+  status?: FeatureStatus;
+  limit?: number;
+  offset?: number;
+}
+
+export interface ProjectFeaturesListResponse {
+  success: boolean;
+  data: ActorFeature[];
+  message: string | null;
+}
+
+export interface ProjectFeatureDetailResponse {
+  success: boolean;
+  data: ActorFeature;
+  message: string | null;
+}
+
 /** PATCH body (camelCase trong app → snake_case trên wire). */
 export interface UpdateFeatureRequest {
   title?: string;
   description?: string;
-  status?: ActorEpicStatus;
+  status?: FeatureStatus;
   priority?: ActorEpicPriority;
   labels?: string[];
-  nfrNote?: string;
 }
 
 export interface UpdateFeatureResponse {
@@ -92,12 +119,25 @@ export interface CreateFeatureUserStoryRequest {
   priority: ActorEpicPriority;
   labels: string[];
   storyPoints: number;
+  businessValue: number;
 }
 
 export interface CreateFeatureUserStoryResponse {
   success: boolean;
   data: ActorUserStory;
   message: string | null;
+}
+
+function resolveProjectId(projectId: string): string {
+  const id = projectId.trim();
+  if (!id) throw new Error("project_id là bắt buộc");
+  return id;
+}
+
+function resolveFeatureId(featureId: string): string {
+  const id = featureId.trim();
+  if (!id) throw new Error("feature_id là bắt buộc");
+  return id;
 }
 
 function normalizeWireTextListField(value: unknown): string {
@@ -110,12 +150,6 @@ function normalizeWireTextListField(value: unknown): string {
       .join(", ");
   }
   return String(value);
-}
-
-function parseActorEpicStatus(status: string): ActorEpicStatus {
-  return (ACTOR_EPIC_STATUSES as readonly string[]).includes(status)
-    ? (status as ActorEpicStatus)
-    : "draft";
 }
 
 function parseActorEpicPriority(priority: string): ActorEpicPriority {
@@ -131,12 +165,15 @@ function mapActorFeatureRow(row: ActorFeatureRowApi): ActorFeature {
     prefix: row.prefix,
     title: row.title,
     description: row.description,
-    status: parseActorEpicStatus(row.status),
+    status: parseFeatureStatus(row.status),
     priority: parseActorEpicPriority(row.priority),
     labels: normalizeWireTextListField(row.labels),
-    nfrNote: row.nfr_note,
+    nfrNote: "",
     references: normalizeWireTextListField(row.references),
     warnings: row.warnings ?? [],
+    totalStoryPoints: Number(row.total_story_points) || 0,
+    totalBusinessValue: Number(row.total_business_value) || 0,
+    storyCount: Number(row.story_count) || 0,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -145,20 +182,22 @@ function mapActorFeatureRow(row: ActorFeatureRowApi): ActorFeature {
 function mapAcceptanceCriterion(
   row: AcceptanceCriterionApi,
   index: number
-): { id: string; description: string; order: number } {
-  const description =
-    typeof row.description === "string" && row.description.trim()
-      ? row.description.trim()
-      : typeof row.text === "string"
-        ? row.text.trim()
-        : "";
+): { id: string; label: string; order: number } {
+  const label =
+    typeof row.label === "string" && row.label.trim()
+      ? row.label.trim()
+      : typeof row.description === "string" && row.description.trim()
+        ? row.description.trim()
+        : typeof row.text === "string"
+          ? row.text.trim()
+          : "";
   const order =
     typeof row.order === "number" && Number.isFinite(row.order)
       ? row.order
       : index;
   return {
     id: row.id ?? `ac-${index}`,
-    description,
+    label,
     order,
   };
 }
@@ -173,15 +212,29 @@ function mapActorUserStoryRow(row: ActorUserStoryRowApi): ActorUserStory {
     actorRef: row.actor_ref,
     actionText: row.action_text,
     goalText: row.goal_text,
-    status: parseActorEpicStatus(row.status),
+    status: parseFeatureStatus(row.status),
     priority: parseActorEpicPriority(row.priority),
     labels: normalizeWireTextListField(row.labels),
     references: normalizeWireTextListField(row.references),
-    storyPoints: row.story_points,
+    storyPoints: Number(row.story_points) || 0,
+    businessValue: Number(row.business_value) || 0,
     acceptanceCriteria: (row.acceptance_criteria ?? []).map(mapAcceptanceCriterion),
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
+}
+
+function toListProjectFeaturesSearchParams(
+  params?: ListProjectFeaturesParams
+): Record<string, string | number> | undefined {
+  if (!params) return undefined;
+  const searchParams: Record<string, string | number> = {};
+  const epicId = params.epicId?.trim();
+  if (epicId) searchParams.epic_id = epicId;
+  if (params.status) searchParams.status = params.status;
+  if (params.limit !== undefined) searchParams.limit = params.limit;
+  if (params.offset !== undefined) searchParams.offset = params.offset;
+  return Object.keys(searchParams).length > 0 ? searchParams : undefined;
 }
 
 function toUpdateFeatureApiBody(body: UpdateFeatureRequest) {
@@ -195,7 +248,6 @@ function toUpdateFeatureApiBody(body: UpdateFeatureRequest) {
     ...(body.labels !== undefined
       ? { labels: body.labels.map((l) => l.trim()).filter(Boolean) }
       : {}),
-    ...(body.nfrNote !== undefined ? { nfr_note: body.nfrNote.trim() } : {}),
   };
 }
 
@@ -209,17 +261,61 @@ function toCreateFeatureUserStoryApiBody(body: CreateFeatureUserStoryRequest) {
     priority: body.priority,
     labels: body.labels.map((l) => l.trim()).filter(Boolean),
     story_points: body.storyPoints,
+    business_value: body.businessValue,
+  };
+}
+
+function assertCreateFeatureUserStorySuccess(
+  body: CreateFeatureUserStoryApiResponse
+): CreateFeatureUserStoryApiResponse {
+  if (!body.success) {
+    throw new Error(body.message ?? "Tạo user story thất bại");
+  }
+  return body;
+}
+
+function assertProjectFeaturesListSuccess(
+  body: ListProjectFeaturesApiResponse
+): ListProjectFeaturesApiResponse {
+  if (!body.success) {
+    throw new Error(body.message ?? "Không tải được danh sách feature");
+  }
+  return body;
+}
+
+function assertFeatureMutationSuccess(
+  body: FeatureMutationApiResponse
+): FeatureMutationApiResponse {
+  if (!body.success) {
+    throw new Error(body.message ?? "Thao tác feature thất bại");
+  }
+  return body;
+}
+
+function mapProjectFeaturesListResponse(
+  body: ListProjectFeaturesApiResponse
+): ProjectFeaturesListResponse {
+  return {
+    success: body.success,
+    message: body.message ?? null,
+    data: (body.data ?? []).map(mapActorFeatureRow),
+  };
+}
+
+function mapProjectFeatureDetailResponse(
+  body: FeatureMutationApiResponse
+): ProjectFeatureDetailResponse {
+  return {
+    success: body.success,
+    message: body.message ?? null,
+    data: mapActorFeatureRow(body.data),
   };
 }
 
 function mapUpdateFeatureResponse(
   body: FeatureMutationApiResponse
 ): UpdateFeatureResponse {
-  return {
-    success: body.success,
-    message: body.message ?? null,
-    data: mapActorFeatureRow(body.data),
-  };
+  return mapProjectFeatureDetailResponse(body);
 }
 
 function mapCreateFeatureUserStoryResponse(
@@ -232,11 +328,44 @@ function mapCreateFeatureUserStoryResponse(
   };
 }
 
+function projectsFeaturesPath(projectId: string) {
+  return `/api/v1/projects/${encodeURIComponent(projectId)}/features`;
+}
+
 function featurePath(projectId: string, featureId: string) {
-  return `/api/v1/projects/${encodeURIComponent(projectId)}/features/${encodeURIComponent(featureId)}`;
+  return `${projectsFeaturesPath(projectId)}/${encodeURIComponent(featureId)}`;
 }
 
 export const fetchFeature = {
+  /** GET /api/v1/projects/{project_id}/features */
+  list: async (
+    projectId: string,
+    params?: ListProjectFeaturesParams
+  ): Promise<ProjectFeaturesListResponse> => {
+    const pid = resolveProjectId(projectId);
+    const response = await apiService.get<ListProjectFeaturesApiResponse>(
+      projectsFeaturesPath(pid),
+      toListProjectFeaturesSearchParams(params)
+    );
+    return mapProjectFeaturesListResponse(
+      assertProjectFeaturesListSuccess(response.data)
+    );
+  },
+
+  /** GET /api/v1/projects/{project_id}/features/{feature_id} */
+  get: async (
+    projectId: string,
+    featureId: string
+  ): Promise<ProjectFeatureDetailResponse> => {
+    const pid = resolveProjectId(projectId);
+    const fid = resolveFeatureId(featureId);
+    const response = await apiService.get<FeatureMutationApiResponse>(
+      featurePath(pid, fid)
+    );
+    assertFeatureMutationSuccess(response.data);
+    return mapProjectFeatureDetailResponse(response.data);
+  },
+
   /**
    * PATCH /api/v1/projects/:project_id/features/:feature_id
    * Sau mutation: `invalidateActorWorkspaceQueries` (requirement-model + canvas-layout).
@@ -246,10 +375,13 @@ export const fetchFeature = {
     featureId: string,
     body: UpdateFeatureRequest
   ): Promise<UpdateFeatureResponse> => {
+    const pid = resolveProjectId(projectId);
+    const fid = resolveFeatureId(featureId);
     const response = await apiService.patch<FeatureMutationApiResponse>(
-      featurePath(projectId, featureId),
+      featurePath(pid, fid),
       toUpdateFeatureApiBody(body)
     );
+    assertFeatureMutationSuccess(response.data);
     return mapUpdateFeatureResponse(response.data);
   },
 
@@ -258,7 +390,9 @@ export const fetchFeature = {
    * Sau mutation: `invalidateActorWorkspaceQueries` (requirement-model + canvas-layout).
    */
   delete: async (projectId: string, featureId: string): Promise<void> => {
-    await apiService.delete<unknown>(featurePath(projectId, featureId));
+    const pid = resolveProjectId(projectId);
+    const fid = resolveFeatureId(featureId);
+    await apiService.delete<unknown>(featurePath(pid, fid));
   },
 
   /**
@@ -270,10 +404,13 @@ export const fetchFeature = {
     featureId: string,
     body: CreateFeatureUserStoryRequest
   ): Promise<CreateFeatureUserStoryResponse> => {
+    const pid = resolveProjectId(projectId);
+    const fid = resolveFeatureId(featureId);
     const response = await apiService.post<CreateFeatureUserStoryApiResponse>(
-      `${featurePath(projectId, featureId)}/user-stories`,
+      `${featurePath(pid, fid)}/user-stories`,
       toCreateFeatureUserStoryApiBody(body)
     );
+    assertCreateFeatureUserStorySuccess(response.data);
     return mapCreateFeatureUserStoryResponse(response.data);
   },
 };

@@ -62,6 +62,9 @@ export function actorFeatureToNodeData(feature: ActorFeature): FeatureNodeData {
     nfr_note: feature.nfrNote,
     references: feature.references,
     warnings: feature.warnings,
+    total_story_points: feature.totalStoryPoints,
+    total_business_value: feature.totalBusinessValue,
+    story_count: feature.storyCount,
     created_at: feature.createdAt,
     updated_at: feature.updatedAt,
   };
@@ -83,10 +86,11 @@ export function actorUserStoryToNodeData(story: ActorUserStory): UserStoryNodeDa
     labels: story.labels,
     references: story.references,
     story_points: story.storyPoints,
+    business_value: story.businessValue,
     sprint_id: null,
     acceptance_criteria: story.acceptanceCriteria.map((ac) => ({
       id: ac.id,
-      description: ac.description,
+      label: ac.label,
       order: ac.order,
     })),
     created_at: story.createdAt,
@@ -336,21 +340,20 @@ export function featureNodeDataToUpdateRequest(
     status: data.status,
     priority: data.priority,
     labels: parseWorkItemLabels(data.labels),
-    nfrNote: data.nfr_note,
   };
 }
 
-/** Gắn id từ API lên dòng local khi khớp order + description (giữ draft rỗng). */
+/** Gắn id từ API lên dòng local khi khớp order + label (giữ draft rỗng). */
 function syncAcceptanceCriteriaIds(
   local: AcceptanceCriterion[],
   fromApi: AcceptanceCriterion[]
 ): AcceptanceCriterion[] {
   return local.map((lc, index) => {
-    const trimmed = lc.description.trim();
+    const trimmed = lc.label.trim();
     if (!trimmed) return lc;
     const match =
       fromApi.find(
-        (ac) => ac.order === lc.order && ac.description.trim() === trimmed
+        (ac) => ac.order === lc.order && ac.label.trim() === trimmed
       ) ?? fromApi[index];
     return match ? { ...lc, id: match.id } : lc;
   });
@@ -378,12 +381,12 @@ export function userStoryNodeDataToUpdateRequest(
   data: UserStoryNodeData,
   lockedActorRef: string
 ): UpdateUserStoryRequest {
-  const actorRef = lockedActorRef.trim() || data.actor_ref.trim();
+  const actorRef = data.actor_ref.trim() || lockedActorRef.trim();
   const allCriteria = data.acceptance_criteria;
   const nonEmptyCriteria = allCriteria
-    .filter((ac) => ac.description.trim())
+    .filter((ac) => ac.label.trim())
     .map((ac, index) => ({
-      description: ac.description.trim(),
+      label: ac.label.trim(),
       order: ac.order ?? index,
     }));
 
@@ -404,6 +407,7 @@ export function userStoryNodeDataToUpdateRequest(
     priority: data.priority,
     labels: parseWorkItemLabels(data.labels),
     storyPoints: data.story_points,
+    businessValue: data.business_value,
     ...(acceptanceCriteria !== undefined ? { acceptanceCriteria } : {}),
   };
 }
@@ -422,6 +426,7 @@ export function userStoryNodeDataToCreateRequest(
     priority: data.priority,
     labels: parseWorkItemLabels(data.labels),
     storyPoints: data.story_points,
+    businessValue: data.business_value,
   };
 }
 

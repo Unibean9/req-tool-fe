@@ -44,8 +44,8 @@ export function ProjectNewStepBasics({
   );
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-6">
-      <div className="shrink-0">
+    <div className="flex flex-col gap-6">
+      <div>
         <h2 className="font-heading text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
           Thông tin dự án
         </h2>
@@ -54,8 +54,8 @@ export function ProjectNewStepBasics({
         </p>
       </div>
 
-      <div className="flex min-h-0 flex-1 flex-col gap-4">
-        <div className="grid shrink-0 gap-2">
+      <div className="grid gap-4">
+        <div className="grid gap-2">
           <div className="flex items-center justify-between gap-2">
             <Label htmlFor="pn-name" className="text-sm font-semibold">
               Tên dự án <span className="text-destructive">*</span>
@@ -91,11 +91,11 @@ export function ProjectNewStepBasics({
           <ProjectNewFieldError message={nameError} />
         </div>
 
-        <div className="flex min-h-0 flex-1 flex-col gap-2">
-          <Label htmlFor="pn-desc" className="shrink-0 text-sm font-semibold">
+        <div className="grid gap-2">
+          <Label htmlFor="pn-desc" className="text-sm font-semibold">
             Mô tả <span className="text-destructive">*</span>
           </Label>
-          <div className="relative min-h-0 flex-1">
+          <div className="relative">
             <Textarea
               id="pn-desc"
               aria-invalid={Boolean(descriptionError)}
@@ -112,7 +112,7 @@ export function ProjectNewStepBasics({
               disabled={disabled}
               maxLength={PROJECT_DESCRIPTION_MAX_CHARS}
               className={cn(
-                "h-full min-h-0 resize-none border-2 border-border/90 pb-8 dark:border-zinc-600",
+                "min-h-48 resize-y border-2 border-border/90 pb-8 sm:min-h-52 dark:border-zinc-600",
                 descriptionError && "border-destructive"
               )}
             />

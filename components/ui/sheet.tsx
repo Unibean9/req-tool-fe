@@ -5,6 +5,7 @@ import { Dialog as SheetPrimitive } from "@base-ui/react/dialog"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
+import { uiOverlayClasses } from "@/components/ui/ui-motion"
 import { XIcon } from "lucide-react"
 
 function Sheet({ ...props }: SheetPrimitive.Root.Props) {
@@ -29,8 +30,7 @@ function SheetOverlay({ className, ...props }: SheetPrimitive.Backdrop.Props) {
       data-slot="sheet-overlay"
       className={cn(
         "fixed inset-0 z-50 bg-brand-dark/55 backdrop-blur-[3px]",
-        "transition-opacity duration-200 ease-out",
-        "data-starting-style:opacity-0 data-ending-style:opacity-0 data-open:opacity-100",
+        uiOverlayClasses(),
         className
       )}
       {...props}
@@ -70,7 +70,7 @@ function SheetContent({
         data-side={side}
         className={cn(
           "fixed z-50 flex flex-col border-border/90 bg-popover/95 bg-clip-padding text-sm text-popover-foreground shadow-2xl shadow-primary/20 backdrop-blur-md",
-          "transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform",
+          "transition-transform duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform motion-reduce:transition-none",
           "data-[side=bottom]:inset-x-0 data-[side=bottom]:bottom-0 data-[side=bottom]:h-auto data-[side=bottom]:max-h-[90vh] data-[side=bottom]:rounded-t-xl data-[side=bottom]:border-t",
           "data-[side=left]:inset-y-0 data-[side=left]:left-0 data-[side=left]:h-full data-[side=left]:w-[min(100%-2rem,24rem)] data-[side=left]:border-r sm:max-w-md",
           "data-[side=right]:inset-y-0 data-[side=right]:right-0 data-[side=right]:h-full data-[side=right]:w-[min(100%-2rem,24rem)] data-[side=right]:border-l sm:max-w-md",

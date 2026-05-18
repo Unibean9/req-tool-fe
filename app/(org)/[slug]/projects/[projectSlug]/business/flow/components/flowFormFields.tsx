@@ -104,53 +104,24 @@ export function FlowFormFields({
 
   return (
     <div className="grid w-full min-w-0 gap-5 py-4">
-      <div className="grid w-full min-w-0 grid-cols-[minmax(0,1fr)_5.5rem] items-end gap-4">
-        <div className="grid min-w-0 gap-2">
-          <div className="flex items-baseline justify-between gap-3">
-            <Label htmlFor={`${idPrefix}-title`} className="text-sm font-semibold">
-              Tên flow
-            </Label>
-            <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
-              {values.title.length} / {FLOW_TITLE_MAX_CHARS}
-            </span>
-          </div>
-          <Input
-            id={`${idPrefix}-title`}
-            value={values.title}
-            onChange={(e) => onChange({ title: e.target.value })}
-            disabled={disabled}
-            maxLength={FLOW_TITLE_MAX_CHARS}
-            placeholder="VD: User checkout, Onboarding…"
-            className="h-10 min-w-0 border-border/80 bg-muted/30"
-          />
-        </div>
-
-        <div className="grid min-w-0 gap-2">
-          <Label htmlFor={`${idPrefix}-order`} className="text-sm font-semibold">
-            Thứ tự
+      <div className="grid min-w-0 gap-2">
+        <div className="flex items-baseline justify-between gap-3">
+          <Label htmlFor={`${idPrefix}-title`} className="text-sm font-semibold">
+            Tên flow
           </Label>
-          <Input
-            id={`${idPrefix}-order`}
-            type="number"
-            inputMode="numeric"
-            min={FLOW_ORDER_MIN}
-            max={FLOW_ORDER_MAX}
-            step={1}
-            value={Number.isFinite(values.order) ? values.order : FLOW_ORDER_MIN}
-            onChange={(e) => {
-              const raw = e.target.value;
-              if (raw === "") {
-                onChange({ order: FLOW_ORDER_MIN });
-                return;
-              }
-              const parsed = Number.parseInt(raw, 10);
-              onChange({ order: clampFlowOrder(parsed) });
-            }}
-            disabled={disabled}
-            className="h-10 w-full border-border/80 bg-muted/30 tabular-nums"
-          />
-          <p className="sr-only">Số nhỏ hơn hiển thị trước</p>
+          <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
+            {values.title.length} / {FLOW_TITLE_MAX_CHARS}
+          </span>
         </div>
+        <Input
+          id={`${idPrefix}-title`}
+          value={values.title}
+          onChange={(e) => onChange({ title: e.target.value })}
+          disabled={disabled}
+          maxLength={FLOW_TITLE_MAX_CHARS}
+          placeholder="VD: User checkout, Onboarding…"
+          className="h-10 min-w-0 border-border/80 bg-muted/30"
+        />
       </div>
 
       <fieldset className="grid w-full min-w-0 gap-3 rounded-xl border border-border/70 bg-muted/15 p-4">

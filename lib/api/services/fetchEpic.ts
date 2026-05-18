@@ -9,6 +9,7 @@ import type {
 import {
   ACTOR_EPIC_PRIORITIES,
   ACTOR_EPIC_STATUSES,
+  parseFeatureStatus,
 } from "./fetchActor";
 
 interface ActorEpicRowApi {
@@ -35,9 +36,12 @@ interface ActorFeatureRowApi {
   status: string;
   priority: string;
   labels: unknown;
-  nfr_note: string;
+  nfr_note?: string;
   references: unknown;
   warnings: string[];
+  total_story_points?: number;
+  total_business_value?: number;
+  story_count?: number;
   created_at: string;
   updated_at: string;
 }
@@ -75,7 +79,6 @@ export interface CreateEpicFeatureRequest {
   description: string;
   priority: ActorEpicPriority;
   labels: string[];
-  nfrNote: string;
 }
 
 export interface CreateEpicFeatureResponse {
@@ -132,12 +135,15 @@ function mapActorFeatureRow(row: ActorFeatureRowApi): ActorFeature {
     prefix: row.prefix,
     title: row.title,
     description: row.description,
-    status: parseActorEpicStatus(row.status),
+    status: parseFeatureStatus(row.status),
     priority: parseActorEpicPriority(row.priority),
     labels: normalizeWireTextListField(row.labels),
-    nfrNote: row.nfr_note,
+    nfrNote: row.nfr_note ?? "",
     references: normalizeWireTextListField(row.references),
     warnings: row.warnings ?? [],
+    totalStoryPoints: Number(row.total_story_points) || 0,
+    totalBusinessValue: Number(row.total_business_value) || 0,
+    storyCount: Number(row.story_count) || 0,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -163,8 +169,16 @@ function toCreateEpicFeatureApiBody(body: CreateEpicFeatureRequest) {
     description: body.description.trim(),
     priority: body.priority,
     labels: body.labels.map((l) => l.trim()).filter(Boolean),
-    nfr_note: body.nfrNote.trim(),
   };
+}
+
+function assertCreateEpicFeatureSuccess(
+  body: CreateEpicFeatureApiResponse
+): CreateEpicFeatureApiResponse {
+  if (!body.success) {
+    throw new Error(body.message ?? "Tạo feature thất bại");
+  }
+  return body;
 }
 
 function mapUpdateEpicResponse(body: EpicMutationApiResponse): UpdateEpicResponse {
@@ -227,6 +241,7 @@ export const fetchEpic = {
       `${epicPath(projectId, epicId)}/features`,
       toCreateEpicFeatureApiBody(body)
     );
+    assertCreateEpicFeatureSuccess(response.data);
     return mapCreateEpicFeatureResponse(response.data);
   },
 };

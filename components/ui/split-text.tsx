@@ -20,6 +20,8 @@ export interface SplitTextProps {
   tag?: 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'p' | 'span';
   textAlign?: React.CSSProperties['textAlign'];
   onLetterAnimationComplete?: () => void;
+  /** When false, avoids clipping descenders on large display type. */
+  clipOverflow?: boolean;
 }
 
 const SplitText: React.FC<SplitTextProps> = ({
@@ -35,7 +37,8 @@ const SplitText: React.FC<SplitTextProps> = ({
   rootMargin = '-100px',
   tag = 'p',
   textAlign = 'center',
-  onLetterAnimationComplete
+  onLetterAnimationComplete,
+  clipOverflow = true,
 }) => {
   const ref = useRef<HTMLElement | null>(null);
   const animationCompletedRef = useRef(false);
@@ -167,7 +170,7 @@ const SplitText: React.FC<SplitTextProps> = ({
       wordWrap: 'break-word',
       willChange: 'transform, opacity'
     };
-    const classes = `split-parent overflow-hidden inline-block whitespace-normal ${className}`;
+    const classes = `split-parent inline-block whitespace-normal ${clipOverflow ? "overflow-hidden" : "overflow-visible"} ${className}`;
     const Tag = (tag || 'p') as React.ElementType;
 
     return (

@@ -20,7 +20,6 @@ import type { ProjectFlow } from "@/lib/api/services/fetchFlow";
 import { cn } from "@/lib/utils";
 
 import {
-  clampFlowOrder,
   FlowFormFields,
   isFlowFormValid,
   trimFlowFormValues,
@@ -124,15 +123,7 @@ function FlowFormDialogBody({
       </DialogHeader>
       <FlowFormFields
         values={values}
-        onChange={(patch) =>
-          setValues((prev) => ({
-            ...prev,
-            ...patch,
-            ...(patch.order !== undefined
-              ? { order: clampFlowOrder(patch.order) }
-              : {}),
-          }))
-        }
+        onChange={(patch) => setValues((prev) => ({ ...prev, ...patch }))}
         disabled={pending}
         idPrefix={isEdit ? "edit-flow" : "create-flow"}
       />

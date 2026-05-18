@@ -1,10 +1,11 @@
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
+import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import {
-  ArrowUpRight,
+  ArrowRight,
   Building2,
   CalendarDays,
   LayoutGrid,
@@ -14,12 +15,6 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -41,7 +36,7 @@ import { orgProjectsQueryKey } from "@/lib/query/query-keys";
 import { buildOrgEntryPath } from "./orgWorkspacePaths";
 import { cn } from "@/lib/utils";
 
-const ORG_CARD_GRADIENTS = [
+const ORG_CARD_TONES = [
   "from-orange-400 to-rose-600",
   "from-violet-500 to-indigo-700",
   "from-cyan-400 to-teal-600",
@@ -51,10 +46,27 @@ const ORG_CARD_GRADIENTS = [
   "from-sky-400 to-blue-700",
 ] as const;
 
-function orgCardGradientFromSeed(seed: string): string {
+const listStagger = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: { staggerChildren: 0.06, delayChildren: 0.04 },
+  },
+} as const;
+
+const cardReveal = {
+  hidden: { opacity: 0, y: 14 },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.38, ease: [0.22, 1, 0.36, 1] as const },
+  },
+} as const;
+
+function orgCardToneFromSeed(seed: string): string {
   let h = 0;
   for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) >>> 0;
-  return ORG_CARD_GRADIENTS[h % ORG_CARD_GRADIENTS.length]!;
+  return ORG_CARD_TONES[h % ORG_CARD_TONES.length]!;
 }
 
 function formatOrgCreatedAt(iso: string): string {
@@ -113,63 +125,103 @@ function OrgHomeOrgCard({ org }: { org: Org }) {
       disabled={isOpening}
       onClick={() => void openOrg()}
       className={cn(
-        "group/card-link block h-full w-full rounded-xl text-left outline-none",
-        "focus-visible:ring-[3px] focus-visible:ring-ring/60",
+        "group/card block h-full w-full rounded-xl text-left outline-none",
+        "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
         "disabled:pointer-events-none disabled:opacity-70"
       )}
     >
-      <Card
+      <article
         className={cn(
-          "h-full min-h-46 gap-0 border border-border/55 bg-popover py-0 shadow-md shadow-black/20 ring-1 ring-white/5",
-          "transition-[border-color,box-shadow,transform,background-color] duration-200 ease-out",
-          "group-hover/card-link:-translate-y-0.5 group-hover/card-link:border-primary/30 group-hover/card-link:bg-muted/40 group-hover/card-link:shadow-lg group-hover/card-link:shadow-black/25 group-hover/card-link:ring-primary/10"
+          "relative flex h-full min-h-44 flex-col overflow-hidden rounded-xl",
+          "border border-border/55 bg-card/45 ring-1 ring-white/[0.04]",
+          "transition-[border-color,transform,background-color] duration-200 ease-out",
+          "group-hover/card:-translate-y-0.5 group-hover/card:border-brand-jade/35 group-hover/card:bg-card/65"
         )}
       >
-        <CardHeader className="flex flex-row items-start gap-4 px-5 pt-5 pb-4 sm:px-6 sm:pt-6">
-          <span
-            className={cn(
-              "flex size-11 shrink-0 items-center justify-center rounded-lg bg-linear-to-br text-sm font-bold text-white shadow-inner shadow-black/15 ring-1 ring-white/15",
-              orgCardGradientFromSeed(org.id)
-            )}
-            aria-hidden
-          >
-            {orgInitial(org.name)}
-          </span>
-          <div className="min-w-0 flex-1 space-y-2">
-            <CardTitle className="font-heading text-lg leading-snug font-semibold tracking-tight text-card-foreground line-clamp-2 sm:text-xl">
-              {org.name}
-            </CardTitle>
-            <p className="flex items-center gap-2 text-sm text-muted-foreground">
-              <CalendarDays
-                className="size-4 shrink-0 opacity-80"
+        <span
+          className="absolute inset-y-3 left-0 w-0.5 rounded-full bg-brand-jade/0 transition-colors duration-200 group-hover/card:bg-brand-mint/80"
+          aria-hidden
+        />
+        <div
+          className="pointer-events-none absolute -top-12 -right-8 size-32 rounded-full bg-brand-jade/10 opacity-0 blur-2xl transition-opacity duration-300 group-hover/card:opacity-100"
+          aria-hidden
+        />
+
+        <div className="flex flex-1 flex-col gap-4 p-5 sm:p-6">
+          <div className="flex items-start gap-3.5">
+            <span
+              className={cn(
+                "flex size-12 shrink-0 items-center justify-center rounded-xl bg-linear-to-br text-base font-bold text-white shadow-sm ring-1 ring-white/15",
+                orgCardToneFromSeed(org.id)
+              )}
+              aria-hidden
+            >
+              {orgInitial(org.name)}
+            </span>
+            <div className="min-w-0 flex-1 space-y-1.5 pt-0.5">
+              <h2 className="font-heading line-clamp-2 text-lg font-semibold leading-snug tracking-tight text-foreground sm:text-xl">
+                {org.name}
+              </h2>
+              <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <CalendarDays className="size-3.5 shrink-0 opacity-80" aria-hidden />
+                <time dateTime={org.createdAt}>{formatOrgCreatedAt(org.createdAt)}</time>
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-auto flex flex-wrap items-center justify-between gap-2 border-t border-border/40 pt-3">
+            <div className="flex flex-wrap gap-1.5">
+              <span className="inline-flex items-center gap-1 rounded-md border border-border/50 bg-muted/30 px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+                <Users className="size-3 shrink-0" aria-hidden />
+                Thành viên
+              </span>
+              <span className="inline-flex items-center gap-1 rounded-md border border-border/50 bg-muted/30 px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+                <LayoutGrid className="size-3 shrink-0" aria-hidden />
+                Dự án
+              </span>
+            </div>
+            <span className="inline-flex items-center gap-1 text-xs font-semibold text-brand-mint transition-[gap] duration-200 group-hover/card:gap-1.5">
+              {isOpening ? "Đang mở…" : "Mở workspace"}
+              <ArrowRight
+                className={cn(
+                  "size-3.5 shrink-0 transition-transform duration-200",
+                  !isOpening && "group-hover/card:translate-x-0.5"
+                )}
                 aria-hidden
               />
-              <span className="min-w-0 leading-snug">
-                Tạo{" "}
-                <time dateTime={org.createdAt}>
-                  {formatOrgCreatedAt(org.createdAt)}
-                </time>
-              </span>
-            </p>
-          </div>
-        </CardHeader>
-        <CardFooter className="flex-wrap content-center justify-between gap-x-2 gap-y-1.5 border-border/50 bg-card/35 px-3 py-2 sm:px-3.5 sm:py-2.5 dark:bg-card/20">
-          <div className="flex min-w-0 flex-[1_1_auto] flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-muted-foreground sm:text-xs">
-            <span className="inline-flex items-center gap-1 whitespace-nowrap">
-              <Users className="size-4 shrink-0 opacity-90" aria-hidden />
-              Thành viên
-            </span>
-            <span className="inline-flex items-center gap-1 whitespace-nowrap">
-              <LayoutGrid className="size-4 shrink-0 opacity-90" aria-hidden />
-              Dự án
             </span>
           </div>
-          <span className="inline-flex shrink-0 items-center gap-0.5 text-xs font-semibold text-brand-mint">
-            {isOpening ? "Đang mở…" : "Mở"}
-            {!isOpening ? <span aria-hidden>→</span> : null}
-          </span>
-        </CardFooter>
-      </Card>
+        </div>
+      </article>
+    </button>
+  );
+}
+
+function CreateOrgCard({
+  onClick,
+  className,
+}: {
+  onClick: () => void;
+  className?: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "group/create flex h-full min-h-44 w-full flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-border/60 bg-transparent px-4 py-8 text-center outline-none",
+        "transition-[border-color,background-color,transform] duration-200",
+        "hover:-translate-y-0.5 hover:border-brand-jade/40 hover:bg-brand-jade/[0.06]",
+        "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+        className
+      )}
+    >
+      <span className="flex size-11 items-center justify-center rounded-xl border border-border/60 bg-muted/25 text-muted-foreground transition-colors group-hover/create:border-brand-jade/30 group-hover/create:bg-brand-jade/10 group-hover/create:text-brand-mint">
+        <Plus className="size-5" aria-hidden />
+      </span>
+      <span className="font-heading text-sm font-semibold tracking-tight text-muted-foreground transition-colors group-hover/create:text-foreground">
+        Tạo tổ chức mới
+      </span>
     </button>
   );
 }
@@ -199,51 +251,46 @@ export function OrgHomeList({ orgs }: OrgHomeListProps) {
   const listCount = filtered.length;
 
   return (
-    <div className="flex min-h-full w-full flex-1 flex-col gap-8 p-6 sm:gap-10 sm:p-8">
-      <header className="flex flex-col gap-6">
-        <div className="flex flex-col gap-2">
-          <h1 className="font-heading text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-            Tổ chức của bạn
-          </h1>
-          <p className="max-w-xl text-sm text-muted-foreground sm:text-base">
-            Quản lý và truy cập các workspace
-          </p>
+    <div className="flex min-h-full w-full flex-1 flex-col gap-8 px-6 py-8 sm:gap-10 sm:px-8 sm:py-10">
+      <header className="flex flex-col gap-5">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="min-w-0 space-y-2">
+            <p className="text-xs font-medium tracking-wide text-brand-mint">Workspace</p>
+            <h1 className="font-heading text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+              Tổ chức của bạn
+            </h1>
+            <p className="text-sm leading-relaxed text-muted-foreground sm:text-base">
+              Chọn workspace để vào dự án, thành viên và mô hình yêu cầu.
+            </p>
+          </div>
+          <Button
+            type="button"
+            size="lg"
+            className="h-11 w-full shrink-0 gap-2 rounded-xl font-semibold shadow-none sm:w-auto"
+            onClick={() => setCreateOpen(true)}
+          >
+            <Plus className="size-4" aria-hidden />
+            Tạo tổ chức
+          </Button>
         </div>
-        <div className="flex flex-row flex-wrap items-center gap-3">
-          {orgs.length > 0 ? (
-            <div className="relative min-h-11 min-w-0 flex-1 basis-[min(100%,12rem)]">
-              <Search
-                className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
-                aria-hidden
-              />
-              <Input
-                type="search"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Tìm tổ chức…"
-                autoComplete="off"
-                aria-label="Tìm tổ chức"
-                className="h-11 border-border/80 bg-muted/40 pr-3 pl-10 text-sm shadow-none dark:bg-muted/25"
-              />
-            </div>
-          ) : null}
-          {orgs.length > 0 ? (
-            <Button
-              type="button"
-              variant="outline"
-              size="lg"
-              className={cn(
-                "h-11 shrink-0 border-2 font-semibold transition-colors",
-                "hover:border-brand-mint/55 hover:bg-brand-mint/10 hover:text-brand-mint",
-                "dark:hover:bg-brand-mint/15"
-              )}
-              onClick={() => setCreateOpen(true)}
-            >
-              <Plus className="size-4" aria-hidden />
-              Tạo tổ chức mới
-            </Button>
-          ) : null}
-        </div>
+
+        {orgs.length > 0 ? (
+          <div className="relative min-h-11 w-full max-w-md">
+            <Search
+              className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-muted-foreground"
+              aria-hidden
+            />
+            <Input
+              type="search"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Tìm tổ chức…"
+              autoComplete="off"
+              aria-label="Tìm tổ chức"
+              className="h-11 rounded-xl border-border/70 bg-muted/30 pl-10 shadow-none ring-1 ring-white/[0.03] focus-visible:ring-brand-jade/30"
+            />
+          </div>
+        ) : null}
       </header>
 
       <Dialog
@@ -255,7 +302,7 @@ export function OrgHomeList({ orgs }: OrgHomeListProps) {
       >
         <DialogContent className="sm:max-w-md" showCloseButton>
           <DialogHeader>
-            <DialogTitle className="text-lg">Tạo tổ chức mới</DialogTitle>
+            <DialogTitle className="font-heading text-lg">Tạo tổ chức mới</DialogTitle>
             <DialogDescription>
               Nhập tên tổ chức. Sau khi tạo xong bạn sẽ được chuyển vào workspace.
             </DialogDescription>
@@ -265,7 +312,10 @@ export function OrgHomeList({ orgs }: OrgHomeListProps) {
               Tên tổ chức
             </Label>
             <div className="relative">
-              <Building2 className="text-foreground/40 pointer-events-none absolute top-1/2 left-3 size-5 -translate-y-1/2" />
+              <Building2
+                className="pointer-events-none absolute top-1/2 left-3 size-5 -translate-y-1/2 text-muted-foreground"
+                aria-hidden
+              />
               <Input
                 id="dialog-org-name"
                 autoComplete="organization"
@@ -273,7 +323,7 @@ export function OrgHomeList({ orgs }: OrgHomeListProps) {
                 value={newOrgName}
                 onChange={(e) => setNewOrgName(e.target.value)}
                 disabled={isCreating}
-                className="h-11 border-2 border-border/90 pl-11 dark:border-zinc-600"
+                className="h-11 rounded-xl border-border/80 bg-muted/25 pl-11"
               />
             </div>
           </div>
@@ -299,81 +349,57 @@ export function OrgHomeList({ orgs }: OrgHomeListProps) {
       </Dialog>
 
       {orgs.length > 0 ? (
-        <div className="flex flex-col gap-4">
-          <div className="flex items-baseline justify-between gap-3 border-b border-border/50 pb-3">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-              Đã tham gia
-            </p>
+        <section className="flex flex-col gap-5">
+          <div className="flex items-end justify-between gap-3 border-b border-border/45 pb-3">
+            <p className="text-sm font-medium text-foreground">Đã tham gia</p>
             <p className="text-sm tabular-nums text-muted-foreground">
               {listCount === joinedCount
                 ? `${joinedCount} tổ chức`
-                : `${listCount} / ${joinedCount} tổ chức`}
+                : `${listCount} / ${joinedCount}`}
             </p>
           </div>
 
           {filtered.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              Không có tổ chức khớp với từ khóa.
+            <p className="rounded-lg border border-border/50 bg-muted/20 px-4 py-6 text-center text-sm text-muted-foreground">
+              Không có tổ chức khớp với từ khóa &ldquo;{search.trim()}&rdquo;.
             </p>
           ) : null}
 
-          <ul
-            className="grid list-none grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4"
+          <motion.ul
+            className="grid list-none grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
             role="list"
+            variants={listStagger}
+            initial="hidden"
+            animate="show"
           >
-              {filtered.map((org) => (
-                <li key={org.id} className="min-w-0">
-                  <OrgHomeOrgCard org={org} />
-                </li>
-              ))}
-              <li className="min-w-0">
-                <button
-                  type="button"
-                  onClick={() => setCreateOpen(true)}
-                  className={cn(
-                    "group/create flex h-full min-h-46 w-full flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed border-border/70 bg-transparent px-4 py-8 text-center outline-none transition-colors",
-                    "hover:border-primary/40 hover:bg-muted/30 focus-visible:ring-[3px] focus-visible:ring-ring/60"
-                  )}
-                >
-                  <span className="flex size-12 items-center justify-center rounded-full border border-border/80 bg-muted/30 text-muted-foreground transition-colors group-hover/create:text-foreground">
-                    <Plus className="size-6" aria-hidden />
-                  </span>
-                  <span className="font-heading text-sm font-semibold tracking-tight text-muted-foreground transition-colors group-hover/create:text-foreground">
-                    Tạo tổ chức mới
-                    <ArrowUpRight
-                      className="ml-1 inline size-4 align-text-bottom opacity-70"
-                      aria-hidden
-                    />
-                  </span>
-                </button>
-              </li>
-          </ul>
-        </div>
+            {filtered.map((org) => (
+              <motion.li key={org.id} className="min-w-0" variants={cardReveal}>
+                <OrgHomeOrgCard org={org} />
+              </motion.li>
+            ))}
+            <motion.li className="min-w-0" variants={cardReveal}>
+              <CreateOrgCard onClick={() => setCreateOpen(true)} />
+            </motion.li>
+          </motion.ul>
+        </section>
       ) : (
-        <div className="flex flex-col items-center gap-6 py-6 text-center">
-          <p className="max-w-md text-sm text-muted-foreground">
-            Chưa có tổ chức nào. Tạo tổ chức đầu tiên để bắt đầu workspace.
-          </p>
-          <button
-            type="button"
+        <section className="flex flex-col items-center gap-8 py-10 text-center">
+          <div className="flex size-14 items-center justify-center rounded-2xl border border-border/60 bg-brand-jade/10 text-brand-mint">
+            <Building2 className="size-7" aria-hidden />
+          </div>
+          <div className="max-w-md space-y-2">
+            <h2 className="font-heading text-xl font-semibold text-foreground">
+              Chưa có tổ chức nào
+            </h2>
+            <p className="text-sm leading-relaxed text-muted-foreground">
+              Tạo tổ chức đầu tiên để bắt đầu quản lý dự án và yêu cầu phần mềm.
+            </p>
+          </div>
+          <CreateOrgCard
             onClick={() => setCreateOpen(true)}
-            className={cn(
-              "group/create flex w-full max-w-md flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed border-border/70 bg-transparent px-6 py-12 text-center outline-none transition-colors sm:min-h-46",
-              "hover:border-primary/40 hover:bg-muted/30 focus-visible:ring-[3px] focus-visible:ring-ring/60"
-            )}
-          >
-            <span className="flex size-12 items-center justify-center rounded-full border border-border/80 bg-muted/30 text-muted-foreground transition-colors group-hover/create:text-foreground">
-              <Plus className="size-6" aria-hidden />
-            </span>
-            <span className="font-heading text-base font-semibold tracking-tight text-muted-foreground transition-colors group-hover/create:text-foreground">
-              Tạo tổ chức mới
-              <ArrowUpRight
-                className="ml-1 inline size-4 align-text-bottom opacity-70"
-                aria-hidden
-              />
-            </span>
-          </button>
-        </div>
+            className="max-w-md sm:min-h-48"
+          />
+        </section>
       )}
     </div>
   );

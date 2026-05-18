@@ -6,6 +6,7 @@ import { useMemo, useRef, useState } from "react";
 import {
   Check,
   LayoutDashboard,
+  Link2,
   LogOut,
   Pencil,
   PersonStanding,
@@ -131,7 +132,6 @@ const PROJECT_BUSINESS_NAV = [
   { segment: "flow", label: "Flows", icon: Workflow },
   { segment: "rules", label: "Rules", icon: Scale },
   { segment: "goals", label: "Goals", icon: Target },
-  { segment: "nfr", label: "NFRs", icon: Gauge },
 ] as const;
 
 const SETUP_PROGRESS_STEP_COUNT = 7;
@@ -153,7 +153,7 @@ const SETUP_PROGRESS_STEPS: {
   { key: "goals", label: "Goals", icon: Target, hrefPath: "business/goals" },
   { key: "flows", label: "Flows", icon: Workflow, hrefPath: "business/flow" },
   { key: "rules", label: "Rules", icon: Scale, hrefPath: "business/rules" },
-  { key: "nfrs", label: "NFRs", icon: Gauge, hrefPath: "business/nfr" },
+  { key: "nfrs", label: "NFRs", icon: Gauge, hrefPath: "nfr" },
   {
     key: "requirements",
     label: "Requirements",
@@ -753,9 +753,11 @@ export function ProjectWorkspaceNavSidebar({
   const nav = useMemo(
     () => ({
       dashboard: `${base}/dashboard`,
+      github: `${base}/github`,
       members: `${base}/members`,
       actorsBase: `${base}/actors`,
       businessBase: `${base}/business`,
+      nfr: `${base}/nfr`,
     }),
     [base]
   );
@@ -779,6 +781,12 @@ export function ProjectWorkspaceNavSidebar({
                 label="Tổng quan dự án"
                 icon={LayoutDashboard}
                 active={pathActive(pathname, nav.dashboard)}
+              />
+              <SidebarNavLink
+                href={nav.github}
+                label="Liên kết với Github"
+                icon={Link2}
+                active={pathActive(pathname, nav.github)}
               />
               <SidebarNavLink
                 href={nav.members}
@@ -811,6 +819,14 @@ export function ProjectWorkspaceNavSidebar({
 
           <div className="flex min-h-0 flex-1 flex-col">
             <SidebarSectionTitle withDivider>Requirements</SidebarSectionTitle>
+            <div className="shrink-0 space-y-1 px-0.5 pb-2">
+              <SidebarNavLink
+                href={nav.nfr}
+                label="NFRs"
+                icon={Gauge}
+                active={pathActive(pathname, nav.nfr)}
+              />
+            </div>
             <ProjectWorkspaceActorsSection
               projectId={projectId}
               projectsLoaded={projectsLoaded}

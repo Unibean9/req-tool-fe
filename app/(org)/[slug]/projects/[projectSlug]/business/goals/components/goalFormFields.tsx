@@ -1,10 +1,8 @@
 "use client";
 
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import type { ProjectGoalWriteRequest } from "@/lib/api/services/fetchGoal";
-import { cn } from "@/lib/utils";
 
 import {
   GOAL_DESCRIPTION_MAX_CHARS,
@@ -69,23 +67,6 @@ export function GoalFormFields({
               description: e.target.value.slice(0, GOAL_DESCRIPTION_MAX_CHARS),
             })
           }
-        />
-      </div>
-
-      <div className="grid gap-2">
-        <Label htmlFor="goal-order">Thứ tự</Label>
-        <Input
-          id="goal-order"
-          type="number"
-          min={GOAL_ORDER_MIN}
-          max={GOAL_ORDER_MAX}
-          step={1}
-          disabled={disabled}
-          value={values.order}
-          onChange={(e) =>
-            onChange({ order: clampGoalOrder(Number(e.target.value)) })
-          }
-          className={cn("h-10 w-28 tabular-nums")}
         />
       </div>
     </div>

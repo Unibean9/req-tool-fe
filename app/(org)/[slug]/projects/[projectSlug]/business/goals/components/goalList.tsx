@@ -83,11 +83,11 @@ function GoalListRow({
   onDelete: () => void;
 }) {
   return (
-    <article className="flex h-full w-full items-start gap-3 rounded-xl border border-border/70 bg-card/50 p-3.5 shadow-sm transition-colors hover:border-border hover:bg-card/80 sm:gap-4 sm:p-4">
+    <article className="flex h-full w-full min-w-0 items-start gap-3 rounded-xl border border-border/70 bg-card/50 p-3.5 shadow-sm transition-colors hover:border-border hover:bg-card/80 sm:gap-4 sm:p-4">
       <GoalIndexBadge index={displayIndex} />
 
-      <div className="min-w-0 flex-1 space-y-1">
-        <p className="text-base leading-relaxed text-foreground">
+      <div className="min-w-0 flex-1 space-y-1 overflow-hidden">
+        <p className="min-w-0 break-words text-base leading-relaxed text-foreground [overflow-wrap:anywhere]">
           {row.description.trim() || (
             <span className="text-muted-foreground italic">Chưa có mô tả.</span>
           )}
