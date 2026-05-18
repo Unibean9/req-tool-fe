@@ -2,20 +2,22 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useCallback, useMemo, useRef, useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useMemo, useRef, useState } from "react";
 import {
-  ChevronsUpDown,
   Check,
   LayoutDashboard,
   LogOut,
   Pencil,
   PersonStanding,
-  Plus,
-  Search,
+  Gauge,
+  Scale,
+  Target,
   Trash2,
   UserRoundPlus,
   Users,
+  UsersRound,
+  Workflow,
+  type LucideIcon,
 } from "lucide-react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -28,39 +30,25 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
 import { useAuth } from "@/hooks/useAuth";
+import { useProjectSetupProgress } from "@/hooks/useProject";
 import { useProjectActors, useDeleteProjectActor } from "@/hooks/useActor";
 import type { ProjectActor } from "@/lib/api/services/fetchActor";
 import { useUserMe } from "@/hooks/useUser";
-import type { Org } from "@/lib/api/services/fetchOrg";
-import { fetchProject } from "@/lib/api/services/fetchProject";
-import { orgProjectsQueryKey } from "@/lib/query/query-keys";
+import type { ProjectSetupProgress } from "@/lib/api/services/fetchProject";
 import { cn } from "@/lib/utils";
 
 import { useOrgWorkspace } from "../../../orgWorkspaceContext";
-import { CreateOrgDialog } from "../../../../components/createOrgDialog";
 import { CreateProjectActorDialog } from "./sub-task/actor/createProjectActorDialog";
 import { DeleteProjectActorDialog } from "./sub-task/actor/deleteProjectActorDialog";
 import { EditProjectActorDialog } from "./sub-task/actor/editProjectActorDialog";
-import {
-  buildOrgEntryPath,
-  projectWorkspaceSubPathFromPathname,
-  replaceOrgSlugInPathname,
-} from "../../../../components/orgWorkspacePaths";
-
-const ORG_LIST_GRADIENTS = [
-  "from-orange-400 to-rose-600",
-  "from-violet-500 to-indigo-700",
-  "from-cyan-400 to-teal-600",
-  "from-amber-400 to-orange-600",
-  "from-fuchsia-500 to-pink-600",
-  "from-emerald-400 to-green-700",
-  "from-sky-400 to-blue-700",
-] as const;
-
 function nameToInitials(fullName: string | undefined): string {
   const name = (fullName ?? "").trim();
   if (!name) return "";
@@ -78,45 +66,6 @@ function userInitials(email: string | undefined, fullName: string | undefined): 
   if (local && local.length >= 2) return local.slice(0, 2).toUpperCase();
   if (local) return local[0]!.toUpperCase();
   return "?";
-}
-
-function orgListGradientFromSeed(seed: string): string {
-  let h = 0;
-  for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) >>> 0;
-  return ORG_LIST_GRADIENTS[h % ORG_LIST_GRADIENTS.length]!;
-}
-
-function OrgMiniAvatar({
-  name,
-  seed,
-  size = "sm",
-}: {
-  name: string;
-  seed: string;
-  size?: "sm" | "md";
-}) {
-  const fromName = nameToInitials(name);
-  const initials =
-    fromName ||
-    (name.trim().length >= 1 ? name.trim().slice(0, 2).toUpperCase() : "?");
-  return (
-    <span
-      className={cn(
-        "shrink-0 items-center justify-center rounded-xl bg-linear-to-br font-bold text-white shadow-inner shadow-black/15 ring-1 ring-white/15",
-        size === "md"
-          ? "flex size-10 text-sm"
-          : "flex size-7 text-[10px]",
-        orgListGradientFromSeed(seed)
-      )}
-      aria-hidden
-    >
-      {initials}
-    </span>
-  );
-}
-
-function foldForSearch(s: string): string {
-  return s.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase();
 }
 
 function SidebarSectionTitle({
@@ -175,6 +124,285 @@ function pathActive(pathname: string, prefix: string): boolean {
   const p = pathname.split("?")[0] ?? "";
   if (!prefix.endsWith("/") && p === prefix) return true;
   return p === prefix || p.startsWith(`${prefix}/`);
+}
+
+const PROJECT_BUSINESS_NAV = [
+  { segment: "stakeholders", label: "Stakeholders", icon: UsersRound },
+  { segment: "flow", label: "Flows", icon: Workflow },
+  { segment: "rules", label: "Rules", icon: Scale },
+  { segment: "goals", label: "Goals", icon: Target },
+  { segment: "nfr", label: "NFRs", icon: Gauge },
+] as const;
+
+const SETUP_PROGRESS_STEP_COUNT = 7;
+
+const SETUP_PROGRESS_STEPS: {
+  key: keyof ProjectSetupProgress;
+  label: string;
+  icon: LucideIcon;
+  /** Path segment(s) sau `{org}/projects/{project}` */
+  hrefPath: string;
+}[] = [
+  { key: "core", label: "Core", icon: LayoutDashboard, hrefPath: "dashboard" },
+  {
+    key: "stakeholders",
+    label: "Stakeholders",
+    icon: UsersRound,
+    hrefPath: "business/stakeholders",
+  },
+  { key: "goals", label: "Goals", icon: Target, hrefPath: "business/goals" },
+  { key: "flows", label: "Flows", icon: Workflow, hrefPath: "business/flow" },
+  { key: "rules", label: "Rules", icon: Scale, hrefPath: "business/rules" },
+  { key: "nfrs", label: "NFRs", icon: Gauge, hrefPath: "business/nfr" },
+  {
+    key: "requirements",
+    label: "Requirements",
+    icon: PersonStanding,
+    hrefPath: "actors",
+  },
+];
+
+function setupProgressStepHref(base: string, hrefPath: string): string {
+  return `${base}/${hrefPath}`;
+}
+
+type SetupProgressStepState = (typeof SETUP_PROGRESS_STEPS)[number] & {
+  done: boolean;
+  href: string;
+};
+
+function resolveSetupProgressStepHref(
+  base: string,
+  step: (typeof SETUP_PROGRESS_STEPS)[number],
+  firstActorId: string | undefined
+): string {
+  if (step.key === "requirements") {
+    if (firstActorId) {
+      return `${base}/actors/${encodeURIComponent(firstActorId)}`;
+    }
+    return `${base}/dashboard`;
+  }
+  return setupProgressStepHref(base, step.hrefPath);
+}
+
+function setupProgressPercent(doneCount: number): number {
+  return Math.round((doneCount / SETUP_PROGRESS_STEP_COUNT) * 100);
+}
+
+function SetupProgressHoverPanel({
+  steps,
+  percent,
+  doneCount,
+  pathname,
+}: {
+  steps: SetupProgressStepState[];
+  percent: number;
+  doneCount: number;
+  pathname: string;
+}) {
+  return (
+    <div className="overflow-hidden">
+      <div className="border-b border-border/50 px-4 pb-3.5 pt-3.5">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-[10px] font-semibold tracking-[0.14em] text-muted-foreground uppercase">
+              Project setup
+            </p>
+            <p className="mt-1 text-[1.75rem] font-bold leading-none tracking-tight text-foreground tabular-nums">
+              {percent}%
+            </p>
+          </div>
+          <span className="mt-0.5 shrink-0 rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-foreground tabular-nums">
+            {doneCount} / {SETUP_PROGRESS_STEP_COUNT}
+          </span>
+        </div>
+        <div className="mt-3.5 flex gap-1" aria-hidden>
+          {steps.map((step) => (
+            <span
+              key={step.key}
+              className={cn(
+                "h-2 min-w-0 flex-1 rounded-sm",
+                step.done ? "bg-emerald-500" : "bg-muted"
+              )}
+            />
+          ))}
+        </div>
+      </div>
+
+      <ul className="list-none space-y-0.5 px-2 py-2" role="list">
+        {steps.map((step) => {
+          const Icon = step.icon;
+          const active = pathActive(pathname, step.href);
+          return (
+            <li key={step.key}>
+              <Link
+                href={step.href}
+                className={cn(
+                  "flex items-center gap-3 rounded-md px-1 py-1.5 outline-none transition-colors",
+                  "hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-ring/45",
+                  active && "bg-muted/40 ring-1 ring-border/60"
+                )}
+              >
+                {step.done ? (
+                  <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-emerald-500">
+                    <Check
+                      className="size-4 text-white"
+                      strokeWidth={2.5}
+                      aria-hidden
+                    />
+                  </span>
+                ) : (
+                  <span className="flex size-8 shrink-0 items-center justify-center rounded-full border border-border/80 bg-muted/60 text-muted-foreground">
+                    <Icon className="size-3.5" strokeWidth={1.75} aria-hidden />
+                  </span>
+                )}
+                <span
+                  className={cn(
+                    "min-w-0 flex-1 truncate text-sm",
+                    step.done
+                      ? "font-semibold text-foreground"
+                      : "font-medium text-muted-foreground"
+                  )}
+                >
+                  {step.label}
+                </span>
+                <span
+                  className={cn(
+                    "shrink-0 text-xs font-medium",
+                    step.done ? "text-emerald-500" : "text-muted-foreground"
+                  )}
+                >
+                  {step.done ? "Done" : "Pending"}
+                </span>
+              </Link>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+}
+
+function ProjectWorkspaceSetupProgress({
+  base,
+  pathname,
+  projectId,
+  projectsLoaded,
+}: {
+  base: string;
+  pathname: string;
+  projectId: string | null;
+  projectsLoaded: boolean;
+}) {
+  const enabled = projectsLoaded && Boolean(projectId?.trim());
+  const { data, isPending, isError } = useProjectSetupProgress(
+    enabled ? projectId : null
+  );
+  const { data: actors = [] } = useProjectActors(enabled ? projectId : null);
+  const firstActorId = actors[0]?.id;
+
+  const steps = useMemo(
+    () =>
+      SETUP_PROGRESS_STEPS.map((step) => ({
+        ...step,
+        done: Boolean(data?.[step.key]),
+        href: resolveSetupProgressStepHref(base, step, firstActorId),
+      })),
+    [base, data, firstActorId]
+  );
+
+  const doneCount = steps.filter((s) => s.done).length;
+  const percent = setupProgressPercent(doneCount);
+
+  if (!enabled) return null;
+
+  const progressBody = (
+    <div
+      className={cn(
+        "rounded-lg border border-border/50 bg-card/40 px-2.5 py-2 outline-none transition-colors",
+        "hover:border-border/80 hover:bg-card/60",
+        "focus-visible:ring-2 focus-visible:ring-ring/45"
+      )}
+    >
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <span className="text-xs font-medium text-muted-foreground">
+          Setup progress
+        </span>
+        <span className="text-xs font-semibold tabular-nums text-foreground">
+          {percent}%
+        </span>
+      </div>
+      <div
+        className="flex gap-1"
+        role="progressbar"
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={percent}
+        aria-label={`Setup progress ${doneCount} of ${SETUP_PROGRESS_STEP_COUNT} complete`}
+      >
+        {steps.map((step) => (
+          <span
+            key={step.key}
+            className={cn(
+              "h-1.5 min-w-0 flex-1 rounded-full transition-colors",
+              step.done ? "bg-primary" : "bg-muted"
+            )}
+            aria-hidden
+          />
+        ))}
+      </div>
+      <p className="mt-1.5 text-[10px] tabular-nums text-muted-foreground">
+        {doneCount}/{SETUP_PROGRESS_STEP_COUNT} completed
+      </p>
+    </div>
+  );
+
+  if (isPending) {
+    return (
+      <div className="px-0.5 pb-2">
+        <Skeleton className="h-17 w-full rounded-lg" />
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <p className="px-1 pb-2 text-[11px] leading-snug text-muted-foreground">
+        Không tải được tiến độ setup.
+      </p>
+    );
+  }
+
+  return (
+    <div className="px-0.5 pb-2">
+      <HoverCard>
+        <HoverCardTrigger
+          render={
+            <button
+              type="button"
+              className="w-full cursor-default text-left outline-none"
+              aria-label={`Setup progress ${percent} percent. Hover for details.`}
+            >
+              {progressBody}
+            </button>
+          }
+        />
+        <HoverCardContent
+          side="top"
+          sideOffset={10}
+          align="start"
+          className="w-72 border-border/70 bg-[#1a1a1a] p-0 shadow-xl ring-0"
+        >
+          <SetupProgressHoverPanel
+            steps={steps}
+            percent={percent}
+            doneCount={doneCount}
+            pathname={pathname}
+          />
+        </HoverCardContent>
+      </HoverCard>
+    </div>
+  );
 }
 
 function pathsEqualIgnoreQuery(a: string, b: string): boolean {
@@ -423,7 +651,6 @@ function ProjectWorkspaceActorsSection({
   actorsBase: string;
   pathname: string;
   dashboardHref: string;
-  /** Chỉ owner tổ chức mới có nút thêm/sửa/xóa actor */
   canManageActors: boolean;
 }) {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
@@ -436,18 +663,14 @@ function ProjectWorkspaceActorsSection({
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <div className="mt-1 shrink-0 border-t border-border/70 px-1 pt-3">
+      <div className="shrink-0 px-0.5 pb-2">
         <div
           className={cn(
-            "flex items-center gap-2 px-0.5 pb-2",
+            "flex items-center gap-2 px-0.5",
             canManageActors ? "justify-between" : ""
           )}
         >
-          <p className="flex min-w-0 flex-1 items-center gap-2 m-0 text-xs font-bold tracking-wide text-foreground/95 uppercase">
-            <span
-              className="h-3.5 w-0.5 shrink-0 rounded-full bg-brand-mint/90 shadow-[0_0_6px_color-mix(in_oklab,var(--brand-mint)_50%,transparent)]"
-              aria-hidden
-            />
+          <p className="m-0 flex min-w-0 flex-1 items-center gap-2 text-xs font-semibold tracking-wide text-muted-foreground">
             <span className="leading-snug">Actors</span>
           </p>
           {canManageActors ? (
@@ -509,51 +732,13 @@ export function ProjectWorkspaceNavSidebar({
   className,
 }: ProjectWorkspaceNavSidebarProps) {
   const pathname = usePathname() ?? "";
-  const router = useRouter();
-  const queryClient = useQueryClient();
-  const { slug, orgs, orgFromList, canManageOrgMembers } = useOrgWorkspace();
+  const { orgFromList, canManageOrgMembers } = useOrgWorkspace();
   const encOrg = encodeURIComponent(orgSlug);
   const encProj = encodeURIComponent(projectSlug);
   const base = `/${encOrg}/projects/${encProj}`;
 
   const { user, logout, isLoggingOut } = useAuth();
   const { data: profile, isPending: isProfilePending } = useUserMe();
-  const [createOrgOpen, setCreateOrgOpen] = useState(false);
-  const [orgSearch, setOrgSearch] = useState("");
-  const [switchingOrgId, setSwitchingOrgId] = useState<string | null>(null);
-  const orgSearchRef = useRef<HTMLInputElement | null>(null);
-
-  const switchToOrg = useCallback(
-    async (org: Org) => {
-      if (org.slug === slug) return;
-      setSwitchingOrgId(org.id);
-      const subPath = projectWorkspaceSubPathFromPathname(pathname);
-      const key = orgProjectsQueryKey(org.id);
-
-      try {
-        let projects =
-          queryClient.getQueryData<Awaited<
-            ReturnType<typeof fetchProject.listOrgProjects>
-          >>(key)?.data;
-
-        if (!projects) {
-          const res = await queryClient.fetchQuery({
-            queryKey: key,
-            queryFn: () => fetchProject.listOrgProjects(org.id),
-          });
-          projects = res.data;
-        }
-
-        router.push(buildOrgEntryPath(org.slug, projects, subPath));
-      } catch {
-        router.push(replaceOrgSlugInPathname(pathname, org.slug));
-      } finally {
-        setSwitchingOrgId(null);
-      }
-    },
-    [slug, pathname, queryClient, router]
-  );
-
   const email = profile?.email ?? user?.email;
   const displayName =
     profile?.fullName?.trim() || user?.userNname?.trim() || undefined;
@@ -565,26 +750,18 @@ export function ProjectWorkspaceNavSidebar({
       ? `Ảnh đại diện — ${email}`
       : "Ảnh đại diện tài khoản";
 
-  const filteredOrgs = useMemo(() => {
-    const q = foldForSearch(orgSearch.trim());
-    if (!q) return orgs;
-    return orgs.filter(
-      (o) => foldForSearch(o.name).includes(q) || foldForSearch(o.slug).includes(q)
-    );
-  }, [orgs, orgSearch]);
-
   const nav = useMemo(
     () => ({
       dashboard: `${base}/dashboard`,
       members: `${base}/members`,
       actorsBase: `${base}/actors`,
+      businessBase: `${base}/business`,
     }),
     [base]
   );
 
   return (
     <>
-      <CreateOrgDialog open={createOrgOpen} onOpenChange={setCreateOrgOpen} />
       <aside
         className={cn(
           "flex h-full min-h-0 w-70 shrink-0 flex-col border-r border-border/60 bg-muted/20",
@@ -592,118 +769,6 @@ export function ProjectWorkspaceNavSidebar({
         )}
         aria-label="Điều hướng dự án"
       >
-        <div className="shrink-0 border-b border-border/60 px-3 pb-3 pt-3">
-          <DropdownMenu
-            onOpenChange={(open) => {
-              if (!open) {
-                setOrgSearch("");
-                return;
-              }
-              requestAnimationFrame(() => {
-                requestAnimationFrame(() => orgSearchRef.current?.focus());
-              });
-            }}
-          >
-            <DropdownMenuTrigger className="flex w-full items-center gap-2.5 rounded-lg px-1 py-1.5 outline-none transition-colors hover:bg-muted/60 focus-visible:ring-2 focus-visible:ring-ring/45">
-              <OrgMiniAvatar
-                name={orgFromList.name}
-                seed={orgFromList.id}
-                size="md"
-              />
-              <div className="min-w-0 flex-1 text-left">
-                <p className="truncate text-sm font-semibold leading-tight text-foreground">
-                  {orgFromList.name}
-                </p>
-                <p className="truncate text-xs text-muted-foreground">
-                  Tổ chức
-                </p>
-              </div>
-              <ChevronsUpDown
-                className="size-4 shrink-0 text-muted-foreground"
-                aria-hidden
-              />
-            </DropdownMenuTrigger>
-
-            <DropdownMenuContent
-              align="start"
-              sideOffset={6}
-              className="w-[min(18rem,calc(100vw-1rem))] p-0 overflow-hidden"
-            >
-              <div className="border-b border-border/60 px-3 py-2.5">
-                <div className="relative">
-                  <Search
-                    className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground"
-                    aria-hidden
-                  />
-                  <Input
-                    ref={orgSearchRef}
-                    type="text"
-                    inputMode="search"
-                    autoComplete="off"
-                    placeholder="Tìm tổ chức…"
-                    value={orgSearch}
-                    onChange={(e) => setOrgSearch(e.target.value)}
-                    onKeyDown={(e) => e.stopPropagation()}
-                    className="h-8 border-border/70 bg-muted/40 pr-2 pl-9 text-sm shadow-none"
-                  />
-                </div>
-              </div>
-
-              <div className="max-h-52 overflow-y-auto py-1 scrollbar-none">
-                {filteredOrgs.length === 0 ? (
-                  <p className="px-3 py-3 text-center text-xs text-muted-foreground">
-                    {orgSearch.trim()
-                      ? "Không tìm thấy tổ chức."
-                      : "Chưa có tổ chức nào."}
-                  </p>
-                ) : (
-                  filteredOrgs.map((org) => {
-                    const active = org.slug === slug;
-                    const switching = switchingOrgId === org.id;
-                    return (
-                      <DropdownMenuItem
-                        key={org.id}
-                        className="mx-1 gap-2.5 rounded-lg py-2 pr-2 pl-2"
-                        disabled={switchingOrgId != null}
-                        onClick={() => void switchToOrg(org)}
-                      >
-                        <OrgMiniAvatar name={org.name} seed={org.id} />
-                        <span
-                          className={cn(
-                            "min-w-0 flex-1 truncate text-sm font-medium",
-                            active ? "text-muted-foreground" : "text-foreground"
-                          )}
-                        >
-                          {org.name}
-                        </span>
-                        {switching ? (
-                          <span className="text-[10px] text-muted-foreground">
-                            …
-                          </span>
-                        ) : active ? (
-                          <Check
-                            className="size-4 shrink-0 text-primary"
-                            aria-hidden
-                          />
-                        ) : null}
-                      </DropdownMenuItem>
-                    );
-                  })
-                )}
-              </div>
-
-              <div className="border-t border-border/60 p-1">
-                <DropdownMenuItem
-                  className="gap-2 rounded-lg py-2 font-medium"
-                  onClick={() => setCreateOrgOpen(true)}
-                >
-                  <Plus className="size-4 text-muted-foreground" aria-hidden />
-                  Tạo tổ chức
-                </DropdownMenuItem>
-              </div>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
 
         <nav className="flex min-h-0 flex-1 flex-col gap-4 px-2 py-4">
           <div className="shrink-0 space-y-1">
@@ -724,17 +789,46 @@ export function ProjectWorkspaceNavSidebar({
             </div>
           </div>
 
-          <ProjectWorkspaceActorsSection
-            projectId={projectId}
-            projectsLoaded={projectsLoaded}
-            actorsBase={nav.actorsBase}
-            pathname={pathname}
-            dashboardHref={nav.dashboard}
-            canManageActors={canManageOrgMembers}
-          />
+          <div className="shrink-0 space-y-1">
+            <SidebarSectionTitle withDivider>
+              Phân tích business
+            </SidebarSectionTitle>
+            <div className="space-y-1 px-0.5">
+              {PROJECT_BUSINESS_NAV.map(({ segment, label, icon }) => {
+                const href = `${nav.businessBase}/${segment}`;
+                return (
+                  <SidebarNavLink
+                    key={segment}
+                    href={href}
+                    label={label}
+                    icon={icon}
+                    active={pathActive(pathname, href)}
+                  />
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="flex min-h-0 flex-1 flex-col">
+            <SidebarSectionTitle withDivider>Requirements</SidebarSectionTitle>
+            <ProjectWorkspaceActorsSection
+              projectId={projectId}
+              projectsLoaded={projectsLoaded}
+              actorsBase={nav.actorsBase}
+              pathname={pathname}
+              dashboardHref={nav.dashboard}
+              canManageActors={canManageOrgMembers}
+            />
+          </div>
         </nav>
 
         <div className="shrink-0 border-t border-border/60 px-2 pt-2 pb-1">
+          <ProjectWorkspaceSetupProgress
+            base={base}
+            pathname={pathname}
+            projectId={projectId}
+            projectsLoaded={projectsLoaded}
+          />
           <DropdownMenu>
             <DropdownMenuTrigger
               className={cn(

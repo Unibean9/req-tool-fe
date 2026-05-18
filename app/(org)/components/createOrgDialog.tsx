@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
@@ -16,7 +16,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useCreateOrg } from "@/hooks/useOrg";
 
+import { clampOrgName, ORG_NAME_MAX_CHARS } from "./orgFormLimits";
 import { replaceOrgSlugInPathname } from "./orgWorkspacePaths";
+
+/** Khớp `duration-200` trên DialogContent — đóng xong rồi mới `router.push`. */
+const DIALOG_EXIT_MS = 220;
 
 type CreateOrgDialogProps = {
   open: boolean;
@@ -27,13 +31,30 @@ export function CreateOrgDialog({ open, onOpenChange }: CreateOrgDialogProps) {
   const router = useRouter();
   const pathname = usePathname();
   const [name, setName] = useState("");
+  const navigateAfterCloseRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null
+  );
+
+  useEffect(() => {
+    return () => {
+      if (navigateAfterCloseRef.current !== null) {
+        clearTimeout(navigateAfterCloseRef.current);
+      }
+    };
+  }, []);
 
   const createOrg = useCreateOrg({
     onSuccess: (res) => {
-      onOpenChange(false);
-      setName("");
       const target = replaceOrgSlugInPathname(pathname ?? "", res.data.slug);
-      router.push(target);
+      setName("");
+      onOpenChange(false);
+      if (navigateAfterCloseRef.current !== null) {
+        clearTimeout(navigateAfterCloseRef.current);
+      }
+      navigateAfterCloseRef.current = setTimeout(() => {
+        navigateAfterCloseRef.current = null;
+        router.push(target);
+      }, DIALOG_EXIT_MS);
     },
   });
 
@@ -55,13 +76,20 @@ export function CreateOrgDialog({ open, onOpenChange }: CreateOrgDialogProps) {
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-2">
-          <Label htmlFor="create-org-name">Tên tổ chức</Label>
+          <div className="flex items-baseline justify-between gap-2">
+            <Label htmlFor="create-org-name">Tên tổ chức</Label>
+            <span className="text-[11px] tabular-nums text-muted-foreground">
+              {name.length} / {ORG_NAME_MAX_CHARS}
+            </span>
+          </div>
           <Input
             id="create-org-name"
             autoComplete="organization"
             placeholder="Ví dụ: Nhóm sản phẩm A"
             value={name}
-            onChange={(e) => setName(e.target.value)}
+            maxLength={ORG_NAME_MAX_CHARS}
+            disabled={createOrg.isPending}
+            onChange={(e) => setName(clampOrgName(e.target.value))}
             onKeyDown={(e) => {
               if (e.key === "Enter" && canSubmit) {
                 e.preventDefault();

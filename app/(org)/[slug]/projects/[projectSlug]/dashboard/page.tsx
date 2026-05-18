@@ -39,14 +39,6 @@ function DashboardSkeleton() {
         <Skeleton className="h-28 w-full" />
         <Skeleton className="h-44 w-full" />
       </div>
-      <div className={DASHBOARD_PAIR_ROW_CLASS}>
-        <Skeleton className="h-36 w-full" />
-        <Skeleton className="h-36 w-full" />
-      </div>
-      <div className={DASHBOARD_PAIR_ROW_CLASS}>
-        <Skeleton className="h-40 w-full" />
-        <Skeleton className="h-40 w-full" />
-      </div>
       <Skeleton className="h-48 w-full" />
     </div>
   );
@@ -140,42 +132,10 @@ export default function ProjectDashboardPage() {
           )}
         </ProjectDashboardSection>
 
-        <ProjectDashboardSection title="Bên liên quan" accent="teal">
-          <ProjectDashboardIndexedList
-            items={project.stakeholders}
-            emptyLabel="Chưa có bên liên quan."
-          />
-        </ProjectDashboardSection>
-      </div>
-
-      <div className={DASHBOARD_PAIR_ROW_CLASS}>
         <ProjectDashboardSection title="Vấn đề" accent="orange">
           <ProjectDashboardIndexedList
             items={project.problems}
             emptyLabel="Chưa có vấn đề nào."
-          />
-        </ProjectDashboardSection>
-
-        <ProjectDashboardSection title="Mục tiêu kinh doanh" accent="emerald">
-          <ProjectDashboardIndexedList
-            items={project.businessGoals}
-            emptyLabel="Chưa có mục tiêu."
-          />
-        </ProjectDashboardSection>
-      </div>
-
-      <div className={DASHBOARD_PAIR_ROW_CLASS}>
-        <ProjectDashboardSection title="Luồng nghiệp vụ" accent="violet">
-          <ProjectDashboardIndexedList
-            items={project.businessFlows}
-            emptyLabel="Chưa có luồng nghiệp vụ."
-          />
-        </ProjectDashboardSection>
-
-        <ProjectDashboardSection title="Quy tắc nghiệp vụ" accent="amber">
-          <ProjectDashboardIndexedList
-            items={project.businessRules}
-            emptyLabel="Chưa có quy tắc."
           />
         </ProjectDashboardSection>
       </div>

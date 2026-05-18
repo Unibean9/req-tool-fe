@@ -19,10 +19,6 @@ const PREVIEW_ROWS: {
   { key: "description", label: "Mô tả" },
   { key: "context", label: "Ngữ cảnh" },
   { key: "problems", label: "Vấn đề", isList: true },
-  { key: "stakeholders", label: "Bên liên quan", isList: true },
-  { key: "businessGoals", label: "Mục tiêu kinh doanh", isList: true },
-  { key: "businessFlows", label: "Luồng nghiệp vụ", isList: true },
-  { key: "businessRules", label: "Quy tắc nghiệp vụ", isList: true },
   { key: "proposedSolutions", label: "Đề xuất giải pháp", isList: true },
 ];
 

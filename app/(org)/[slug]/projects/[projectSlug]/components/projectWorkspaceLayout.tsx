@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect } from "react";
@@ -16,6 +15,7 @@ import {
 import type { OrgProject } from "@/lib/api/services/fetchProject";
 import { cn } from "@/lib/utils";
 
+import { ProjectWorkspaceOrgRailSwitcher } from "./projectWorkspaceOrgRailSwitcher";
 import { ProjectWorkspaceNavSidebar } from "./projectWorkspaceNavSidebar";
 import {
   getNextProjectSlugAfterDelete,
@@ -198,21 +198,12 @@ export function ProjectWorkspaceLayout({
       {/* Rail 1 — danh sách dự án (kiểu Discord) */}
       <aside
         className="flex w-21 shrink-0 flex-col items-center bg-sidebar py-3"
-        aria-label="Dự án trong tổ chức"
+        aria-label="Tổ chức và dự án"
       >
-        <div className="flex shrink-0 items-center justify-center px-2">
-          <Image
-            src="/Logo.png"
-            alt="REQ-Bean9"
-            width={44}
-            height={44}
-            className="size-14 rounded-xl object-contain"
-            priority
-          />
-        </div>
+        <ProjectWorkspaceOrgRailSwitcher />
 
         <span
-          className="my-2 h-0.5 w-8 shrink-0 rounded-full bg-border/80"
+          className="my-2.5 h-0.5 w-11 shrink-0 rounded-full bg-white/50 shadow-[0_0_8px_color-mix(in_oklab,var(--primary)_40%,transparent)]"
           aria-hidden
         />
 
@@ -248,7 +239,7 @@ export function ProjectWorkspaceLayout({
         </div>
 
         <span
-          className="my-2 h-0.5 w-8 shrink-0 rounded-full bg-border/80"
+          className="my-2.5 h-0.5 w-11 shrink-0 rounded-full bg-white/50 shadow-[0_0_8px_color-mix(in_oklab,var(--primary)_40%,transparent)]"
           aria-hidden
         />
 

@@ -56,16 +56,6 @@ export const projectNewStep1Schema = z.object({
 });
 
 export const projectNewStep2Schema = z.object({
-  stakeholders: projectListSchema("bên liên quan"),
-  businessGoals: projectListSchema("mục tiêu kinh doanh"),
-});
-
-export const projectNewStep3Schema = z.object({
-  businessFlows: projectListSchema("luồng nghiệp vụ"),
-  businessRules: projectListSchema("quy tắc nghiệp vụ"),
-});
-
-export const projectNewStep4Schema = z.object({
   proposedSolutions: projectListSchema("đề xuất giải pháp"),
 });
 
@@ -73,15 +63,11 @@ const PROJECT_NEW_STEP_SCHEMAS = [
   projectNewStep0Schema,
   projectNewStep1Schema,
   projectNewStep2Schema,
-  projectNewStep3Schema,
-  projectNewStep4Schema,
 ] as const;
 
 const STEP_FIELD_KEYS: (keyof CreateOrgProjectRequest)[][] = [
   ["name", "description"],
   ["context", "problems"],
-  ["stakeholders", "businessGoals"],
-  ["businessFlows", "businessRules"],
   ["proposedSolutions"],
 ];
 

@@ -62,6 +62,17 @@ import {
 
 const PANEL_MOTION_EASE = [0.22, 1, 0.36, 1] as const;
 
+/** Khung viền — hai cột dùng chung để đồng bộ. */
+const ADD_MEMBER_PANEL_FRAME_CLASS =
+  "overflow-hidden rounded-lg border border-border/70";
+
+/** Vùng cuộn cố định chiều cao; nội dung dài scroll trong khung. */
+const ADD_MEMBER_PANEL_SCROLL_CLASS =
+  "h-[min(48vh,17.5rem)] overflow-y-auto overscroll-contain p-1.5";
+
+const ADD_MEMBER_DIALOG_COLUMN_CLASS =
+  "flex min-w-0 flex-col gap-3";
+
 function memberRowInitials(
   displayName: string,
   email: string | null,
@@ -612,21 +623,28 @@ function AddOrgMemberDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleDialogOpenChange}>
-      <DialogContent className="max-h-[min(90vh,36rem)] sm:max-w-lg" showCloseButton>
+      <DialogContent
+        className="max-h-[min(92vh,44rem)] w-[min(100vw-2rem,52rem)] max-w-none overflow-hidden sm:max-w-[min(100vw-2rem,52rem)]"
+        showCloseButton
+      >
         <DialogHeader>
           <DialogTitle className="text-lg">Thêm thành viên</DialogTitle>
           <DialogDescription>
-            Tìm theo tên hoặc email, bấm từng người trong kết quả để đưa vào danh
-            sách mời (bấm lại để bỏ). Có thể mời nhiều người rồi xác nhận một lần.
+            Tìm theo tên hoặc email để thêm vào danh sách mời
           </DialogDescription>
         </DialogHeader>
 
-        <div className="grid min-h-0 flex-1 gap-4 px-1">
-          <div className="space-y-2">
-            <Label htmlFor="add-member-search" className="text-sm font-semibold">
-              Tìm người dùng
-            </Label>
-            <div className="relative">
+        <div className="grid min-w-0 grid-cols-1 gap-4 px-1 sm:grid-cols-2 sm:items-start sm:gap-0">
+          <div
+            className={cn(
+              ADD_MEMBER_DIALOG_COLUMN_CLASS,
+              "sm:border-r sm:border-border/70 sm:pr-4"
+            )}
+          >
+            <div className="relative shrink-0">
+              <Label htmlFor="add-member-search" className="sr-only">
+                Tìm người dùng
+              </Label>
               <Search
                 className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
                 aria-hidden
@@ -642,20 +660,20 @@ function AddOrgMemberDialog({
                 className="h-11 border-2 border-border/90 pr-3 pl-10 dark:border-zinc-600"
               />
             </div>
-          </div>
 
-          <div className="flex min-h-0 flex-col gap-2">
-            <p className="text-[11px] font-medium text-muted-foreground">
-              Kết quả — bấm để thêm / bỏ trong danh sách mời
-            </p>
-            <div
-              className="max-h-44 min-h-28 overflow-y-auto rounded-lg border border-border/70 bg-muted/15 p-1.5"
-              onScroll={userSearchInfinite.onScrollToLoadMore}
-            >
-              {!hasQuery ? (
-                <p className="px-2 py-6 text-center text-xs text-muted-foreground">
-                  Nhập ít nhất một ký tự để tìm.
-                </p>
+            <div className="flex flex-col gap-2">
+              <p className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
+                Kết quả
+              </p>
+              <div className={cn(ADD_MEMBER_PANEL_FRAME_CLASS, "bg-muted/15")}>
+                <div
+                  className={ADD_MEMBER_PANEL_SCROLL_CLASS}
+                  onScroll={userSearchInfinite.onScrollToLoadMore}
+                >
+                {!hasQuery ? (
+                  <p className="px-2 py-8 text-center text-xs text-muted-foreground">
+                    Nhập để tìm kiếm.
+                  </p>
               ) : searchLoadingFirst ? (
                 <p className="px-2 py-6 text-center text-xs text-muted-foreground">
                   Đang tìm…
@@ -734,18 +752,29 @@ function AddOrgMemberDialog({
                   Đang tải thêm…
                 </p>
               ) : null}
+                </div>
+              </div>
             </div>
           </div>
 
-          <div className="flex min-h-0 flex-col gap-2">
-            <p className="text-[11px] font-medium text-muted-foreground">
-              Danh sách mời ({pendingMembers.length})
-            </p>
-            <div className="max-h-36 min-h-16 overflow-y-auto rounded-lg border border-border/70 bg-muted/20 p-1.5">
-              {pendingMembers.length === 0 ? (
-                <p className="px-2 py-5 text-center text-xs text-muted-foreground">
-                  Chưa có ai. Chọn từ kết quả tìm kiếm phía trên.
-                </p>
+          <div className={cn(ADD_MEMBER_DIALOG_COLUMN_CLASS, "sm:pl-4")}>
+            <div className="flex h-11 shrink-0 items-center rounded-lg border border-border/60 bg-muted/25 px-3 text-sm">
+              <p className="truncate text-muted-foreground">
+                <span className="font-medium text-foreground">Vai trò:</span>{" "}
+                Thành viên mặc định.
+              </p>
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <p className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
+                Danh sách mời ({pendingMembers.length})
+              </p>
+              <div className={cn(ADD_MEMBER_PANEL_FRAME_CLASS, "bg-muted/20")}>
+                <div className={ADD_MEMBER_PANEL_SCROLL_CLASS}>
+                {pendingMembers.length === 0 ? (
+                  <p className="px-2 py-8 text-center text-xs text-muted-foreground italic">
+                    Chưa có ai.
+                  </p>
               ) : (
                 <ul className="space-y-1">
                   {pendingMembers.map((u) => (
@@ -775,6 +804,11 @@ function AddOrgMemberDialog({
                         <p className="truncate text-[10px] text-muted-foreground">
                           {u.email}
                         </p>
+                        {u.githubLogin ? (
+                          <p className="truncate text-[10px] text-muted-foreground/80">
+                            @{u.githubLogin}
+                          </p>
+                        ) : null}
                       </div>
                       <Button
                         type="button"
@@ -791,14 +825,9 @@ function AddOrgMemberDialog({
                   ))}
                 </ul>
               )}
+                </div>
+              </div>
             </div>
-          </div>
-
-          <div className="rounded-lg border border-border/60 bg-muted/25 px-3 py-2.5 text-sm">
-            <p className="text-muted-foreground">
-              <span className="font-medium text-foreground">Vai trò:</span> Thành
-              viên (áp dụng cho mọi người trong danh sách mời).
-            </p>
           </div>
         </div>
 

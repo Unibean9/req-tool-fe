@@ -1,25 +1,24 @@
 import apiService from "../core";
 
-/** POST /api/v1/orgs/:org_id/projects — body JSON (snake_case trên wire). */
+/** POST /api/v1/orgs/{org_id}/projects */
 export interface CreateOrgProjectRequest {
   name: string;
   description: string;
   context: string;
   problems: string[];
-  stakeholders: string[];
-  businessGoals: string[];
-  businessFlows: string[];
-  businessRules: string[];
   proposedSolutions: string[];
 }
 
-/** PATCH /api/v1/orgs/:org_id/projects/:project_id */
+/** PATCH /api/v1/orgs/{org_id}/projects/{project_id} */
 export interface UpdateOrgProjectRequest {
-  name: string;
-  description: string;
+  name?: string;
+  description?: string;
+  context?: string;
+  problems?: string[];
+  proposedSolutions?: string[];
 }
 
-/** Một dự án trên wire (GET list/detail/create). */
+/** Một dự án trên wire (GET list/detail/create/patch). */
 export interface OrgProjectApiRow {
   id: string;
   org_id: string;
@@ -28,10 +27,6 @@ export interface OrgProjectApiRow {
   description: string;
   context: string;
   problems: string[];
-  stakeholders: string[];
-  business_goals: string[];
-  business_flows: string[];
-  business_rules: string[];
   proposed_solutions: string[];
   created_at: string;
 }
@@ -47,16 +42,12 @@ export interface GetOrgProjectParams {
   projectId: string;
 }
 
-interface CreateOrgProjectApiBody {
-  name: string;
-  description: string;
-  context: string;
-  problems: string[];
-  stakeholders: string[];
-  business_goals: string[];
-  business_flows: string[];
-  business_rules: string[];
-  proposed_solutions: string[];
+interface OrgProjectMutationApiBody {
+  name?: string;
+  description?: string;
+  context?: string;
+  problems?: string[];
+  proposed_solutions?: string[];
 }
 
 interface CreateOrgProjectApiResponse {
@@ -92,10 +83,6 @@ export interface OrgProject {
   description: string;
   context: string;
   problems: string[];
-  stakeholders: string[];
-  businessGoals: string[];
-  businessFlows: string[];
-  businessRules: string[];
   proposedSolutions: string[];
   createdAt: string;
 }
@@ -124,6 +111,39 @@ export interface UpdateOrgProjectResponse {
   message: string | null;
 }
 
+/** GET /api/v1/projects/{project_id}/setup-progress — flags theo từng bước workspace. */
+export interface ProjectSetupProgress {
+  core: boolean;
+  stakeholders: boolean;
+  goals: boolean;
+  flows: boolean;
+  rules: boolean;
+  nfrs: boolean;
+  requirements: boolean;
+}
+
+export interface ProjectSetupProgressResponse {
+  success: boolean;
+  data: ProjectSetupProgress;
+  message: string | null;
+}
+
+interface ProjectSetupProgressApiRow {
+  core: boolean;
+  stakeholders: boolean;
+  goals: boolean;
+  flows: boolean;
+  rules: boolean;
+  nfrs: boolean;
+  requirements: boolean;
+}
+
+interface ProjectSetupProgressApiResponse {
+  success: boolean;
+  data: ProjectSetupProgressApiRow;
+  message: string | null;
+}
+
 function trimField(s: string): string {
   return s.trim();
 }
@@ -132,8 +152,8 @@ function normalizeStringList(items: string[]): string[] {
   return items.map((s) => s.trim()).filter(Boolean);
 }
 
-function mapStringListFromApi(value: string[] | null | undefined): string[] {
-  if (!value?.length) return [];
+function mapStringListFromApi(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
   return value.map((s) => String(s).trim()).filter(Boolean);
 }
 
@@ -154,17 +174,33 @@ export function linesToOrgProjectList(text: string): string[] {
 
 function toCreateOrgProjectApiBody(
   body: CreateOrgProjectRequest
-): CreateOrgProjectApiBody {
+): OrgProjectMutationApiBody {
   return {
     name: trimField(body.name),
     description: trimField(body.description),
     context: trimField(body.context),
     problems: normalizeStringList(body.problems),
-    stakeholders: normalizeStringList(body.stakeholders),
-    business_goals: normalizeStringList(body.businessGoals),
-    business_flows: normalizeStringList(body.businessFlows),
-    business_rules: normalizeStringList(body.businessRules),
     proposed_solutions: normalizeStringList(body.proposedSolutions),
+  };
+}
+
+function toUpdateOrgProjectApiBody(
+  body: UpdateOrgProjectRequest
+): OrgProjectMutationApiBody {
+  return {
+    ...(body.name !== undefined ? { name: trimField(body.name) } : {}),
+    ...(body.description !== undefined
+      ? { description: trimField(body.description) }
+      : {}),
+    ...(body.context !== undefined ? { context: trimField(body.context) } : {}),
+    ...(body.problems !== undefined
+      ? { problems: normalizeStringList(body.problems) }
+      : {}),
+    ...(body.proposedSolutions !== undefined
+      ? {
+          proposed_solutions: normalizeStringList(body.proposedSolutions),
+        }
+      : {}),
   };
 }
 
@@ -205,10 +241,6 @@ function mapOrgProjectRow(row: OrgProjectApiRow): OrgProject {
     description: row.description ?? "",
     context: row.context ?? "",
     problems: mapStringListFromApi(row.problems),
-    stakeholders: mapStringListFromApi(row.stakeholders),
-    businessGoals: mapStringListFromApi(row.business_goals),
-    businessFlows: mapStringListFromApi(row.business_flows),
-    businessRules: mapStringListFromApi(row.business_rules),
     proposedSolutions: mapStringListFromApi(row.proposed_solutions),
     createdAt: row.created_at,
   };
@@ -275,6 +307,45 @@ function mapUpdateOrgProjectResponse(
   };
 }
 
+function resolveProjectId(projectId: string): string {
+  const id = projectId.trim();
+  if (!id) throw new Error("project_id là bắt buộc");
+  return id;
+}
+
+function mapProjectSetupProgressRow(
+  row: ProjectSetupProgressApiRow
+): ProjectSetupProgress {
+  return {
+    core: Boolean(row.core),
+    stakeholders: Boolean(row.stakeholders),
+    goals: Boolean(row.goals),
+    flows: Boolean(row.flows),
+    rules: Boolean(row.rules),
+    nfrs: Boolean(row.nfrs),
+    requirements: Boolean(row.requirements),
+  };
+}
+
+function mapProjectSetupProgressResponse(
+  body: ProjectSetupProgressApiResponse
+): ProjectSetupProgressResponse {
+  return {
+    success: body.success,
+    message: body.message ?? null,
+    data: mapProjectSetupProgressRow(body.data),
+  };
+}
+
+function assertProjectSetupProgressSuccess(
+  body: ProjectSetupProgressApiResponse
+): ProjectSetupProgressApiResponse {
+  if (!body.success) {
+    throw new Error(body.message ?? "Không tải được tiến độ setup dự án");
+  }
+  return body;
+}
+
 export const fetchProject = {
   /**
    * GET /api/v1/orgs/{org_id}/projects
@@ -312,38 +383,57 @@ export const fetchProject = {
     );
   },
 
-  /** POST /api/v1/orgs/:org_id/projects */
+  /** POST /api/v1/orgs/{org_id}/projects */
   createProject: async (
     orgId: string,
     body: CreateOrgProjectRequest
   ): Promise<CreateOrgProjectResponse> => {
+    const oid = resolveOrgId(orgId);
     const response = await apiService.post<CreateOrgProjectApiResponse>(
-      `/api/v1/orgs/${encodeURIComponent(orgId)}/projects`,
+      `/api/v1/orgs/${encodeURIComponent(oid)}/projects`,
       toCreateOrgProjectApiBody(body)
     );
     return mapCreateOrgProjectResponse(response.data);
   },
 
-  /** PATCH /api/v1/orgs/:org_id/projects/:project_id */
+  /** PATCH /api/v1/orgs/{org_id}/projects/{project_id} */
   updateOrgProject: async (
     orgId: string,
     projectId: string,
     body: UpdateOrgProjectRequest
   ): Promise<UpdateOrgProjectResponse> => {
+    const { orgId: oid, projectId: pid } = resolveGetOrgProjectParams(
+      orgId,
+      projectId
+    );
     const response = await apiService.patch<UpdateOrgProjectApiResponse>(
-      `/api/v1/orgs/${encodeURIComponent(orgId)}/projects/${encodeURIComponent(projectId)}`,
-      {
-        name: body.name.trim(),
-        description: body.description.trim(),
-      }
+      `/api/v1/orgs/${encodeURIComponent(oid)}/projects/${encodeURIComponent(pid)}`,
+      toUpdateOrgProjectApiBody(body)
     );
     return mapUpdateOrgProjectResponse(response.data);
   },
 
-  /** DELETE /api/v1/orgs/:org_id/projects/:project_id */
+  /** DELETE /api/v1/orgs/{org_id}/projects/{project_id} */
   deleteOrgProject: async (orgId: string, projectId: string): Promise<void> => {
+    const { orgId: oid, projectId: pid } = resolveGetOrgProjectParams(
+      orgId,
+      projectId
+    );
     await apiService.delete<unknown>(
-      `/api/v1/orgs/${encodeURIComponent(orgId)}/projects/${encodeURIComponent(projectId)}`
+      `/api/v1/orgs/${encodeURIComponent(oid)}/projects/${encodeURIComponent(pid)}`
+    );
+  },
+
+  /** GET /api/v1/projects/{project_id}/setup-progress */
+  getSetupProgress: async (
+    projectId: string
+  ): Promise<ProjectSetupProgressResponse> => {
+    const pid = resolveProjectId(projectId);
+    const response = await apiService.get<ProjectSetupProgressApiResponse>(
+      `/api/v1/projects/${encodeURIComponent(pid)}/setup-progress`
+    );
+    return mapProjectSetupProgressResponse(
+      assertProjectSetupProgressSuccess(response.data)
     );
   },
 };

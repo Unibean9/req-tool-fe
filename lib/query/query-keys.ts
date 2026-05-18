@@ -21,6 +21,39 @@ export function projectActorsQueryKey(projectId: string) {
   return [...PROJECTS_ROOT, "actors", projectId] as const;
 }
 
+/** Key danh sách stakeholders theo `project_id`. */
+export function projectStakeholdersQueryKey(projectId: string) {
+  return [...PROJECTS_ROOT, "stakeholders", projectId] as const;
+}
+
+/** Key chi tiết một stakeholder. */
+export function projectStakeholderQueryKey(
+  projectId: string,
+  stakeholderId: string
+) {
+  return [
+    ...PROJECTS_ROOT,
+    "stakeholders",
+    projectId,
+    stakeholderId,
+  ] as const;
+}
+
+/** Key danh sách flows theo `project_id`. */
+export function projectFlowsQueryKey(projectId: string) {
+  return [...PROJECTS_ROOT, "flows", projectId] as const;
+}
+
+/** Key danh sách goals theo `project_id`. */
+export function projectGoalsQueryKey(projectId: string) {
+  return [...PROJECTS_ROOT, "goals", projectId] as const;
+}
+
+/** Key tiến độ setup workspace dự án. */
+export function projectSetupProgressQueryKey(projectId: string) {
+  return [...PROJECTS_ROOT, projectId, "setup-progress"] as const;
+}
+
 /** Key mô hình yêu cầu (epic / feature / story) theo actor. */
 export function actorRequirementModelQueryKey(projectId: string, actorId: string) {
   return [
@@ -92,6 +125,11 @@ export const queryKeys = {
   projects: {
     all: PROJECTS_ROOT,
     actors: projectActorsQueryKey,
+    stakeholders: projectStakeholdersQueryKey,
+    stakeholder: projectStakeholderQueryKey,
+    flows: projectFlowsQueryKey,
+    goals: projectGoalsQueryKey,
+    setupProgress: projectSetupProgressQueryKey,
   },
   users: {
     all: ["users"] as const,

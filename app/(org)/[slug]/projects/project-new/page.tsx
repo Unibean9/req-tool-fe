@@ -20,9 +20,7 @@ import {
 } from "./components/projectNewFormSchema";
 import { ProjectNewStepBasics } from "./components/steps/projectNewStepBasics";
 import { ProjectNewStepContext } from "./components/steps/projectNewStepContext";
-import { ProjectNewStepFlowsRules } from "./components/steps/projectNewStepFlowsRules";
 import { ProjectNewStepSolution } from "./components/steps/projectNewStepSolution";
-import { ProjectNewStepStakeholders } from "./components/steps/projectNewStepStakeholders";
 
 function emptyCreateProjectForm(): CreateOrgProjectRequest {
   return {
@@ -30,10 +28,6 @@ function emptyCreateProjectForm(): CreateOrgProjectRequest {
     description: "",
     context: "",
     problems: [],
-    stakeholders: [],
-    businessGoals: [],
-    businessFlows: [],
-    businessRules: [],
     proposedSolutions: [],
   };
 }
@@ -70,7 +64,7 @@ export default function OrgProjectNewPage() {
     router.replace(projectsBase);
   }, [router, projectsBase]);
 
-  const isFillHeightStep = step === 0 || step === 1 || step === 2;
+  const isFillHeightStep = step === 0 || step === 1;
   const isLast = step === PROJECT_NEW_TOTAL_STEPS - 1;
   const stepValid = isProjectNewStepValid(step, form);
   const formValid = isProjectNewFormValid(form);
@@ -129,24 +123,6 @@ export default function OrgProjectNewPage() {
           />
         );
       case 2:
-        return (
-          <ProjectNewStepStakeholders
-            form={form}
-            onPatch={patchForm}
-            disabled={createProject.isPending}
-            {...stepValidationProps}
-          />
-        );
-      case 3:
-        return (
-          <ProjectNewStepFlowsRules
-            form={form}
-            onPatch={patchForm}
-            disabled={createProject.isPending}
-            {...stepValidationProps}
-          />
-        );
-      case 4:
         return (
           <ProjectNewStepSolution
             form={form}
