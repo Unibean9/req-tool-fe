@@ -8,7 +8,10 @@ import { useOrgProjects } from "@/hooks/useProject";
 
 import { useOrgWorkspace } from "../../../../orgWorkspaceContext";
 import { StakeHolderList } from "./components/stakeHolderList";
-import { StakeHolderToolbar } from "./components/stakeHolderToolbar";
+import {
+  StakeHolderToolbar,
+  type StakeholderBusinessActorFilter,
+} from "./components/stakeHolderToolbar";
 
 function StakeholdersPageSkeleton() {
   return (
@@ -18,7 +21,7 @@ function StakeholdersPageSkeleton() {
         <Skeleton className="h-5 w-full max-w-md" />
         <div className="flex gap-3">
           <Skeleton className="h-10 flex-1" />
-          <Skeleton className="h-10 w-40" />
+          <Skeleton className="h-10 w-full max-w-56 sm:w-56" />
         </div>
       </div>
       <div className="space-y-3">
@@ -34,6 +37,8 @@ export default function ProjectBusinessStakeholdersPage() {
   const params = useParams();
   const { orgId } = useOrgWorkspace();
   const [search, setSearch] = useState("");
+  const [businessActorFilter, setBusinessActorFilter] =
+    useState<StakeholderBusinessActorFilter>("all");
 
   const projectSlug = useMemo(() => {
     const raw = params?.projectSlug;
@@ -66,12 +71,15 @@ export default function ProjectBusinessStakeholdersPage() {
       <StakeHolderToolbar
         search={search}
         onSearchChange={setSearch}
+        businessActorFilter={businessActorFilter}
+        onBusinessActorFilterChange={setBusinessActorFilter}
         projectId={project?.id ?? null}
         canCreate={Boolean(project)}
       />
       <StakeHolderList
         projectId={project?.id ?? null}
         search={search}
+        businessActorFilter={businessActorFilter}
       />
     </div>
   );

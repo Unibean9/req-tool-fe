@@ -3,12 +3,24 @@ export function isOrgProjectNewWizardPath(pathname: string): boolean {
   return /\/projects\/project-new\/?$/.test(pathname);
 }
 
-/** Workspace chi tiết dự án: `/{slug}/projects/{projectSlug}/...` (không gồm project-new). */
+/** Wizard chỉnh sửa tại `/{slug}/projects/project-edit` — ẩn chrome tổng. */
+export function isOrgProjectEditWizardPath(pathname: string): boolean {
+  return /\/projects\/project-edit\/?$/.test(pathname);
+}
+
+export function isOrgProjectWizardPath(pathname: string): boolean {
+  return (
+    isOrgProjectNewWizardPath(pathname) ||
+    isOrgProjectEditWizardPath(pathname)
+  );
+}
+
+/** Workspace chi tiết dự án: `/{slug}/projects/{projectSlug}/...` (không gồm wizard). */
 export function isOrgProjectSlugWorkspacePath(pathname: string): boolean {
   const p = pathname.split("/").filter(Boolean);
   if (p.length < 3) return false;
   if (p[1] !== "projects") return false;
-  if (p[2] === "project-new") return false;
+  if (p[2] === "project-new" || p[2] === "project-edit") return false;
   return true;
 }
 
@@ -40,6 +52,9 @@ export function replaceOrgSlugInPathname(
     if (segs[2] === "project-new") {
       return `/${enc}/projects/project-new`;
     }
+    if (segs[2] === "project-edit") {
+      return `/${enc}/projects`;
+    }
     return `/${enc}/projects`;
   }
 
@@ -49,8 +64,17 @@ export function replaceOrgSlugInPathname(
 export function projectWorkspaceSubPathFromPathname(pathname: string): string {
   const p = pathname.split("/").filter(Boolean);
   if (p.length < 3 || p[1] !== "projects") return "dashboard";
-  if (p[2] === "project-new") return "dashboard";
+  if (p[2] === "project-new" || p[2] === "project-edit") return "dashboard";
   return p.slice(3).join("/") || "dashboard";
+}
+
+export function buildProjectEditPath(
+  orgSlug: string,
+  projectSlug: string
+): string {
+  const encOrg = encodeURIComponent(orgSlug);
+  const encProj = encodeURIComponent(projectSlug);
+  return `/${encOrg}/projects/project-edit?project=${encProj}`;
 }
 
 export function buildProjectWorkspacePath(

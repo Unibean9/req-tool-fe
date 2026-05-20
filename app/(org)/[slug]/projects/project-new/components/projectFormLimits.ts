@@ -1,6 +1,14 @@
 export const PROJECT_NAME_MAX_CHARS = 80;
 export const PROJECT_DESCRIPTION_MAX_CHARS = 2000;
 export const PROJECT_CONTEXT_MAX_CHARS = 300;
+/** Mô tả ngắn (executive_summary) trên wizard tạo dự án. */
+export const PROJECT_SHORT_SUMMARY_MAX_CHARS = 500;
+export const PROJECT_EXECUTIVE_SUMMARY_MAX_CHARS = 2000;
+/** Nhãn UI cho trường `roiNotes` (wire API giữ nguyên). */
+export const PROJECT_BUSINESS_VALUE_LABEL =
+  "Mục đích kinh doanh (Business Value)" as const;
+
+export const PROJECT_ROI_NOTES_MAX_CHARS = 2000;
 
 export const PROJECT_MIN_TEXT_CHARS = 20;
 export const PROJECT_MIN_TEXT_MESSAGE = `Cần ít nhất ${PROJECT_MIN_TEXT_CHARS} ký tự`;

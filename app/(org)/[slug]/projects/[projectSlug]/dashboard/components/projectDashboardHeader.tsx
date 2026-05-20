@@ -1,29 +1,30 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { Pencil, Trash2 } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
+import { buildProjectEditPath } from "@/app/(org)/components/orgWorkspacePaths";
+import { Button, buttonVariants } from "@/components/ui/button";
+import type { OrgProject } from "@/lib/api/services/fetchProject";
 import { useDeleteOrgProject } from "@/hooks/useProject";
+import { cn } from "@/lib/utils";
 
+import { useOrgWorkspace } from "../../../../orgWorkspaceContext";
 import { useProjectWorkspaceNav } from "../../components/projectWorkspaceNavContext";
 import { DeleteOrgProjectDialog } from "./deleteOrgProjectDialog";
+import { ProjectDashboardMeta } from "./projectDashboardMeta";
 
 export type ProjectDashboardHeaderProps = {
-  title: string;
-  description?: string;
+  project: OrgProject;
   orgId: string;
-  projectId: string;
-  onEdit: () => void;
 };
 
 export function ProjectDashboardHeader({
-  title,
-  description,
+  project,
   orgId,
-  projectId,
-  onEdit,
 }: ProjectDashboardHeaderProps) {
+  const { slug } = useOrgWorkspace();
   const { navigateAfterProjectDelete } = useProjectWorkspaceNav();
   const [deleteOpen, setDeleteOpen] = useState(false);
 
@@ -34,24 +35,43 @@ export function ProjectDashboardHeader({
     },
   });
 
+  const executiveSummary = project.executiveSummary.trim();
+  const editHref = buildProjectEditPath(slug, project.slug);
+
   return (
     <>
-      <div className="flex flex-col gap-3">
+      <header className="space-y-4 border-b border-border/50 pb-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <h1 className="min-w-0 flex-1 font-heading text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-            {title}
-          </h1>
+          <div className="min-w-0 flex-1 space-y-2">
+            <h1 className="font-heading text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+              {project.name}
+            </h1>
+            {executiveSummary ? (
+              <p
+                className={cn(
+                  "max-w-3xl text-sm leading-relaxed text-muted-foreground sm:text-base"
+                )}
+              >
+                {executiveSummary}
+              </p>
+            ) : (
+              <p className="text-sm italic text-muted-foreground">
+                Chưa có mô tả ngắn.
+              </p>
+            )}
+          </div>
           <div className="flex shrink-0 flex-wrap items-center gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="gap-1.5 border-border/80"
-              onClick={onEdit}
+            <Link
+              href={editHref}
+              className={buttonVariants({
+                variant: "outline",
+                size: "sm",
+                className: "gap-1.5 border-border/80",
+              })}
             >
               <Pencil className="size-3.5" aria-hidden />
               Chỉnh sửa
-            </Button>
+            </Link>
             <Button
               type="button"
               variant="destructive"
@@ -65,20 +85,21 @@ export function ProjectDashboardHeader({
             </Button>
           </div>
         </div>
-        {description ? (
-          <p className="w-full text-sm leading-relaxed text-muted-foreground sm:text-base">
-            {description}
-          </p>
-        ) : null}
-      </div>
+
+        <ProjectDashboardMeta
+          startDate={project.startDate}
+          endDate={project.endDate}
+          budget={project.budget}
+        />
+      </header>
 
       <DeleteOrgProjectDialog
         open={deleteOpen}
-        projectName={title}
+        projectName={project.name}
         deletePending={deleteMutation.isPending}
         onOpenChange={setDeleteOpen}
         onConfirmDelete={() =>
-          deleteMutation.mutate({ orgId, projectId })
+          deleteMutation.mutate({ orgId, projectId: project.id })
         }
       />
     </>

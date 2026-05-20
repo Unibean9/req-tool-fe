@@ -92,9 +92,6 @@ import {
 import { validateRequirementConnection } from "./requirementsModelValidation";
 
 const LAYOUT_SAVE_DEBOUNCE_MS = 600;
-const EPIC_PATCH_DEBOUNCE_MS = 500;
-const FEATURE_PATCH_DEBOUNCE_MS = 500;
-const STORY_PATCH_DEBOUNCE_MS = 500;
 
 function nodesToCanvasLayout(nodes: RequirementNode[]): CanvasLayoutNode[] {
   return nodes.map((n) => ({
@@ -319,7 +316,7 @@ export function RequirementsModelProvider({
   const updateEpicMutation = useUpdateEpic({
     invalidateRequirementModel: false,
     invalidateCanvasLayout: false,
-    showSuccessToast: false,
+    showSuccessToast: true,
     onSuccess: (res, variables) => {
       setNodes((nds) =>
         nds.map((n) => {
@@ -333,6 +330,7 @@ export function RequirementsModelProvider({
           };
         })
       );
+      setSelectedNodeId(null);
     },
   });
   const createEpicFeatureMutation = useCreateEpicFeature({
@@ -343,7 +341,7 @@ export function RequirementsModelProvider({
   const updateFeatureMutation = useUpdateFeature({
     invalidateRequirementModel: false,
     invalidateCanvasLayout: false,
-    showSuccessToast: false,
+    showSuccessToast: true,
     onSuccess: (res, variables) => {
       setNodes((nds) =>
         nds.map((n) => {
@@ -359,6 +357,7 @@ export function RequirementsModelProvider({
           };
         })
       );
+      setSelectedNodeId(null);
     },
   });
   const createFeatureUserStoryMutation = useCreateFeatureUserStory({
@@ -369,7 +368,7 @@ export function RequirementsModelProvider({
   const updateUserStoryMutation = useUpdateUserStory({
     invalidateRequirementModel: false,
     invalidateCanvasLayout: false,
-    showSuccessToast: false,
+    showSuccessToast: true,
     onSuccess: (res, variables) => {
       const lockedActorRef = actorMetaRef.current.name.trim() || "Actor";
       const fromApi = actorUserStoryToNodeData(res.data);
@@ -391,6 +390,7 @@ export function RequirementsModelProvider({
           };
         })
       );
+      setSelectedNodeId(null);
     },
   });
 
@@ -546,22 +546,17 @@ export function RequirementsModelProvider({
 
       const existing = epicPatchTimersRef.current.get(epicId);
       if (existing) clearTimeout(existing);
+      epicPatchTimersRef.current.delete(epicId);
 
-      epicPatchTimersRef.current.set(
+      const node = nodesRef.current.find((n) => n.id === epicId);
+      if (!node || !isEpicNodeData(node.data)) return;
+
+      updateEpicMutation.mutate({
+        projectId,
+        actorId,
         epicId,
-        setTimeout(() => {
-          epicPatchTimersRef.current.delete(epicId);
-          const node = nodesRef.current.find((n) => n.id === epicId);
-          if (!node || !isEpicNodeData(node.data)) return;
-
-          updateEpicMutation.mutate({
-            projectId,
-            actorId,
-            epicId,
-            body: epicNodeDataToUpdateRequest(node.data),
-          });
-        }, EPIC_PATCH_DEBOUNCE_MS)
-      );
+        body: epicNodeDataToUpdateRequest(node.data),
+      });
     },
     [actorId, graphHydrated, projectId, updateEpicMutation]
   );
@@ -572,22 +567,17 @@ export function RequirementsModelProvider({
 
       const existing = featurePatchTimersRef.current.get(featureId);
       if (existing) clearTimeout(existing);
+      featurePatchTimersRef.current.delete(featureId);
 
-      featurePatchTimersRef.current.set(
+      const node = nodesRef.current.find((n) => n.id === featureId);
+      if (!node || !isFeatureNodeData(node.data)) return;
+
+      updateFeatureMutation.mutate({
+        projectId,
+        actorId,
         featureId,
-        setTimeout(() => {
-          featurePatchTimersRef.current.delete(featureId);
-          const node = nodesRef.current.find((n) => n.id === featureId);
-          if (!node || !isFeatureNodeData(node.data)) return;
-
-          updateFeatureMutation.mutate({
-            projectId,
-            actorId,
-            featureId,
-            body: featureNodeDataToUpdateRequest(node.data),
-          });
-        }, FEATURE_PATCH_DEBOUNCE_MS)
-      );
+        body: featureNodeDataToUpdateRequest(node.data),
+      });
     },
     [actorId, graphHydrated, projectId, updateFeatureMutation]
   );
@@ -598,24 +588,18 @@ export function RequirementsModelProvider({
 
       const existing = storyPatchTimersRef.current.get(userStoryId);
       if (existing) clearTimeout(existing);
+      storyPatchTimersRef.current.delete(userStoryId);
 
-      storyPatchTimersRef.current.set(
+      const node = nodesRef.current.find((n) => n.id === userStoryId);
+      if (!node || !isUserStoryNodeData(node.data)) return;
+
+      const lockedActorRef = actorMetaRef.current.name.trim() || "Actor";
+      updateUserStoryMutation.mutate({
+        projectId,
+        actorId,
         userStoryId,
-        setTimeout(() => {
-          storyPatchTimersRef.current.delete(userStoryId);
-          const node = nodesRef.current.find((n) => n.id === userStoryId);
-          if (!node || !isUserStoryNodeData(node.data)) return;
-
-          const lockedActorRef =
-            actorMetaRef.current.name.trim() || "Actor";
-          updateUserStoryMutation.mutate({
-            projectId,
-            actorId,
-            userStoryId,
-            body: userStoryNodeDataToUpdateRequest(node.data, lockedActorRef),
-          });
-        }, STORY_PATCH_DEBOUNCE_MS)
-      );
+        body: userStoryNodeDataToUpdateRequest(node.data, lockedActorRef),
+      });
     },
     [actorId, graphHydrated, projectId, updateUserStoryMutation]
   );
@@ -787,9 +771,11 @@ export function RequirementsModelProvider({
         nextData = { ...nextData, actor_ref: lockedActorRef };
       }
 
-      setNodes((nds) =>
-        nds.map((n) => (n.id === id ? { ...n, data: nextData } : n))
+      const nextNodes = nodesRef.current.map((n) =>
+        n.id === id ? { ...n, data: nextData } : n
       );
+      nodesRef.current = nextNodes;
+      setNodes(nextNodes);
 
       if (isOptimisticNodeId(id)) return;
       if (isEpicNodeData(nextData)) scheduleEpicPatch(id);

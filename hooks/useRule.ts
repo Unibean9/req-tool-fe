@@ -202,7 +202,10 @@ export type {
   ProjectRule,
   ProjectRuleResponse,
   ProjectRulesListResponse,
+  ProjectRuleType,
   ProjectRuleWriteRequest,
   UpdateProjectRuleRequest,
   UpdateProjectRuleResponse,
 } from "@/lib/api/services/fetchRule";
+
+export { PROJECT_RULE_TYPES } from "@/lib/api/services/fetchRule";

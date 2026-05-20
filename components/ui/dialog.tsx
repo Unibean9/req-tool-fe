@@ -46,9 +46,12 @@ function DialogContent({
   className,
   children,
   showCloseButton = true,
+  contentClassName,
   ...props
 }: DialogPrimitive.Popup.Props & {
   showCloseButton?: boolean
+  /** Thay layout wrapper bên trong (mặc định `relative grid gap-4 p-4`). VD: flex column + scroll. */
+  contentClassName?: string
 }) {
   return (
     <DialogPortal>
@@ -62,7 +65,11 @@ function DialogContent({
         )}
         {...props}
       >
-        <div className="relative grid gap-4 p-4">
+        <div
+          className={
+            contentClassName ?? "relative grid gap-4 p-4"
+          }
+        >
           {children}
           {showCloseButton && (
             <DialogPrimitive.Close

@@ -1,6 +1,11 @@
 import { z } from "zod";
 
 import type { CreateOrgProjectRequest } from "@/lib/api/services/fetchProject";
+import {
+  isProjectEndIsoInvalid,
+  isProjectIsoDateBeforeToday,
+  parseProjectIsoDate,
+} from "@/lib/project/projectDisplay";
 
 import {
   PROJECT_LIST_MIN_MESSAGE,
@@ -47,6 +52,7 @@ function projectListSchema(fieldLabel: string) {
 
 export const projectNewStep0Schema = z.object({
   name: projectTextSchema,
+  executiveSummary: projectTextSchema,
   description: projectTextSchema,
 });
 
@@ -56,19 +62,87 @@ export const projectNewStep1Schema = z.object({
 });
 
 export const projectNewStep2Schema = z.object({
+  budget: z.coerce.number().min(0, "Ngân sách không được âm"),
   proposedSolutions: projectListSchema("đề xuất giải pháp"),
 });
+
+export const projectNewStep3Schema = z
+  .object({
+    startDate: z.string().trim().min(1, "Chọn ngày bắt đầu"),
+    endDate: z.string().trim().min(1, "Chọn ngày kết thúc"),
+    roiNotes: z
+      .string()
+      .trim()
+      .superRefine((val, ctx) => {
+        if (val.length === 0) return;
+        if (val.length < PROJECT_MIN_TEXT_CHARS) {
+          ctx.addIssue({
+            code: "custom",
+            message: PROJECT_MIN_TEXT_MESSAGE,
+          });
+        }
+      }),
+  })
+  .superRefine((data, ctx) => {
+    if (!data.startDate.trim()) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Chọn ngày bắt đầu",
+        path: ["startDate"],
+      });
+    } else if (!parseProjectIsoDate(data.startDate)) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Ngày bắt đầu không hợp lệ",
+        path: ["startDate"],
+      });
+    } else if (isProjectIsoDateBeforeToday(data.startDate)) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Ngày bắt đầu không được ở quá khứ",
+        path: ["startDate"],
+      });
+    }
+
+    if (!data.endDate.trim()) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Chọn ngày kết thúc",
+        path: ["endDate"],
+      });
+    } else if (!parseProjectIsoDate(data.endDate)) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Ngày kết thúc không hợp lệ",
+        path: ["endDate"],
+      });
+    } else if (isProjectIsoDateBeforeToday(data.endDate)) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Ngày kết thúc không được ở quá khứ",
+        path: ["endDate"],
+      });
+    } else if (isProjectEndIsoInvalid(data.startDate, data.endDate)) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Ngày kết thúc phải sau ngày bắt đầu",
+        path: ["endDate"],
+      });
+    }
+  });
 
 const PROJECT_NEW_STEP_SCHEMAS = [
   projectNewStep0Schema,
   projectNewStep1Schema,
   projectNewStep2Schema,
+  projectNewStep3Schema,
 ] as const;
 
 const STEP_FIELD_KEYS: (keyof CreateOrgProjectRequest)[][] = [
-  ["name", "description"],
+  ["name", "executiveSummary", "description"],
   ["context", "problems"],
-  ["proposedSolutions"],
+  ["budget", "proposedSolutions"],
+  ["startDate", "endDate", "roiNotes"],
 ];
 
 function pickStepFields(

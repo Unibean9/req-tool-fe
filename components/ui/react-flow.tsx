@@ -76,10 +76,12 @@ export {
   Controls,
   ReactFlow,
   ReactFlowProvider,
+  reconnectEdge,
   useReactFlow,
   useNodesState,
+  useEdgesState,
   Handle,
   Position,
 } from "@xyflow/react";
 
-export type { Edge, Node, NodeProps, NodeTypes } from "@xyflow/react";
+export type { Connection, Edge, Node, NodeProps, NodeTypes } from "@xyflow/react";

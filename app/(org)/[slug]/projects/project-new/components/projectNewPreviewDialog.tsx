@@ -9,80 +9,47 @@ import {
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import type { CreateOrgProjectRequest } from "@/lib/api/services/fetchProject";
+import { cn } from "@/lib/utils";
 
-const PREVIEW_ROWS: {
-  key: keyof CreateOrgProjectRequest;
-  label: string;
-  isList?: boolean;
-}[] = [
-  { key: "name", label: "Tên dự án" },
-  { key: "description", label: "Mô tả" },
-  { key: "context", label: "Ngữ cảnh" },
-  { key: "problems", label: "Vấn đề", isList: true },
-  { key: "proposedSolutions", label: "Đề xuất giải pháp", isList: true },
-];
+import { ProjectFormDashboardPreview } from "../../components/projectFormDashboardPreview";
 
-function previewListItems(items: string[]): string[] {
-  return items.map((s) => s.trim()).filter(Boolean);
-}
+const PREVIEW_DIALOG_CLASS = cn(
+  "top-3 left-1/2 flex h-[calc(100dvh-1rem)] max-h-[calc(100dvh-1rem)] w-[calc(100vw-1rem)] max-w-[calc(100vw-1rem)] -translate-x-1/2 -translate-y-0 flex-col overflow-hidden rounded-2xl border-border/80 p-0 shadow-2xl",
+  "sm:top-4 sm:h-[calc(100dvh-1.5rem)] sm:max-h-[calc(100dvh-1.5rem)] sm:w-[calc(100vw-1.5rem)] sm:max-w-[calc(100vw-1.5rem)]",
+  "lg:w-[calc(100vw-2rem)] lg:max-w-[calc(100vw-2rem)]"
+);
 
 export function ProjectNewPreviewDialog({
   open,
   onOpenChange,
   form,
+  description = "Tóm tắt thông tin bạn đã nhập — bố cục giống trang tổng quan dự án.",
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   form: CreateOrgProjectRequest;
+  description?: string;
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[min(88vh,36rem)] sm:max-w-lg" showCloseButton>
-        <DialogHeader>
-          <DialogTitle className="text-lg">Xem trước</DialogTitle>
-          <DialogDescription>
-            Tóm tắt thông tin bạn đã nhập trước khi tạo dự án.
+      <DialogContent
+        className={PREVIEW_DIALOG_CLASS}
+        contentClassName="flex min-h-0 flex-1 flex-col overflow-hidden"
+        showCloseButton
+      >
+        <DialogHeader className="shrink-0 space-y-1 border-b border-border/60 px-5 py-4 pr-14 text-left sm:px-8 sm:py-5">
+          <DialogTitle className="font-heading text-xl font-semibold tracking-tight sm:text-2xl">
+            Xem trước
+          </DialogTitle>
+          <DialogDescription className="text-sm text-muted-foreground">
+            {description}
           </DialogDescription>
         </DialogHeader>
-        <ScrollArea className="max-h-[min(60vh,24rem)] pr-3">
-          <dl className="grid gap-4 text-sm">
-            {PREVIEW_ROWS.map(({ key, label, isList }) => {
-              const raw = form[key];
-              return (
-                <div key={key} className="min-w-0">
-                  <dt className="font-semibold text-foreground">{label}</dt>
-                  <dd className="mt-1 text-muted-foreground">
-                    {isList ? (
-                      (() => {
-                        const items = previewListItems(
-                          raw as string[]
-                        );
-                        if (!items.length) {
-                          return <span>—</span>;
-                        }
-                        return (
-                          <ul className="list-disc space-y-1 pl-4">
-                            {items.map((item, i) => (
-                              <li
-                                key={`${key}-${i}`}
-                                className="wrap-break-word whitespace-pre-wrap"
-                              >
-                                {item}
-                              </li>
-                            ))}
-                          </ul>
-                        );
-                      })()
-                    ) : (
-                      <span className="whitespace-pre-wrap wrap-break-word">
-                        {(raw as string).trim() || "—"}
-                      </span>
-                    )}
-                  </dd>
-                </div>
-              );
-            })}
-          </dl>
+
+        <ScrollArea className="min-h-0 flex-1">
+          <div className="px-5 py-6 sm:px-8 sm:py-8 lg:px-12 xl:px-16">
+            <ProjectFormDashboardPreview form={form} />
+          </div>
         </ScrollArea>
       </DialogContent>
     </Dialog>

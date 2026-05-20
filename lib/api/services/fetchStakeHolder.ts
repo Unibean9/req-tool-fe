@@ -17,6 +17,7 @@ interface ProjectStakeholderRowApi {
   impact_area: string;
   influence_level: string;
   notes: string;
+  is_business_actor: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -33,6 +34,12 @@ interface ListProjectStakeholdersApiResponse {
   message: string | null;
 }
 
+interface DeleteProjectStakeholderApiResponse {
+  success: boolean;
+  message?: string | null;
+  data?: unknown;
+}
+
 /** POST/PATCH body (camelCase trong app → snake_case trên wire). */
 export interface ProjectStakeholderWriteRequest {
   name: string;
@@ -40,6 +47,7 @@ export interface ProjectStakeholderWriteRequest {
   impactArea: string;
   influenceLevel: StakeholderInfluenceLevel;
   notes: string;
+  isBusinessActor: boolean;
 }
 
 export interface ProjectStakeholder {
@@ -50,6 +58,7 @@ export interface ProjectStakeholder {
   impactArea: string;
   influenceLevel: StakeholderInfluenceLevel;
   notes: string;
+  isBusinessActor: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -72,6 +81,11 @@ export interface ProjectStakeholdersListResponse {
   message: string | null;
 }
 
+export interface ListProjectStakeholdersParams {
+  /** Khi set, gửi `?is_business_actor=true|false`. Khi bỏ qua, không gửi query (danh sách đầy đủ). */
+  isBusinessActor?: boolean;
+}
+
 function parseInfluenceLevel(level: string): StakeholderInfluenceLevel {
   return (STAKEHOLDER_INFLUENCE_LEVELS as readonly string[]).includes(level)
     ? (level as StakeholderInfluenceLevel)
@@ -89,6 +103,7 @@ function mapProjectStakeholderRow(
     impactArea: row.impact_area,
     influenceLevel: parseInfluenceLevel(row.influence_level),
     notes: row.notes,
+    isBusinessActor: Boolean(row.is_business_actor),
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -101,6 +116,7 @@ function toProjectStakeholderApiBody(body: ProjectStakeholderWriteRequest) {
     impact_area: body.impactArea.trim(),
     influence_level: body.influenceLevel,
     notes: body.notes.trim(),
+    is_business_actor: body.isBusinessActor,
   };
 }
 
@@ -124,11 +140,20 @@ function mapProjectStakeholdersListResponse(
   };
 }
 
+function listStakeholdersQueryString(params?: ListProjectStakeholdersParams) {
+  if (params?.isBusinessActor === undefined) return "";
+  return `?is_business_actor=${params.isBusinessActor ? "true" : "false"}`;
+}
+
 export const fetchStakeHolder = {
-  /** GET /api/v1/projects/:project_id/stakeholders */
-  list: async (projectId: string): Promise<ProjectStakeholdersListResponse> => {
+  /** GET /api/v1/projects/:project_id/stakeholders — optional `is_business_actor` query. */
+  list: async (
+    projectId: string,
+    params?: ListProjectStakeholdersParams
+  ): Promise<ProjectStakeholdersListResponse> => {
+    const qs = listStakeholdersQueryString(params);
     const response = await apiService.get<ListProjectStakeholdersApiResponse>(
-      `/api/v1/projects/${encodeURIComponent(projectId)}/stakeholders`
+      `/api/v1/projects/${encodeURIComponent(projectId)}/stakeholders${qs}`
     );
     return mapProjectStakeholdersListResponse(response.data);
   },
@@ -169,10 +194,31 @@ export const fetchStakeHolder = {
     return mapProjectStakeholderResponse(response.data);
   },
 
-  /** DELETE /api/v1/projects/:project_id/stakeholders/:stakeholder_id */
-  delete: async (projectId: string, stakeholderId: string): Promise<void> => {
-    await apiService.delete<unknown>(
+  /** DELETE /api/v1/projects/:project_id/stakeholders/:stakeholder_id — body `{ success, message? }`. */
+  delete: async (
+    projectId: string,
+    stakeholderId: string
+  ): Promise<{ success: boolean; message: string | null }> => {
+    const response = await apiService.delete<
+      DeleteProjectStakeholderApiResponse | Record<string, never>
+    >(
       `/api/v1/projects/${encodeURIComponent(projectId)}/stakeholders/${encodeURIComponent(stakeholderId)}`
     );
+    const payload = response.data as DeleteProjectStakeholderApiResponse | undefined;
+    if (payload && typeof payload === "object" && "success" in payload) {
+      if (!payload.success) {
+        throw new Error(
+          typeof payload.message === "string" && payload.message
+            ? payload.message
+            : "Xóa stakeholder thất bại"
+        );
+      }
+      return {
+        success: true,
+        message:
+          typeof payload.message === "string" ? payload.message : null,
+      };
+    }
+    return { success: true, message: null };
   },
 };

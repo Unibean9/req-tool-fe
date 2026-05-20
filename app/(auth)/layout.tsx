@@ -1,7 +1,6 @@
 "use client";
 
 import { GitBranch, Target, Users } from "lucide-react";
-import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, type ReactNode } from "react";
 
@@ -24,29 +23,38 @@ function AuthGithubOAuthListener() {
 
 function AuthBrandMark({ className }: { className?: string }) {
   return (
-    <Link
-      href="/"
+    <div
       className={cn(
-        "inline-flex shrink-0 items-center gap-3 rounded-md outline-none",
-        "transition-opacity duration-200 hover:opacity-85",
-        "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+        "inline-flex shrink-0 items-center gap-4",
         className
       )}
     >
-      <span className="relative flex size-14 shrink-0 items-center justify-center sm:size-16">
-        <SafeImage
-          src="/Logo.png"
-          alt="REQ-Bean9"
-          fill
-          priority
-          sizes="64px"
-          className="object-contain"
-        />
+      <span
+        className={cn(
+          "relative flex size-18 shrink-0 items-center justify-center rounded-2xl border border-border/70 bg-card/80 p-2.5 shadow-sm",
+          "sm:size-20"
+        )}
+      >
+        <span className="relative size-full">
+          <SafeImage
+            src="/Logo.png"
+            alt="REQ-Bean9"
+            fill
+            priority
+            sizes="110px"
+            className="object-contain"
+          />
+        </span>
       </span>
-      <span className="font-heading text-lg font-semibold tracking-tight text-foreground sm:text-xl">
-        REQ-Bean9
+      <span className="flex min-w-0 flex-col">
+        <span className="font-heading text-xl font-semibold leading-none tracking-tight text-foreground sm:text-2xl">
+          REQ-Bean9
+        </span>
+        <span className="mt-1 text-[11px] font-semibold tracking-[0.16em] text-brand-mint uppercase">
+          Requirements workspace
+        </span>
       </span>
-    </Link>
+    </div>
   );
 }
 
@@ -103,14 +111,14 @@ function AuthMarketingAside() {
             className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_90%_75%_at_50%_45%,color-mix(in_oklab,var(--brand-jade)_18%,transparent),transparent_72%)]"
             aria-hidden
           />
-          <div className="relative h-full min-h-[min(42vh,22rem)] w-full xl:min-h-[min(48vh,26rem)]">
+          <div className="relative h-full min-h-[min(38vh,20rem)] w-full xl:min-h-[min(44vh,24rem)]">
             <SafeImage
               src="/auth-image.png"
               alt="Minh họa làm việc với REQ-Bean9"
               fill
               priority
               sizes="(max-width: 1024px) 50vw, 640px"
-              className="object-contain object-center xl:scale-110 2xl:scale-[1.15]"
+              className="object-contain object-center xl:scale-50 2xl:scale-70"
             />
           </div>
         </div>

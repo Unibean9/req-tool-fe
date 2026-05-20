@@ -7,6 +7,12 @@ export interface CreateOrgProjectRequest {
   context: string;
   problems: string[];
   proposedSolutions: string[];
+  /** ISO date `YYYY-MM-DD`. */
+  startDate?: string;
+  endDate?: string;
+  budget?: number;
+  executiveSummary?: string;
+  roiNotes?: string;
 }
 
 /** PATCH /api/v1/orgs/{org_id}/projects/{project_id} */
@@ -16,6 +22,11 @@ export interface UpdateOrgProjectRequest {
   context?: string;
   problems?: string[];
   proposedSolutions?: string[];
+  startDate?: string;
+  endDate?: string;
+  budget?: number;
+  executiveSummary?: string;
+  roiNotes?: string;
 }
 
 /** Một dự án trên wire (GET list/detail/create/patch). */
@@ -28,6 +39,12 @@ export interface OrgProjectApiRow {
   context: string;
   problems: string[];
   proposed_solutions: string[];
+  start_date: string;
+  end_date: string;
+  /** BE trả decimal dạng string (precision lớn). */
+  budget: string | number;
+  executive_summary: string;
+  roi_notes: string;
   created_at: string;
 }
 
@@ -48,6 +65,17 @@ interface OrgProjectMutationApiBody {
   context?: string;
   problems?: string[];
   proposed_solutions?: string[];
+  start_date?: string;
+  end_date?: string;
+  budget?: number;
+  executive_summary?: string;
+  roi_notes?: string;
+}
+
+interface DeleteOrgProjectApiResponse {
+  success: boolean;
+  message?: string | null;
+  data?: unknown;
 }
 
 interface CreateOrgProjectApiResponse {
@@ -84,6 +112,12 @@ export interface OrgProject {
   context: string;
   problems: string[];
   proposedSolutions: string[];
+  startDate: string;
+  endDate: string;
+  /** Giá trị budget từ BE (decimal string). */
+  budget: string | null;
+  executiveSummary: string;
+  roiNotes: string;
   createdAt: string;
 }
 
@@ -122,6 +156,21 @@ export interface ProjectSetupProgress {
   requirements: boolean;
 }
 
+export interface ProjectSetupProgressBusinessRequirements {
+  stakeholders: boolean;
+  goals: boolean;
+  flows: boolean;
+  rules: boolean;
+}
+
+export interface ProjectSetupProgressUserRequirements {
+  nfrs: boolean;
+}
+
+export interface ProjectSetupProgressFunctionalRequirements {
+  actors: boolean;
+}
+
 export interface ProjectSetupProgressResponse {
   success: boolean;
   data: ProjectSetupProgress;
@@ -130,12 +179,16 @@ export interface ProjectSetupProgressResponse {
 
 interface ProjectSetupProgressApiRow {
   core: boolean;
-  stakeholders: boolean;
-  goals: boolean;
-  flows: boolean;
-  rules: boolean;
-  nfrs: boolean;
-  requirements: boolean;
+  business_requirements?: Partial<ProjectSetupProgressBusinessRequirements>;
+  user_requirements?: Partial<ProjectSetupProgressUserRequirements>;
+  functional_requirements?: Partial<ProjectSetupProgressFunctionalRequirements>;
+  /** Backward compatibility với response phẳng cũ trong local/dev. */
+  stakeholders?: boolean;
+  goals?: boolean;
+  flows?: boolean;
+  rules?: boolean;
+  nfrs?: boolean;
+  requirements?: boolean;
 }
 
 interface ProjectSetupProgressApiResponse {
@@ -155,6 +208,30 @@ function normalizeStringList(items: string[]): string[] {
 function mapStringListFromApi(value: unknown): string[] {
   if (!Array.isArray(value)) return [];
   return value.map((s) => String(s).trim()).filter(Boolean);
+}
+
+function parseIsoDateField(value: unknown): string {
+  if (value == null) return "";
+  const t = String(value).trim();
+  if (!t) return "";
+  return t.length >= 10 ? t.slice(0, 10) : t;
+}
+
+function parseBudgetFromApi(value: unknown): string | null {
+  if (value == null) return null;
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return String(value);
+  }
+  if (typeof value === "string") {
+    const t = value.trim();
+    return t.length > 0 ? t : null;
+  }
+  return null;
+}
+
+function parseBudgetForApiBody(value: number | undefined): number {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  return 0;
 }
 
 /** Hiển thị mảng dự án trong textarea (mỗi dòng một mục). */
@@ -181,6 +258,11 @@ function toCreateOrgProjectApiBody(
     context: trimField(body.context),
     problems: normalizeStringList(body.problems),
     proposed_solutions: normalizeStringList(body.proposedSolutions),
+    start_date: parseIsoDateField(body.startDate),
+    end_date: parseIsoDateField(body.endDate),
+    budget: parseBudgetForApiBody(body.budget),
+    executive_summary: trimField(body.executiveSummary ?? ""),
+    roi_notes: trimField(body.roiNotes ?? ""),
   };
 }
 
@@ -200,6 +282,21 @@ function toUpdateOrgProjectApiBody(
       ? {
           proposed_solutions: normalizeStringList(body.proposedSolutions),
         }
+      : {}),
+    ...(body.startDate !== undefined
+      ? { start_date: parseIsoDateField(body.startDate) }
+      : {}),
+    ...(body.endDate !== undefined
+      ? { end_date: parseIsoDateField(body.endDate) }
+      : {}),
+    ...(body.budget !== undefined
+      ? { budget: parseBudgetForApiBody(body.budget) }
+      : {}),
+    ...(body.executiveSummary !== undefined
+      ? { executive_summary: trimField(body.executiveSummary) }
+      : {}),
+    ...(body.roiNotes !== undefined
+      ? { roi_notes: trimField(body.roiNotes) }
       : {}),
   };
 }
@@ -242,6 +339,11 @@ function mapOrgProjectRow(row: OrgProjectApiRow): OrgProject {
     context: row.context ?? "",
     problems: mapStringListFromApi(row.problems),
     proposedSolutions: mapStringListFromApi(row.proposed_solutions),
+    startDate: parseIsoDateField(row.start_date),
+    endDate: parseIsoDateField(row.end_date),
+    budget: parseBudgetFromApi(row.budget),
+    executiveSummary: String(row.executive_summary ?? "").trim(),
+    roiNotes: String(row.roi_notes ?? "").trim(),
     createdAt: row.created_at,
   };
 }
@@ -287,6 +389,25 @@ function assertOrgProjectDetailSuccess(
   return body;
 }
 
+function assertOrgProjectMutationSuccess<T extends { success: boolean; message?: string | null }>(
+  body: T,
+  fallbackMessage: string
+): T {
+  if (!body.success) {
+    throw new Error(body.message ?? fallbackMessage);
+  }
+  if (!("data" in body) || !(body as { data?: { id?: string } }).data?.id) {
+    throw new Error("Dữ liệu dự án không hợp lệ");
+  }
+  return body;
+}
+
+function assertDeleteOrgProjectSuccess(body: DeleteOrgProjectApiResponse): void {
+  if (body && typeof body === "object" && "success" in body && body.success === false) {
+    throw new Error(body.message ?? "Xóa dự án thất bại");
+  }
+}
+
 function mapOrgProjectDetailResponse(
   body: OrgProjectDetailApiResponse
 ): OrgProjectDetailResponse {
@@ -316,14 +437,18 @@ function resolveProjectId(projectId: string): string {
 function mapProjectSetupProgressRow(
   row: ProjectSetupProgressApiRow
 ): ProjectSetupProgress {
+  const business = row.business_requirements ?? {};
+  const user = row.user_requirements ?? {};
+  const functional = row.functional_requirements ?? {};
+
   return {
     core: Boolean(row.core),
-    stakeholders: Boolean(row.stakeholders),
-    goals: Boolean(row.goals),
-    flows: Boolean(row.flows),
-    rules: Boolean(row.rules),
-    nfrs: Boolean(row.nfrs),
-    requirements: Boolean(row.requirements),
+    stakeholders: Boolean(business.stakeholders ?? row.stakeholders),
+    goals: Boolean(business.goals ?? row.goals),
+    flows: Boolean(business.flows ?? row.flows),
+    rules: Boolean(business.rules ?? row.rules),
+    nfrs: Boolean(user.nfrs ?? row.nfrs),
+    requirements: Boolean(functional.actors ?? row.requirements),
   };
 }
 
@@ -383,7 +508,11 @@ export const fetchProject = {
     );
   },
 
-  /** POST /api/v1/orgs/{org_id}/projects */
+  /**
+   * POST /api/v1/orgs/{org_id}/projects
+   * Body: name, description, context, problems, proposed_solutions, start_date, end_date,
+   * budget, executive_summary, roi_notes.
+   */
   createProject: async (
     orgId: string,
     body: CreateOrgProjectRequest
@@ -393,10 +522,16 @@ export const fetchProject = {
       `/api/v1/orgs/${encodeURIComponent(oid)}/projects`,
       toCreateOrgProjectApiBody(body)
     );
-    return mapCreateOrgProjectResponse(response.data);
+    return mapCreateOrgProjectResponse(
+      assertOrgProjectMutationSuccess(response.data, "Tạo dự án thất bại")
+    );
   },
 
-  /** PATCH /api/v1/orgs/{org_id}/projects/{project_id} */
+  /**
+   * PATCH /api/v1/orgs/{org_id}/projects/{project_id}
+   * Body: name, description, context, problems, proposed_solutions, start_date, end_date,
+   * budget, executive_summary, roi_notes.
+   */
   updateOrgProject: async (
     orgId: string,
     projectId: string,
@@ -410,18 +545,23 @@ export const fetchProject = {
       `/api/v1/orgs/${encodeURIComponent(oid)}/projects/${encodeURIComponent(pid)}`,
       toUpdateOrgProjectApiBody(body)
     );
-    return mapUpdateOrgProjectResponse(response.data);
+    return mapUpdateOrgProjectResponse(
+      assertOrgProjectMutationSuccess(response.data, "Cập nhật dự án thất bại")
+    );
   },
 
-  /** DELETE /api/v1/orgs/{org_id}/projects/{project_id} */
+  /** DELETE /api/v1/orgs/{org_id}/projects/{project_id} — `{ success, message }`. */
   deleteOrgProject: async (orgId: string, projectId: string): Promise<void> => {
     const { orgId: oid, projectId: pid } = resolveGetOrgProjectParams(
       orgId,
       projectId
     );
-    await apiService.delete<unknown>(
+    const response = await apiService.delete<DeleteOrgProjectApiResponse>(
       `/api/v1/orgs/${encodeURIComponent(oid)}/projects/${encodeURIComponent(pid)}`
     );
+    if (response.data && typeof response.data === "object") {
+      assertDeleteOrgProjectSuccess(response.data);
+    }
   },
 
   /** GET /api/v1/projects/{project_id}/setup-progress */

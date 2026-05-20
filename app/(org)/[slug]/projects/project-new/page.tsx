@@ -4,6 +4,10 @@ import { useCallback, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import type { CreateOrgProjectRequest } from "@/lib/api/services/fetchProject";
+import {
+  minProjectEndIsoDate,
+  todayIsoDateLocal,
+} from "@/lib/project/projectDisplay";
 import { useCreateOrgProject } from "@/hooks/useProject";
 
 import { useOrgWorkspace } from "../../orgWorkspaceContext";
@@ -19,15 +23,22 @@ import {
 } from "./components/projectNewFormSchema";
 import { ProjectNewStepBasics } from "./components/steps/projectNewStepBasics";
 import { ProjectNewStepContext } from "./components/steps/projectNewStepContext";
+import { ProjectNewStepPlan } from "./components/steps/projectNewStepPlan";
 import { ProjectNewStepSolution } from "./components/steps/projectNewStepSolution";
 
 function emptyCreateProjectForm(): CreateOrgProjectRequest {
+  const today = todayIsoDateLocal();
   return {
     name: "",
     description: "",
     context: "",
     problems: [],
     proposedSolutions: [],
+    startDate: today,
+    endDate: minProjectEndIsoDate(today),
+    budget: 0,
+    executiveSummary: "",
+    roiNotes: "",
   };
 }
 
@@ -123,6 +134,15 @@ export default function OrgProjectNewPage() {
       case 2:
         return (
           <ProjectNewStepSolution
+            form={form}
+            onPatch={patchForm}
+            disabled={createProject.isPending}
+            {...stepValidationProps}
+          />
+        );
+      case 3:
+        return (
+          <ProjectNewStepPlan
             form={form}
             onPatch={patchForm}
             disabled={createProject.isPending}

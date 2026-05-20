@@ -8,7 +8,11 @@ import { useOrgProjects } from "@/hooks/useProject";
 
 import { useOrgWorkspace } from "../../../../orgWorkspaceContext";
 import { RuleList } from "./components/ruleList";
-import { RuleToolbar } from "./components/ruleToolbar";
+import {
+  RuleToolbar,
+  type RuleDynamicFilter,
+  type RuleTypeFilter,
+} from "./components/ruleToolbar";
 
 function RulesPageSkeleton() {
   return (
@@ -31,6 +35,9 @@ export default function ProjectBusinessRulesPage() {
   const params = useParams();
   const { orgId } = useOrgWorkspace();
   const [search, setSearch] = useState("");
+  const [typeFilter, setTypeFilter] = useState<RuleTypeFilter>("all");
+  const [dynamicFilter, setDynamicFilter] =
+    useState<RuleDynamicFilter>("all");
 
   const projectSlug = useMemo(() => {
     const raw = params?.projectSlug;
@@ -63,10 +70,19 @@ export default function ProjectBusinessRulesPage() {
       <RuleToolbar
         search={search}
         onSearchChange={setSearch}
+        typeFilter={typeFilter}
+        onTypeFilterChange={setTypeFilter}
+        dynamicFilter={dynamicFilter}
+        onDynamicFilterChange={setDynamicFilter}
         projectId={project?.id ?? null}
         canCreate={Boolean(project)}
       />
-      <RuleList projectId={project?.id ?? null} search={search} />
+      <RuleList
+        projectId={project?.id ?? null}
+        search={search}
+        typeFilter={typeFilter}
+        dynamicFilter={dynamicFilter}
+      />
     </div>
   );
 }

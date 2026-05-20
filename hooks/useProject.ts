@@ -21,7 +21,6 @@ import type {
   CreateOrgProjectRequest,
   CreateOrgProjectResponse,
   GetOrgProjectParams,
-  ListOrgProjectsParams,
   OrgProject,
   OrgProjectDetailResponse,
   OrgProjectsListResponse,
@@ -189,7 +188,8 @@ export function useOrgProjectFull(
 
 /**
  * POST /api/v1/orgs/{org_id}/projects
- * Body: name, description, context, problems, proposed_solutions.
+ * Body: name, description, context, problems, proposed_solutions, start_date, end_date,
+ * budget, executive_summary, roi_notes.
  * Invalidate danh sách dự án theo org sau khi tạo.
  */
 export function useCreateOrgProject(
@@ -247,7 +247,8 @@ export function useCreateOrgProject(
 
 /**
  * PATCH /api/v1/orgs/{org_id}/projects/{project_id}
- * Body: name, description, context, problems, proposed_solutions — invalidate list + detail.
+ * Body: name, description, context, problems, proposed_solutions, start_date, end_date,
+ * budget, executive_summary, roi_notes — invalidate list + detail.
  */
 export function useUpdateOrgProject(
   options?: Omit<
@@ -281,6 +282,23 @@ export function useUpdateOrgProject(
       return result;
     },
     onSuccess: (data, variables, onMutateResult, context) => {
+      const updated = data.data;
+      queryClient.setQueryData<OrgProjectDetailResponse>(
+        orgProjectQueryKey(variables.orgId, variables.projectId),
+        data
+      );
+      queryClient.setQueryData<OrgProjectsListResponse>(
+        orgProjectsQueryKey(variables.orgId),
+        (old) => {
+          if (!old?.data) return old;
+          return {
+            ...old,
+            data: old.data.map((p) =>
+              p.id === updated.id ? updated : p
+            ),
+          };
+        }
+      );
       void queryClient.invalidateQueries({
         queryKey: orgProjectsQueryKey(variables.orgId),
       });
@@ -298,7 +316,8 @@ export function useUpdateOrgProject(
 }
 
 /**
- * DELETE /api/v1/orgs/:org_id/projects/:project_id — invalidate list, xóa cache detail.
+ * DELETE /api/v1/orgs/{org_id}/projects/{project_id} — `{ success, message }`;
+ * invalidate list, xóa cache detail.
  */
 export function useDeleteOrgProject(
   options?: Omit<

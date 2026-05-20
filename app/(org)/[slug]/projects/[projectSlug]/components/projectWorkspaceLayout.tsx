@@ -13,6 +13,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import type { OrgProject } from "@/lib/api/services/fetchProject";
+import { formatProjectDateRange } from "@/lib/project/projectDisplay";
 import { cn } from "@/lib/utils";
 
 import { ProjectWorkspaceOrgRailSwitcher } from "./projectWorkspaceOrgRailSwitcher";
@@ -68,12 +69,14 @@ function DiscordRailItem({
   href,
   active,
   title,
+  subtitle,
   className,
   children,
 }: {
   href: string;
   active?: boolean;
   title: string;
+  subtitle?: string;
   className?: string;
   children: React.ReactNode;
 }) {
@@ -115,7 +118,12 @@ function DiscordRailItem({
           }
         />
         <TooltipContent side="right" sideOffset={10} align="center">
-          {title}
+          <span className="block font-medium">{title}</span>
+          {subtitle ? (
+            <span className="mt-0.5 block text-xs text-background/80">
+              {subtitle}
+            </span>
+          ) : null}
         </TooltipContent>
       </Tooltip>
     </div>
@@ -219,12 +227,14 @@ export function ProjectWorkspaceLayout({
               {projects.map((p) => {
                 const active = p.slug === projectSlug;
                 const href = `/${encOrg}/projects/${encodeURIComponent(p.slug)}/${currentSubPath}`;
+                const dateHint = formatProjectDateRange(p.startDate, p.endDate);
                 return (
                   <DiscordRailItem
                     key={p.id}
                     href={href}
                     active={active}
                     title={p.name}
+                    subtitle={dateHint || undefined}
                     className={cn(
                       "bg-linear-to-br shadow-inner shadow-black/25 ring-1 ring-white/10",
                       projectRailGradient(p.id)

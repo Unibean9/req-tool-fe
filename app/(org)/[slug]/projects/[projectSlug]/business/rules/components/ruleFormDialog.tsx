@@ -27,14 +27,18 @@ import {
 import { RULE_FORM_DIALOG_WIDTH_CLASS } from "./ruleFormLimits";
 
 const EMPTY_FORM: RuleFormValues = {
-  description: "",
-  linkedFeatureId: "",
+  ruleDef: "",
+  type: "constraint",
+  isDynamic: false,
+  source: "",
 };
 
 function valuesFromRule(row: ProjectRule): RuleFormValues {
   return {
-    description: row.description,
-    linkedFeatureId: row.linkedFeatureId ?? "",
+    ruleDef: row.ruleDef,
+    type: row.type,
+    isDynamic: row.isDynamic,
+    source: row.source,
   };
 }
 
@@ -92,14 +96,13 @@ function RuleFormDialogBody({
         </DialogTitle>
         <DialogDescription>
           {isEdit
-            ? "Cập nhật mô tả và feature liên kết của rule."
-            : "Ghi nhận quy tắc nghiệp vụ hoặc ràng buộc của dự án."}
+            ? "Cập nhật định nghĩa, loại, trạng thái dynamic và nguồn của rule."
+            : "Ghi nhận quy tắc nghiệp vụ, ràng buộc hoặc chính sách của dự án."}
         </DialogDescription>
       </DialogHeader>
 
       <div className="grid w-full min-w-0 gap-5 py-4">
         <RuleFormFields
-          projectId={projectId}
           values={values}
           disabled={pending}
           onChange={(patch) => setValues((prev) => ({ ...prev, ...patch }))}

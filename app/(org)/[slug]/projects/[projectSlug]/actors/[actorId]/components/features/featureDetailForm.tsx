@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+
 import {
   DetailFieldRow,
   DetailLabelTagsField,
@@ -14,33 +16,96 @@ import {
   REQ_TITLE_MAX_CHARS,
 } from "../model/requirementDetailFormLimits";
 import { PANEL_EDITABLE_STATUSES } from "../model/requirementWorkItemLabels";
-import type { FeatureNodeData } from "./featureTypes";
+import type { PanelEditableStatus } from "../model/requirementWorkItemLabels";
+import type {
+  FeatureNodeData,
+  FeaturePriority,
+  FeatureStatus,
+} from "./featureTypes";
 import { FEATURE_PRIORITIES } from "./featureTypes";
+
+type FeatureDraft = {
+  title: string;
+  description: string;
+  status: PanelEditableStatus | FeatureStatus;
+  priority: FeaturePriority;
+  labels: string;
+};
+
+function draftFromFeature(data: FeatureNodeData): FeatureDraft {
+  return {
+    title: data.title,
+    description: data.description,
+    status: data.status,
+    priority: data.priority,
+    labels: data.labels,
+  };
+}
+
+function sameFeatureDraft(a: FeatureDraft, b: FeatureDraft): boolean {
+  return (
+    a.title === b.title &&
+    a.description === b.description &&
+    a.status === b.status &&
+    a.priority === b.priority &&
+    a.labels === b.labels
+  );
+}
 
 /** Chỉ các field trong PATCH `/features/{id}`: title, description, status, priority, labels. */
 export function FeatureDetailForm({
   data,
   onChange,
+  isSaving,
+  formId,
 }: {
   data: FeatureNodeData;
   onChange: (patch: Partial<FeatureNodeData>) => void;
+  isSaving?: boolean;
+  formId: string;
 }) {
+  const [baseDraft, setBaseDraft] = useState<FeatureDraft>(() =>
+    draftFromFeature(data)
+  );
+  const [draft, setDraft] = useState<FeatureDraft>(() => draftFromFeature(data));
+  const dirty = !sameFeatureDraft(draft, baseDraft);
+
+  function updateDraft(patch: Partial<FeatureDraft>) {
+    setDraft((prev) => ({ ...prev, ...patch }));
+  }
+
+  function submit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    if (!dirty || isSaving) return;
+    onChange({
+      title: draft.title,
+      description: draft.description,
+      status: draft.status,
+      priority: draft.priority,
+      labels: draft.labels,
+    });
+    setBaseDraft(draft);
+  }
+
   return (
-    <div className="space-y-6">
-      <DetailPanelSection title="Feature">
+    <form id={formId} className="space-y-6" onSubmit={submit}>
+      <DetailPanelSection
+        title="Feature"
+        hint="Khả năng nghiệp vụ cụ thể thuộc epic. Bấm cập nhật khi đã chỉnh xong."
+      >
         <DetailTextField
           id="feature-title"
           label="Tiêu đề"
-          value={data.title}
-          onChange={(title) => onChange({ title })}
+          value={draft.title}
+          onChange={(title) => updateDraft({ title })}
           maxLength={REQ_TITLE_MAX_CHARS}
           placeholder="VD: Xem và chỉnh sửa lịch ca"
         />
         <DetailTextAreaField
           id="feature-desc"
           label="Mô tả"
-          value={data.description}
-          onChange={(description) => onChange({ description })}
+          value={draft.description}
+          onChange={(description) => updateDraft({ description })}
           maxLength={REQ_DESCRIPTION_MAX_CHARS}
           rows={4}
           placeholder="Khả năng nghiệp vụ mà feature này cung cấp…"
@@ -49,27 +114,27 @@ export function FeatureDetailForm({
           <DetailStatusSelect
             id="feature-status"
             label="Trạng thái"
-            value={data.status}
+            value={draft.status}
             options={PANEL_EDITABLE_STATUSES}
-            onChange={(status) => onChange({ status: status })}
+            onChange={(status) => updateDraft({ status })}
             colored
           />
           <DetailPrioritySelect
             id="feature-priority"
             label="Độ ưu tiên"
-            value={data.priority}
+            value={draft.priority}
             options={FEATURE_PRIORITIES}
-            onChange={(priority) => onChange({ priority })}
+            onChange={(priority) => updateDraft({ priority })}
             colored
           />
         </DetailFieldRow>
         <DetailLabelTagsField
           id="feature-labels"
           label="Label"
-          value={data.labels}
-          onChange={(labels) => onChange({ labels })}
+          value={draft.labels}
+          onChange={(labels) => updateDraft({ labels })}
         />
       </DetailPanelSection>
-    </div>
+    </form>
   );
 }

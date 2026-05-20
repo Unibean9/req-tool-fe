@@ -3,6 +3,7 @@
 import {
   useMutation,
   useQueryClient,
+  type QueryClient,
   type UseMutationOptions,
 } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -13,6 +14,7 @@ import {
   fetchStakeHolder,
   type CreateProjectStakeholderRequest,
   type CreateProjectStakeholderResponse,
+  type ListProjectStakeholdersParams,
   type ProjectStakeholder,
   type ProjectStakeholderResponse,
   type ProjectStakeholdersListResponse,
@@ -40,23 +42,43 @@ type DeleteProjectStakeholderVariables = {
   stakeholderId: string;
 };
 
+const STAKEHOLDERS_LIST_INVALIDATE_PREFIX = ["projects", "stakeholders"] as const;
+
+function invalidateProjectStakeholdersLists(
+  queryClient: QueryClient,
+  projectId: string
+) {
+  void queryClient.invalidateQueries({
+    queryKey: [...STAKEHOLDERS_LIST_INVALIDATE_PREFIX, projectId] as const,
+  });
+}
+
 /**
- * GET /api/v1/projects/:project_id/stakeholders — thiếu `projectId` thì `enabled: false`.
+ * GET /api/v1/projects/:project_id/stakeholders — optional query `is_business_actor`.
+ * Thiếu `projectId` thì `enabled: false`.
  */
 export function useProjectStakeholders(
   projectId: string | null | undefined,
-  options?: { enabled?: boolean }
+  options?: {
+    enabled?: boolean;
+    /** Khi set, gọi API với `?is_business_actor=...`. Bỏ qua = không gửi query (toàn bộ). */
+    isBusinessActor?: boolean;
+  }
 ) {
   const pid = projectId?.trim() ?? "";
   const enabled = Boolean(pid) && (options?.enabled ?? true);
+  const listParams: ListProjectStakeholdersParams | undefined =
+    options?.isBusinessActor === undefined
+      ? undefined
+      : { isBusinessActor: options.isBusinessActor };
 
   return useCachedGet<
     ProjectStakeholdersListResponse,
     Error,
     ProjectStakeholder[]
   >({
-    queryKey: projectStakeholdersQueryKey(pid),
-    queryFn: async () => fetchStakeHolder.list(pid),
+    queryKey: projectStakeholdersQueryKey(pid, listParams),
+    queryFn: async () => fetchStakeHolder.list(pid, listParams),
     select: (res) => res.data,
     enabled,
   });
@@ -64,14 +86,21 @@ export function useProjectStakeholders(
 
 export function useProjectStakeholdersFull(
   projectId: string | null | undefined,
-  options?: { enabled?: boolean }
+  options?: {
+    enabled?: boolean;
+    isBusinessActor?: boolean;
+  }
 ) {
   const pid = projectId?.trim() ?? "";
   const enabled = Boolean(pid) && (options?.enabled ?? true);
+  const listParams: ListProjectStakeholdersParams | undefined =
+    options?.isBusinessActor === undefined
+      ? undefined
+      : { isBusinessActor: options.isBusinessActor };
 
   return useCachedGet({
-    queryKey: projectStakeholdersQueryKey(pid),
-    queryFn: () => fetchStakeHolder.list(pid),
+    queryKey: projectStakeholdersQueryKey(pid, listParams),
+    queryFn: () => fetchStakeHolder.list(pid, listParams),
     enabled,
   });
 }
@@ -148,9 +177,7 @@ export function useCreateProjectStakeholder(
       return result;
     },
     onSuccess: (data, variables, onMutateResult, context) => {
-      void queryClient.invalidateQueries({
-        queryKey: projectStakeholdersQueryKey(variables.projectId),
-      });
+      invalidateProjectStakeholdersLists(queryClient, variables.projectId);
       toast.success("Đã tạo stakeholder");
       userOnSuccess?.(data, variables, onMutateResult, context);
     },
@@ -196,9 +223,7 @@ export function useUpdateProjectStakeholder(
       return result;
     },
     onSuccess: (data, variables, onMutateResult, context) => {
-      void queryClient.invalidateQueries({
-        queryKey: projectStakeholdersQueryKey(variables.projectId),
-      });
+      invalidateProjectStakeholdersLists(queryClient, variables.projectId);
       void queryClient.invalidateQueries({
         queryKey: projectStakeholderQueryKey(
           variables.projectId,
@@ -237,9 +262,7 @@ export function useDeleteProjectStakeholder(
       await fetchStakeHolder.delete(projectId, stakeholderId);
     },
     onSuccess: (data, variables, onMutateResult, context) => {
-      void queryClient.invalidateQueries({
-        queryKey: projectStakeholdersQueryKey(variables.projectId),
-      });
+      invalidateProjectStakeholdersLists(queryClient, variables.projectId);
       void queryClient.removeQueries({
         queryKey: projectStakeholderQueryKey(
           variables.projectId,
@@ -259,6 +282,7 @@ export function useDeleteProjectStakeholder(
 export type {
   CreateProjectStakeholderRequest,
   CreateProjectStakeholderResponse,
+  ListProjectStakeholdersParams,
   ProjectStakeholder,
   ProjectStakeholderResponse,
   ProjectStakeholdersListResponse,

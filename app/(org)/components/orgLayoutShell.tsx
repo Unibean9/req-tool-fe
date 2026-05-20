@@ -7,19 +7,20 @@ import { cn } from "@/lib/utils";
 
 import { OrgAppHeader } from "./orgAppHeader";
 import {
-  isOrgProjectNewWizardPath,
   isOrgProjectSlugWorkspacePath,
+  isOrgProjectWizardPath,
 } from "./orgWorkspacePaths";
 
 export {
   isOrgProjectNewWizardPath,
   isOrgProjectSlugWorkspacePath,
+  isOrgProjectWizardPath,
 } from "./orgWorkspacePaths";
 
 export function OrgLayoutShell({ children }: { children: ReactNode }) {
   const pathname = usePathname() ?? "";
   const hideOrgChrome =
-    isOrgProjectNewWizardPath(pathname) || isOrgProjectSlugWorkspacePath(pathname);
+    isOrgProjectWizardPath(pathname) || isOrgProjectSlugWorkspacePath(pathname);
 
   return (
     <div className="flex h-dvh max-h-dvh min-h-0 flex-col overflow-hidden">
