@@ -1,7 +1,7 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useCallback, useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 
 import type { CreateOrgProjectRequest } from "@/lib/api/services/fetchProject";
 import {
@@ -9,6 +9,8 @@ import {
   todayIsoDateLocal,
 } from "@/lib/project/projectDisplay";
 import { useCreateOrgProject } from "@/hooks/useProject";
+
+import { resolveWizardExitHref } from "@/app/(org)/components/orgWorkspacePaths";
 
 import { useOrgWorkspace } from "../../orgWorkspaceContext";
 import { ProjectNewFooter } from "./components/projectNewFooter";
@@ -42,11 +44,17 @@ function emptyCreateProjectForm(): CreateOrgProjectRequest {
   };
 }
 
-export default function OrgProjectNewPage() {
+function OrgProjectNewPageContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { orgId, slug } = useOrgWorkspace();
   const encSlug = encodeURIComponent(slug);
   const projectsBase = `/${encSlug}/projects`;
+  const exitHref = resolveWizardExitHref(
+    slug,
+    searchParams.get("returnTo"),
+    projectsBase
+  );
 
   const [step, setStep] = useState(0);
   const [form, setForm] = useState<CreateOrgProjectRequest>(emptyCreateProjectForm);
@@ -71,8 +79,8 @@ export default function OrgProjectNewPage() {
   }, []);
 
   const exitWizard = useCallback(() => {
-    router.replace(projectsBase);
-  }, [router, projectsBase]);
+    router.replace(exitHref);
+  }, [router, exitHref]);
 
   const isLast = step === PROJECT_NEW_TOTAL_STEPS - 1;
   const stepValid = isProjectNewStepValid(step, form);
@@ -158,7 +166,7 @@ export default function OrgProjectNewPage() {
     <div className="flex h-full min-h-0 flex-1 overflow-hidden bg-background">
       <ProjectNewSidebar
         className="hidden lg:flex"
-        projectsHref={projectsBase}
+        projectsHref={exitHref}
         currentStepIndex={step}
         onStepSelect={goToStep}
       />
@@ -192,5 +200,13 @@ export default function OrgProjectNewPage() {
         form={form}
       />
     </div>
+  );
+}
+
+export default function OrgProjectNewPage() {
+  return (
+    <Suspense fallback={null}>
+      <OrgProjectNewPageContent />
+    </Suspense>
   );
 }

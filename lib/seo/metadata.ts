@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 import { SITE, getSiteUrl } from "./site";
 
-const BRAND = "REQ-Bean9";
+const BRAND = "Requirements | Bean9";
 
 /** Default social preview image (under `public/`). */
 const DEFAULT_OG_IMAGE_PATH = "/Logo.png";
@@ -67,6 +67,6 @@ export function rootMetadata(): Metadata {
     ...base,
     metadataBase: new URL(getSiteUrl()),
     title: { default: SITE.name, template: `%s | ${BRAND}` },
-    keywords: ["REQ-Bean9", "học tập", "luyện đề", "khóa học", "thi thử"],
+    keywords: ["Requirements | Bean9", "làm việc", "dự án", "tổ chức", "project", "workspace"],
   };
 }

@@ -6,7 +6,7 @@ import { buildPageMetadata } from "@/lib/seo/metadata";
 
 export const metadata: Metadata = buildPageMetadata({
   title: "Đăng nhập",
-  description: "Đăng nhập REQ-Bean9 bằng GitHub",
+  description: "Đăng nhập Requirements | Bean9 bằng GitHub",
   path: "/login",
   noindex: true,
 });

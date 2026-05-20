@@ -21,7 +21,7 @@ export async function generateMetadata({
   const { slug } = await params;
   return buildPageMetadata({
     title: "Workspace",
-    description: "Không gian làm việc tổ chức trên REQ-Bean9.",
+    description: "Không gian làm việc tổ chức trên Requirements | Bean9.",
     path: `/${segmentForPath(slug)}`,
     noindex: true,
   });

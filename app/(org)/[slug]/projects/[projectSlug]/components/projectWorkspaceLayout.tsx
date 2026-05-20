@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { buildProjectNewPath } from "@/app/(org)/components/orgWorkspacePaths";
 import { useCallback, useEffect } from "react";
 import { LayoutGroup, motion } from "framer-motion";
 import { Plus } from "lucide-react";
@@ -148,7 +149,7 @@ export function ProjectWorkspaceLayout({
   const encOrg = encodeURIComponent(orgSlug);
   const encProj = encodeURIComponent(projectSlug);
   const base = `/${encOrg}/projects/${encProj}`;
-  const newProjectHref = `/${encOrg}/projects/project-new`;
+  const newProjectHref = buildProjectNewPath(orgSlug, { returnTo: pathname });
   const currentSubPath = projectSubPathFromPathname(pathname, base);
   const isMembersView =
     pathname === `${base}/members` || pathname === `${base}/members/`;

@@ -16,6 +16,22 @@ const TRICKLE_MS = 120;
 const COMPLETE_MS = 220;
 const HIDE_MS = 280;
 
+type NavigationProgressController = {
+  start: () => void;
+  complete: () => void;
+};
+
+let navigationProgressController: NavigationProgressController | null = null;
+
+/** Gọi trước `router.push` / `replace` khi không dùng `<Link>`. */
+export function startNavigationProgress() {
+  navigationProgressController?.start();
+}
+
+export function completeNavigationProgress() {
+  navigationProgressController?.complete();
+}
+
 type NavigationProgressProps = {
   className?: string;
   /** Màu thanh (mặc định gradient brand). */
@@ -110,6 +126,13 @@ function NavigationProgressBar({
     }, HIDE_MS);
   }, [clearTimers]);
 
+  useEffect(() => {
+    navigationProgressController = { start, complete };
+    return () => {
+      navigationProgressController = null;
+    };
+  }, [start, complete]);
+
   const pulse = useCallback(() => {
     start();
     completeTimerRef.current = setTimeout(() => complete(), 120);
@@ -146,13 +169,22 @@ function NavigationProgressBar({
       if (!(target instanceof Element)) return;
 
       const anchor = target.closest("a");
-      if (!anchor) return;
-      if (anchor.target === "_blank" || anchor.hasAttribute("download")) return;
+      if (anchor) {
+        if (anchor.target !== "_blank" && !anchor.hasAttribute("download")) {
+          const href = anchor.getAttribute("href");
+          if (href && isSameOriginNavigation(href)) {
+            start();
+          }
+        }
+        return;
+      }
 
-      const href = anchor.getAttribute("href");
-      if (!href || !isSameOriginNavigation(href)) return;
-
-      start();
+      const progressButton = target.closest<HTMLElement>(
+        "[data-navigation-progress]"
+      );
+      if (progressButton && !progressButton.hasAttribute("disabled")) {
+        start();
+      }
     };
 
     const onPopState = () => {

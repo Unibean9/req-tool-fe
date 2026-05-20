@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { Pencil, Trash2 } from "lucide-react";
 
@@ -25,6 +26,7 @@ export function ProjectDashboardHeader({
   orgId,
 }: ProjectDashboardHeaderProps) {
   const { slug } = useOrgWorkspace();
+  const pathname = usePathname() ?? "";
   const { navigateAfterProjectDelete } = useProjectWorkspaceNav();
   const [deleteOpen, setDeleteOpen] = useState(false);
 
@@ -36,7 +38,9 @@ export function ProjectDashboardHeader({
   });
 
   const executiveSummary = project.executiveSummary.trim();
-  const editHref = buildProjectEditPath(slug, project.slug);
+  const editHref = buildProjectEditPath(slug, project.slug, {
+    returnTo: pathname,
+  });
 
   return (
     <>

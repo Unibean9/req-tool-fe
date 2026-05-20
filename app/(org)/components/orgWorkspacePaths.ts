@@ -68,13 +68,74 @@ export function projectWorkspaceSubPathFromPathname(pathname: string): string {
   return p.slice(3).join("/") || "dashboard";
 }
 
+const WIZARD_RETURN_TO_PARAM = "returnTo";
+
+/** Path nội bộ workspace org — dùng làm `returnTo` khi thoát wizard. */
+export function parseWizardReturnToPath(
+  orgSlug: string,
+  raw: string | null | undefined
+): string | null {
+  let path = (raw ?? "").trim();
+  if (!path) return null;
+  try {
+    path = decodeURIComponent(path);
+  } catch {
+    /* keep raw */
+  }
+  if (!path.startsWith("/")) path = `/${path}`;
+
+  const org = orgSlug.trim();
+  if (!org) return null;
+
+  const allowedPrefixes = [
+    `/${org}/`,
+    `/${encodeURIComponent(org)}/`,
+  ];
+  if (!allowedPrefixes.some((prefix) => path.startsWith(prefix))) {
+    return null;
+  }
+
+  if (
+    path.includes("/projects/project-new") ||
+    path.includes("/projects/project-edit")
+  ) {
+    return null;
+  }
+
+  return path;
+}
+
+/** Href thoát wizard: `returnTo` hợp lệ trong org, không thì `fallback`. */
+export function resolveWizardExitHref(
+  orgSlug: string,
+  returnToRaw: string | null | undefined,
+  fallback: string
+): string {
+  return parseWizardReturnToPath(orgSlug, returnToRaw) ?? fallback;
+}
+
+export function buildProjectNewPath(
+  orgSlug: string,
+  options?: { returnTo?: string }
+): string {
+  const encOrg = encodeURIComponent(orgSlug);
+  const base = `/${encOrg}/projects/project-new`;
+  const returnTo = options?.returnTo?.trim();
+  if (!returnTo) return base;
+  return `${base}?${WIZARD_RETURN_TO_PARAM}=${encodeURIComponent(returnTo)}`;
+}
+
 export function buildProjectEditPath(
   orgSlug: string,
-  projectSlug: string
+  projectSlug: string,
+  options?: { returnTo?: string }
 ): string {
   const encOrg = encodeURIComponent(orgSlug);
   const encProj = encodeURIComponent(projectSlug);
-  return `/${encOrg}/projects/project-edit?project=${encProj}`;
+  const base = `/${encOrg}/projects/project-edit?project=${encProj}`;
+  const returnTo = options?.returnTo?.trim();
+  if (!returnTo) return base;
+  return `${base}&${WIZARD_RETURN_TO_PARAM}=${encodeURIComponent(returnTo)}`;
 }
 
 export function buildProjectWorkspacePath(

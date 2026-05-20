@@ -4,10 +4,10 @@
  */
 
 export const SITE = {
-  name: "REQ-Bean9",
-  shortName: "REQ-Bean9",
+  name: "Requirements | Bean9",
+  shortName: "Requirements | Bean9",
   defaultDescription:
-    "REQ-Bean9 — công cụ quản lý yêu cầu, actor, epic, feature và NFR cho dự án phần mềm.",
+    "Requirements | Bean9 — công cụ quản lý yêu cầu, actor, epic, feature và NFR cho dự án phần mềm.",
   locale: "vi_VN" as const,
 };
 

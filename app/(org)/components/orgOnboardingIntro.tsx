@@ -21,7 +21,7 @@ const REDUCED_LINE_PAUSE_MS = 2200;
 const REDUCED_LAST_PAUSE_MS = 2800;
 
 const HEADLINE_CLASS =
-  "font-heading !overflow-visible w-full text-pretty text-center font-bold leading-[1.1] tracking-[-0.02em] text-foreground text-[clamp(2rem,6.5vw,5.25rem)]";
+  "font-display !overflow-visible w-full text-pretty text-center font-bold leading-[1.1] tracking-[-0.02em] text-foreground text-[clamp(2rem,6.5vw,5.25rem)]";
 
 function OnboardingTopProgress({
   total,
