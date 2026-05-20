@@ -61,8 +61,8 @@ export async function refreshGithubTokens(
 }
 
 /** Chỉ ghi access token vào cookie (refresh_token chỉ trong Redux, dùng khi gọi refresh). */
-export function persistAccessTokenCookie(accessToken: string, rememberMe = false): void {
-  setCookie(AUTH_COOKIE, accessToken, getAuthCookieConfig(rememberMe));
+export function persistAccessTokenCookie(accessToken: string): void {
+  setCookie(AUTH_COOKIE, accessToken, getAuthCookieConfig());
   apiService.setAuthToken(accessToken);
 }
 

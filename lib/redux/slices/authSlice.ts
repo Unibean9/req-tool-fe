@@ -179,10 +179,8 @@ const authSlice = createSlice({
         state.user = action.payload.user;
       })
       .addCase(refreshTokenAsync.rejected, (state) => {
-        state.user = null;
-        state.token = null;
-        state.refreshToken = null;
-        state.isAuthenticated = false;
+        resetAuthStateFields(state);
+        clearAuthClientSession();
       });
   },
 });

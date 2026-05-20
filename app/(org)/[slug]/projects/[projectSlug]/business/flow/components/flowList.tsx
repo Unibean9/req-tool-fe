@@ -1,7 +1,16 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { ListOrdered, MoreHorizontal, Pencil, Trash2, Workflow } from "lucide-react";
+import { useMemo, useState, type KeyboardEvent, type MouseEvent } from "react";
+import {
+  ArrowRight,
+  CheckCircle2,
+  ListOrdered,
+  MoreHorizontal,
+  Pencil,
+  Route,
+  Trash2,
+  Workflow,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -25,8 +34,10 @@ import {
 } from "./editFlowActionFormDialog";
 import { EditFlowFormDialog } from "./editFlowFormDialog";
 import { FlowSwimlaneDetailDialog } from "./flowSwimlaneDialog";
-import { hasFlowCatalogActions } from "./flowCatalogActions";
-import { FlowStepsPreview } from "./flowFormFields";
+import {
+  hasFlowCatalogActions,
+  parseFlowCatalogActions,
+} from "./flowCatalogActions";
 import { sortFlows } from "./flowReorder";
 import { parseFlowSteps } from "./flowSteps";
 
@@ -54,11 +65,68 @@ function matchesSearch(row: ProjectFlow, query: string): boolean {
 function FlowIndexBadge({ index }: { index: number }) {
   return (
     <span
-      className="flex size-7 shrink-0 items-center justify-center rounded-full border border-border/80 bg-muted/50 text-xs font-semibold tabular-nums text-foreground sm:size-8"
+      className="flex size-9 shrink-0 items-center justify-center rounded-xl border border-primary/20 bg-primary/10 text-xs font-bold tabular-nums text-primary shadow-sm shadow-primary/5"
       aria-hidden
     >
-      {index}
+      {String(index).padStart(2, "0")}
     </span>
+  );
+}
+
+function FlowStatusPill({
+  hasCatalogActions,
+  actionCount,
+}: {
+  hasCatalogActions: boolean;
+  actionCount: number;
+}) {
+  return (
+    <span
+      className={cn(
+        "inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2 py-1 text-[11px] font-semibold",
+        hasCatalogActions
+          ? "border-emerald-500/25 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
+          : "border-border/70 bg-muted/45 text-muted-foreground"
+      )}
+    >
+      {hasCatalogActions ? (
+        <CheckCircle2 className="size-3.5" aria-hidden />
+      ) : (
+        <ListOrdered className="size-3.5" aria-hidden />
+      )}
+      {hasCatalogActions ? `${actionCount} actions` : "Chưa có actions"}
+    </span>
+  );
+}
+
+function FlowStepsInline({
+  steps,
+}: {
+  steps: string[];
+}) {
+  if (steps.length === 0) {
+    return (
+      <p className="text-sm text-muted-foreground">
+        Chưa có bước nào.
+      </p>
+    );
+  }
+
+  return (
+    <div className="min-w-0">
+      <p className="text-sm leading-relaxed text-muted-foreground">
+        {steps.map((step, index) => (
+          <span key={`${step}-${index}`}>
+            {index > 0 ? (
+              <span className="px-1.5 text-foreground/45" aria-hidden>
+                →
+              </span>
+            ) : null}
+            <span>{step}</span>
+          </span>
+        ))}
+      </p>
+    </div>
   );
 }
 
@@ -81,82 +149,143 @@ function FlowListRow({
   onOpenSwimlane: () => void;
   onDelete: () => void;
 }) {
-  return (
-    <article className="flex h-full w-full items-start gap-3 rounded-xl border border-border/70 bg-card/50 p-3.5 shadow-sm transition-colors hover:border-border hover:bg-card/80 sm:gap-4 sm:p-4">
-      <FlowIndexBadge index={displayIndex} />
+  const steps = parseFlowSteps(row.description).filter(Boolean);
+  const actionCount = parseFlowCatalogActions(row.actions).length;
+  const canOpenSwimlane = hasCatalogActions && !rowBusy;
 
-      <div className="min-w-0 flex-1 space-y-1.5">
-        <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-          <h2 className="text-base font-semibold leading-snug text-foreground">
-            {row.name}
-          </h2>
-          {row.code.trim() ? (
-            <span className="font-mono text-xs text-muted-foreground">
-              {row.code}
-            </span>
-          ) : null}
+  function handleCardClick(event: MouseEvent<HTMLElement>) {
+    if (!canOpenSwimlane) return;
+    const target = event.target;
+    if (
+      target instanceof Element &&
+      target.closest("button,a,input,textarea,select,[role='menuitem']")
+    ) {
+      return;
+    }
+    onOpenSwimlane();
+  }
+
+  function handleCardKeyDown(event: KeyboardEvent<HTMLElement>) {
+    if (!canOpenSwimlane) return;
+    if (event.key !== "Enter" && event.key !== " ") return;
+    if (event.target !== event.currentTarget) return;
+    event.preventDefault();
+    onOpenSwimlane();
+  }
+
+  return (
+    <article
+      role={canOpenSwimlane ? "button" : undefined}
+      tabIndex={canOpenSwimlane ? 0 : undefined}
+      aria-label={canOpenSwimlane ? `Mở swimlane cho flow ${row.name}` : undefined}
+      className={cn(
+        "group/card flex h-full w-full flex-col rounded-xl border border-border/70 bg-card/60 p-4 text-left shadow-sm outline-none transition-[border-color,background-color,box-shadow] duration-200 ease-out hover:border-border hover:bg-card hover:shadow-md focus-visible:ring-2 focus-visible:ring-ring/45",
+        canOpenSwimlane && "cursor-pointer"
+      )}
+      onClick={handleCardClick}
+      onKeyDown={handleCardKeyDown}
+    >
+      <div className="flex items-start gap-3">
+        <FlowIndexBadge index={displayIndex} />
+
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-start justify-between gap-2">
+            <div className="min-w-0 space-y-1">
+              <div className="flex flex-wrap items-center gap-2">
+                {row.code.trim() ? (
+                  <span className="rounded-md border border-border/70 bg-background/70 px-1.5 py-0.5 font-mono text-[11px] font-semibold text-muted-foreground">
+                    {row.code}
+                  </span>
+                ) : null}
+                <FlowStatusPill
+                  hasCatalogActions={hasCatalogActions}
+                  actionCount={actionCount}
+                />
+              </div>
+              <h2 className="line-clamp-2 text-base font-semibold leading-snug text-foreground">
+                {row.name}
+              </h2>
+            </div>
+
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                render={
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="size-8 shrink-0 text-muted-foreground hover:bg-muted hover:text-foreground"
+                    aria-label={`Thao tác flow ${row.name}`}
+                    disabled={rowBusy}
+                  />
+                }
+              >
+                <MoreHorizontal className="size-4" aria-hidden />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" sideOffset={4} className="min-w-44">
+                <DropdownMenuItem
+                  className="gap-2"
+                  disabled={rowBusy}
+                  onClick={onEdit}
+                >
+                  <Pencil className="size-4 text-muted-foreground" aria-hidden />
+                  Chỉnh sửa
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="gap-2"
+                  disabled={rowBusy}
+                  onClick={onEditActions}
+                >
+                  <ListOrdered
+                    className="size-4 text-muted-foreground"
+                    aria-hidden
+                  />
+                  {hasCatalogActions ? "Cập nhật actions" : "Thêm actions"}
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  variant="destructive"
+                  className="gap-2"
+                  disabled={rowBusy}
+                  onClick={onDelete}
+                >
+                  <Trash2 className="size-4" aria-hidden />
+                  Xóa
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
-        {row.description.trim() ? (
-          <FlowStepsPreview description={row.description} compact />
-        ) : (
-          <p className="text-sm text-muted-foreground">Chưa có bước nào.</p>
-        )}
-        {hasCatalogActions ? (
-          <Button
-            type="button"
-            variant="link"
-            className="h-auto min-h-0 p-0 text-sm font-medium text-primary underline-offset-4 hover:underline"
-            disabled={rowBusy}
-            onClick={onOpenSwimlane}
-          >
-            Xem chi tiết swimlane
-          </Button>
-        ) : null}
       </div>
 
-      <DropdownMenu>
-        <DropdownMenuTrigger
-          render={
-            <Button
-              type="button"
-              variant="outline"
-              size="icon"
-              className="size-9 shrink-0"
-              aria-label={`Thao tác flow ${row.name}`}
-              disabled={rowBusy}
-            />
-          }
+      <div className="mt-3 min-w-0 flex-1">
+        <FlowStepsInline steps={steps} />
+      </div>
+
+      <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-border/60 pt-3">
+        <span className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+          <Route className="size-3.5" aria-hidden />
+          Flow #{displayIndex}
+        </span>
+        <Button
+          type="button"
+          variant={hasCatalogActions ? "outline" : "ghost"}
+          size="sm"
+          className={cn(
+            "h-8 gap-1.5 text-xs transition-colors duration-200 ease-out",
+            hasCatalogActions
+              ? "border-border/70 bg-transparent text-foreground hover:bg-primary/5 hover:text-primary group-hover/card:border-primary/25 group-hover/card:text-primary group-focus-visible/card:border-primary/25 group-focus-visible/card:text-primary"
+              : "text-muted-foreground hover:text-foreground"
+          )}
+          disabled={rowBusy || !hasCatalogActions}
+          onClick={onOpenSwimlane}
         >
-          <MoreHorizontal className="size-4" aria-hidden />
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" sideOffset={4} className="min-w-44">
-          <DropdownMenuItem
-            className="gap-2"
-            disabled={rowBusy}
-            onClick={onEdit}
-          >
-            <Pencil className="size-4 text-muted-foreground" aria-hidden />
-            Chỉnh sửa
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            className="gap-2"
-            disabled={rowBusy}
-            onClick={onEditActions}
-          >
-            <ListOrdered className="size-4 text-muted-foreground" aria-hidden />
-            {hasCatalogActions ? "Cập nhật actions" : "Thêm actions"}
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            variant="destructive"
-            className="gap-2"
-            disabled={rowBusy}
-            onClick={onDelete}
-          >
-            <Trash2 className="size-4" aria-hidden />
-            Xóa
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+          Swimlane
+          <ArrowRight
+            className="size-3.5 transition-transform duration-200 ease-out group-hover/card:translate-x-0.5 group-focus-visible/card:translate-x-0.5 motion-reduce:transition-none motion-reduce:group-hover/card:translate-x-0 motion-reduce:group-focus-visible/card:translate-x-0"
+            aria-hidden
+          />
+        </Button>
+      </div>
     </article>
   );
 }

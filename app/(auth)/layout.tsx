@@ -17,7 +17,7 @@ function safeFromSearchParam(raw: string | null): string | undefined {
 function AuthGithubOAuthListener() {
   const searchParams = useSearchParams();
   const from = safeFromSearchParam(searchParams.get("from"));
-  useGithubOAuthPopupResult(from, false);
+  useGithubOAuthPopupResult(from);
   return null;
 }
 

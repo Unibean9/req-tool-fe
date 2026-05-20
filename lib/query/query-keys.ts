@@ -171,6 +171,11 @@ export function projectSetupProgressQueryKey(projectId: string) {
   return [...PROJECTS_ROOT, projectId, "setup-progress"] as const;
 }
 
+/** Key nội dung BRD export theo `project_id`. */
+export function projectBrdExportQueryKey(projectId: string) {
+  return [...PROJECTS_ROOT, projectId, "brd", "export"] as const;
+}
+
 /** Key mô hình yêu cầu (epic / feature / story) theo actor. */
 export function actorRequirementModelQueryKey(projectId: string, actorId: string) {
   return [
@@ -257,6 +262,7 @@ export const queryKeys = {
     stories: projectStoriesQueryKey,
     story: projectStoryQueryKey,
     setupProgress: projectSetupProgressQueryKey,
+    brdExport: projectBrdExportQueryKey,
   },
   users: {
     all: ["users"] as const,

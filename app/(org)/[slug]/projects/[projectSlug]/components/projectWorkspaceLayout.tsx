@@ -3,8 +3,8 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { buildProjectNewPath } from "@/app/(org)/components/orgWorkspacePaths";
-import { useCallback, useEffect } from "react";
-import { LayoutGroup, motion } from "framer-motion";
+import { useCallback, useEffect, useState } from "react";
+import { motion } from "framer-motion";
 import { Plus } from "lucide-react";
 
 import { Skeleton } from "@/components/ui/skeleton";
@@ -36,15 +36,24 @@ const PROJECT_RAIL_GRADIENTS = [
   "from-sky-400 to-blue-700",
 ] as const;
 
-/** Bo góc + scale icon rail: CSS thay spring để tránh “giật” khi hover/active chồng nhau */
-const RAIL_ICON_MOTION =
-  "transition-[border-radius,transform,box-shadow] duration-[520ms] ease-[cubic-bezier(0.25,0.8,0.25,1)] will-change-[border-radius,transform]";
+/** Chỉ animate scale — bo góc tròn ↔ vuông đổi tức thì khi hover/active. */
+const RAIL_ICON_SCALE_MOTION =
+  "transition-transform duration-200 ease-out will-change-transform";
 
-const RAIL_INDICATOR_SPRING = {
-  type: "spring" as const,
-  stiffness: 320,
-  damping: 34,
-  mass: 0.85,
+/** Chiều cao thanh (px) — giống Discord: peek ngắn → selected dài, animate height. */
+const RAIL_INDICATOR_FULL_H = 40;
+const RAIL_INDICATOR_PEEK_H = 20;
+const RAIL_INDICATOR_IDLE_H = 8;
+
+/** Kéo dài khi chọn — chậm, ease-out để thấy rõ chuyển động (không “bụp”). */
+const RAIL_INDICATOR_GROW_TWEEN = {
+  duration: 0.38,
+  ease: [0.22, 1, 0.36, 1] as const,
+};
+
+const RAIL_INDICATOR_PEEK_TWEEN = {
+  duration: 0.2,
+  ease: [0.33, 1, 0.68, 1] as const,
 };
 
 function projectRailGradient(seed: string): string {
@@ -81,24 +90,43 @@ function DiscordRailItem({
   className?: string;
   children: React.ReactNode;
 }) {
+  const [hovered, setHovered] = useState(false);
+  const [pressed, setPressed] = useState(false);
+
+  const showPeek = !active && (pressed || hovered);
+  const indicatorHeight = active
+    ? RAIL_INDICATOR_FULL_H
+    : showPeek
+      ? RAIL_INDICATOR_PEEK_H
+      : RAIL_INDICATOR_IDLE_H;
+  const indicatorOpacity = active || showPeek ? 1 : 0;
+  const isGrowingLong = indicatorHeight === RAIL_INDICATOR_FULL_H;
+
   return (
-    <div className="group/rail relative flex w-full items-center justify-center py-0.5">
-      {active ? (
+    <div
+      className="group/rail relative flex w-full items-center justify-center py-0.5"
+      onPointerEnter={() => setHovered(true)}
+      onPointerLeave={() => {
+        setHovered(false);
+        if (!active) setPressed(false);
+      }}
+    >
+      <span
+        aria-hidden
+        className="pointer-events-none absolute top-1/2 left-0 z-10 flex h-10 w-1 -translate-y-1/2 items-center"
+      >
         <motion.span
-          layoutId="workspace-project-rail-indicator"
-          aria-hidden
-          className="absolute left-0 top-1/2 z-10 h-10 w-1 -translate-y-1/2 rounded-r-full bg-foreground shadow-sm"
-          transition={RAIL_INDICATOR_SPRING}
+          initial={false}
+          animate={{ height: indicatorHeight, opacity: indicatorOpacity }}
+          transition={{
+            height: isGrowingLong
+              ? RAIL_INDICATOR_GROW_TWEEN
+              : RAIL_INDICATOR_PEEK_TWEEN,
+            opacity: RAIL_INDICATOR_PEEK_TWEEN,
+          }}
+          className="w-full shrink-0 rounded-r-full bg-foreground shadow-sm"
         />
-      ) : (
-        <span
-          aria-hidden
-          className={cn(
-            "pointer-events-none absolute left-0 top-1/2 z-0 w-1 -translate-y-1/2 rounded-r-full bg-foreground transition-[height,opacity] duration-300 ease-[cubic-bezier(0.33,1,0.68,1)]",
-            "h-2 opacity-0 group-hover/rail:h-5 group-hover/rail:opacity-100"
-          )}
-        />
-      )}
+      </span>
       <Tooltip>
         <TooltipTrigger
           render={
@@ -106,10 +134,17 @@ function DiscordRailItem({
               href={href}
               aria-label={title}
               aria-current={active ? "page" : undefined}
+              onPointerDown={() => setPressed(true)}
+              onPointerUp={() => {
+                if (!active) setPressed(false);
+              }}
+              onPointerCancel={() => {
+                if (!active) setPressed(false);
+              }}
               className={cn(
-                RAIL_ICON_MOTION,
+                RAIL_ICON_SCALE_MOTION,
                 "relative flex size-12 shrink-0 scale-100 items-center justify-center overflow-hidden rounded-full text-lg font-bold leading-none tracking-tight text-white shadow-md outline-none active:scale-[0.96] focus-visible:ring-2 focus-visible:ring-ring/50",
-                "hover:scale-[1.06] hover:rounded-2xl",
+                "group-hover/rail:scale-[1.06] group-hover/rail:rounded-2xl",
                 active && "scale-[1.04] rounded-2xl",
                 className
               )}
@@ -224,28 +259,26 @@ export function ProjectWorkspaceLayout({
               <Skeleton className="size-12 shrink-0 rounded-full" />
             </>
           ) : (
-            <LayoutGroup id="org-project-workspace-rail">
-              {projects.map((p) => {
-                const active = p.slug === projectSlug;
-                const href = `/${encOrg}/projects/${encodeURIComponent(p.slug)}/${currentSubPath}`;
-                const dateHint = formatProjectDateRange(p.startDate, p.endDate);
-                return (
-                  <DiscordRailItem
-                    key={p.id}
-                    href={href}
-                    active={active}
-                    title={p.name}
-                    subtitle={dateHint || undefined}
-                    className={cn(
-                      "bg-linear-to-br shadow-inner shadow-black/25 ring-1 ring-white/10",
-                      projectRailGradient(p.id)
-                    )}
-                  >
-                    {projectInitials(p.name)}
-                  </DiscordRailItem>
-                );
-              })}
-            </LayoutGroup>
+            projects.map((p) => {
+              const active = p.slug === projectSlug;
+              const href = `/${encOrg}/projects/${encodeURIComponent(p.slug)}/${currentSubPath}`;
+              const dateHint = formatProjectDateRange(p.startDate, p.endDate);
+              return (
+                <DiscordRailItem
+                  key={p.id}
+                  href={href}
+                  active={active}
+                  title={p.name}
+                  subtitle={dateHint || undefined}
+                  className={cn(
+                    "bg-linear-to-br shadow-inner shadow-black/25 ring-1 ring-white/10",
+                    projectRailGradient(p.id)
+                  )}
+                >
+                  {projectInitials(p.name)}
+                </DiscordRailItem>
+              );
+            })
           )}
         </div>
 
@@ -259,7 +292,7 @@ export function ProjectWorkspaceLayout({
           title="Thêm dự án"
           aria-label="Thêm dự án"
           className={cn(
-            RAIL_ICON_MOTION,
+            RAIL_ICON_SCALE_MOTION,
             "group/add flex size-12 shrink-0 scale-100 items-center justify-center rounded-full bg-muted/50 text-primary outline-none active:scale-[0.96] focus-visible:ring-2 focus-visible:ring-ring/50 hover:scale-[1.06] hover:rounded-2xl hover:bg-primary hover:text-primary-foreground"
           )}
         >
@@ -275,6 +308,8 @@ export function ProjectWorkspaceLayout({
       />
 
       <main
+        data-scroll-gutter-scope
+        data-project-scroll-gutter
         className={cn(
           "flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-background",
           isMembersView ? "p-0" : "p-4 sm:p-6"

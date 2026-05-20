@@ -36,14 +36,14 @@ function redirectToLogin(
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const token = request.cookies.get(AUTH_COOKIE)?.value ?? "";
+  const hasToken = token.length > 0;
+  const tokenValid = hasToken && !isAuthTokenExpired(token);
 
-  const tokenValid = token.length > 0 && !isAuthTokenExpired(token);
-
-  if (token.length > 0 && !tokenValid) {
-    return redirectToLogin(request, pathname, true);
-  }
-
-  if (!tokenValid && !isPublicPath(pathname)) {
+  /**
+   * Cookie maxAge (7 ngày) ≠ thời hạn JWT. JWT hết hạn vẫn cho vào app — client
+   * `useAuthSessionBootstrap` refresh bằng refresh token (localStorage) rồi ghi cookie mới.
+   */
+  if (!hasToken && !isPublicPath(pathname)) {
     return redirectToLogin(request, pathname, false);
   }
 

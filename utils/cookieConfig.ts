@@ -34,8 +34,9 @@ export function getSecureCookieConfig(customOptions: Partial<CookieOptions> = {}
   return { ...defaultConfig, ...customOptions };
 }
 
-export function getAuthCookieConfig(rememberMe = false): CookieOptions {
+/** Cookie JWT GitHub OAuth — 7 ngày (login chỉ GitHub, không có “ghi nhớ”). */
+export function getAuthCookieConfig(): CookieOptions {
   return getSecureCookieConfig({
-    maxAge: rememberMe ? 60 * 60 * 24 * 30 : 60 * 60 * 24 * 7,
+    maxAge: 60 * 60 * 24 * 7,
   });
 }

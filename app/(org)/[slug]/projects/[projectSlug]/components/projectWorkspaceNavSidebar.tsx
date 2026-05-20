@@ -11,6 +11,7 @@ import {
   Pencil,
   PersonStanding,
   Gauge,
+  Ruler,
   Scale,
   Target,
   Trash2,
@@ -130,6 +131,7 @@ function pathActive(pathname: string, prefix: string): boolean {
 const PROJECT_BUSINESS_NAV = [
   { segment: "stakeholders", label: "Stakeholders", icon: UsersRound },
   { segment: "flow", label: "Flows", icon: Workflow },
+  { segment: "constraints", label: "Constraints", icon: Ruler },
   { segment: "rules", label: "Rules", icon: Scale },
   { segment: "goals", label: "Goals", icon: Target },
 ] as const;
@@ -831,7 +833,7 @@ export function ProjectWorkspaceNavSidebar({
               />
               <SidebarNavLink
                 href={nav.members}
-                label="Thành viên"
+                label="Thành viên (Tổ chức)"
                 icon={Users}
                 active={pathActive(pathname, nav.members)}
               />

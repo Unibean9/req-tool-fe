@@ -1,7 +1,15 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Pencil, Trash2, UserRoundCheck, UsersRound } from "lucide-react";
+import {
+  CircleGauge,
+  MessageSquareText,
+  Pencil,
+  Tags,
+  Trash2,
+  UserRoundCheck,
+  UsersRound,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -46,7 +54,7 @@ function stakeholderInitials(name: string): string {
 
 function influenceBadgeClassName(level: StakeholderInfluenceLevel): string {
   return cn(
-    "rounded-md border px-2 py-0.5 text-xs font-medium capitalize",
+    "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-semibold capitalize",
     level === "high" &&
       "border-rose-500/35 bg-rose-500/15 text-rose-700 dark:text-rose-200",
     level === "medium" &&
@@ -73,15 +81,11 @@ function ImpactAreaTags({
   return (
     <div className={cn("flex flex-wrap items-center gap-1.5", className)}>
       {tags.map((tag, index) => (
-        <span key={`${tag}-${index}`} className="inline-flex items-center gap-1.5">
-          {index > 0 ? (
-            <span className="text-xs text-muted-foreground" aria-hidden>
-              .
-            </span>
-          ) : null}
-          <span className="inline-flex max-w-full rounded-md border border-border/80 bg-muted/50 px-2 py-0.5 text-xs leading-snug text-foreground/90">
-            {tag}
-          </span>
+        <span
+          key={`${tag}-${index}`}
+          className="inline-flex max-w-full rounded-full border border-border/70 bg-muted/35 px-2.5 py-1 text-xs leading-snug text-foreground/85"
+        >
+          {tag}
         </span>
       ))}
     </div>
@@ -132,65 +136,84 @@ function StakeHolderListRow({
   const initials = stakeholderInitials(row.name);
 
   return (
-    <article className="flex h-full w-full items-start gap-3 rounded-xl border border-border/70 bg-card/50 p-3.5 shadow-sm transition-colors hover:border-border hover:bg-card/80 sm:gap-4 sm:p-4">
-      <span
-        className="flex size-11 shrink-0 items-center justify-center rounded-full bg-brand-mint/25 text-sm font-bold text-foreground ring-1 ring-brand-mint/30 sm:size-12"
-        aria-hidden
-      >
-        {initials}
-      </span>
+    <article className="group flex h-full w-full flex-col rounded-xl border border-border/70 bg-card/60 p-4 shadow-sm transition-[border-color,background-color,box-shadow] duration-200 ease-out hover:border-border hover:bg-card hover:shadow-md">
+      <div className="flex min-w-0 items-start gap-3">
+        <span
+          className={cn(
+            "flex size-12 shrink-0 items-center justify-center rounded-xl text-sm font-bold ring-1",
+            row.isBusinessActor
+              ? "bg-brand-mint/25 text-foreground ring-brand-mint/35"
+              : "bg-muted/65 text-muted-foreground ring-border/70"
+          )}
+          aria-hidden
+        >
+          {initials}
+        </span>
 
-      <div className="min-w-0 flex-1 space-y-2">
-        <div className="space-y-0.5">
-          <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
-            <h2 className="min-w-0 truncate text-base font-semibold leading-snug text-foreground">
-              {row.name}
-            </h2>
-            {row.isBusinessActor ? (
-              <Badge
-                variant="secondary"
-                className="shrink-0 text-xs font-medium tabular-nums"
-              >
-                Business actor
-              </Badge>
-            ) : null}
+        <div className="min-w-0 flex-1">
+          <div className="flex min-w-0 flex-wrap items-start justify-between gap-2">
+            <div className="min-w-0 space-y-1">
+              <div className="flex min-w-0 flex-wrap items-center gap-2">
+                <h2 className="min-w-0 truncate text-base font-semibold leading-snug text-foreground">
+                  {row.name}
+                </h2>
+                {row.isBusinessActor ? (
+                  <Badge
+                    variant="secondary"
+                    className="shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold"
+                  >
+                    Business actor
+                  </Badge>
+                ) : null}
+              </div>
+              {row.role.trim() ? (
+                <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+                  {row.role}
+                </p>
+              ) : (
+                <p className="text-sm italic text-muted-foreground">
+                  Chưa có vai trò.
+                </p>
+              )}
+            </div>
+
+            <span className={influenceBadgeClassName(row.influenceLevel)}>
+              <CircleGauge className="size-3.5" aria-hidden />
+              {INFLUENCE_LEVEL_LABELS[row.influenceLevel]}
+            </span>
           </div>
-          {row.role.trim() ? (
-            <p className="text-sm leading-snug text-muted-foreground">{row.role}</p>
-          ) : null}
         </div>
+      </div>
 
-        <div className="flex flex-wrap items-center gap-2">
+      <div className="mt-3 min-w-0 space-y-2.5">
+        <div className="flex min-w-0 items-start gap-2">
+          <Tags
+            className="mt-1 size-3.5 shrink-0 text-muted-foreground"
+            aria-hidden
+          />
           <ImpactAreaTags impactArea={row.impactArea} />
-          <span className={influenceBadgeClassName(row.influenceLevel)}>
-            {INFLUENCE_LEVEL_LABELS[row.influenceLevel]}
-          </span>
         </div>
 
         {row.notes.trim() ? (
-          <p className="text-sm leading-relaxed text-foreground/90">{row.notes}</p>
+          <div className="flex min-w-0 items-start gap-2 border-l border-border/70 pl-3">
+            <MessageSquareText
+              className="mt-0.5 size-3.5 shrink-0 text-muted-foreground"
+              aria-hidden
+            />
+            <p className="line-clamp-3 text-sm leading-relaxed text-foreground/85">
+              {row.notes}
+            </p>
+          </div>
         ) : null}
       </div>
 
-      <div className="flex shrink-0 flex-col gap-1 sm:flex-row sm:items-start">
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-border/60 pt-3">
         <Button
           type="button"
           variant="outline"
-          size="icon"
-          className="size-9 shrink-0"
-          aria-label={`Chỉnh sửa ${row.name}`}
-          title="Chỉnh sửa"
-          disabled={rowBusy}
-          onClick={onEdit}
-        >
-          <Pencil className="size-4" aria-hidden />
-        </Button>
-        <Button
-          type="button"
-          variant="outline"
-          size="icon"
+          size="sm"
           className={cn(
-            "size-9 shrink-0",
+            "h-8 gap-1.5 text-xs",
             row.isBusinessActor
               ? "border-primary/40 bg-primary/10 text-primary"
               : "text-muted-foreground"
@@ -208,20 +231,36 @@ function StakeHolderListRow({
           disabled={rowBusy}
           onClick={() => onToggleBusinessActor(row)}
         >
-          <UserRoundCheck className="size-5" aria-hidden />
+          <UserRoundCheck className="size-3.5" aria-hidden />
+          {row.isBusinessActor ? "Business actor" : "Mark business"}
         </Button>
-        <Button
-          type="button"
-          variant="outline"
-          size="icon"
-          className="size-9 shrink-0 text-muted-foreground hover:border-destructive/40 hover:bg-destructive/10 hover:text-destructive"
-          aria-label={`Xóa ${row.name}`}
-          title="Xóa"
-          disabled={rowBusy}
-          onClick={onDelete}
-        >
-          <Trash2 className="size-4" aria-hidden />
-        </Button>
+
+        <div className="flex shrink-0 items-center gap-1.5">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="h-8 gap-1.5 text-xs"
+            aria-label={`Chỉnh sửa ${row.name}`}
+            disabled={rowBusy}
+            onClick={onEdit}
+          >
+            <Pencil className="size-3.5" aria-hidden />
+            Sửa
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="h-8 gap-1.5 text-xs text-muted-foreground hover:border-destructive/40 hover:bg-destructive/10 hover:text-destructive"
+            aria-label={`Xóa ${row.name}`}
+            disabled={rowBusy}
+            onClick={onDelete}
+          >
+            <Trash2 className="size-3.5" aria-hidden />
+            Xóa
+          </Button>
+        </div>
       </div>
     </article>
   );
@@ -246,6 +285,9 @@ export function StakeHolderList({
     name: string;
   } | null>(null);
   const [rowMutationBusy, setRowMutationBusy] = useState(false);
+  const [businessActorToggleId, setBusinessActorToggleId] = useState<
+    string | null
+  >(null);
 
   const isBusinessActorParam = listIsBusinessActorQueryParam(businessActorFilter);
 
@@ -267,11 +309,11 @@ export function StakeHolderList({
 
   const updateMutation = useUpdateProjectStakeholder();
 
-  const rowBusy =
-    rowMutationBusy || deleteMutation.isPending || updateMutation.isPending;
+  const listMutationBusy = rowMutationBusy || deleteMutation.isPending;
 
   function handleToggleBusinessActor(row: ProjectStakeholder) {
-    if (!projectId) return;
+    if (!projectId || businessActorToggleId) return;
+    setBusinessActorToggleId(row.id);
     void updateMutation.mutate({
       projectId,
       stakeholderId: row.id,
@@ -279,6 +321,8 @@ export function StakeHolderList({
         ...stakeholderToWriteBody(row),
         isBusinessActor: !row.isBusinessActor,
       },
+    }, {
+      onSettled: () => setBusinessActorToggleId(null),
     });
   }
 
@@ -397,7 +441,7 @@ export function StakeHolderList({
           <li key={row.id} className="flex min-w-0">
             <StakeHolderListRow
               row={row}
-              rowBusy={rowBusy}
+              rowBusy={listMutationBusy || businessActorToggleId === row.id}
               onEdit={() => setEditTarget(row)}
               onDelete={() =>
                 setDeleteTarget({ stakeholderId: row.id, name: row.name })

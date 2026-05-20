@@ -6,9 +6,11 @@ import {
   Calculator,
   ClipboardCheck,
   FileCheck2,
+  History,
   GitBranch,
   Pencil,
   Scale,
+  Sparkles,
   ShieldCheck,
   Trash2,
   type LucideIcon,
@@ -146,83 +148,103 @@ function RuleListRow({
   const Icon = meta.icon;
   const source = row.source.trim();
   const date = formatRuleDate(row.updatedAt || row.createdAt);
+  const ruleDef = row.ruleDef.trim();
 
   return (
-    <article className="flex h-full w-full items-start gap-3 rounded-2xl border border-border/70 bg-card/45 p-3.5 shadow-sm transition-colors hover:border-border hover:bg-card/75 sm:gap-4 sm:p-4">
-      <span
-        className={cn(
-          "flex size-11 shrink-0 items-center justify-center rounded-xl sm:size-12",
-          meta.iconBoxClass
-        )}
-        aria-hidden
-      >
-        <Icon className={cn("size-5", meta.iconClass)} />
-      </span>
-
-      <div className="min-w-0 flex-1 space-y-2.5">
-        <div className="flex flex-wrap items-center gap-2">
-          <span
-            className={cn(
-              "inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-semibold leading-none",
-              meta.badgeClass
-            )}
-          >
-            {RULE_TYPE_LABELS[row.type]}
-          </span>
-          <span
-            className={cn(
-              "inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-semibold leading-none",
-              row.isDynamic
-                ? "border-sky-500/30 bg-sky-500/15 text-sky-700 dark:text-sky-300"
-                : "border-border/80 bg-muted/30 text-muted-foreground"
-            )}
-          >
-            {row.isDynamic ? "Dynamic" : "Static"}
-          </span>
-        </div>
-
-        <p className="min-w-0 wrap-anywhere text-base leading-relaxed text-foreground">
-          {row.ruleDef.trim() || (
-            <span className="text-muted-foreground italic">Chưa có mô tả.</span>
+    <article className="flex h-full w-full min-w-0 flex-col rounded-xl border border-border/70 bg-card/60 p-4 shadow-sm transition-[border-color,background-color,box-shadow] duration-200 ease-out hover:border-border hover:bg-card hover:shadow-md">
+      <div className="flex min-w-0 items-start gap-3">
+        <span
+          className={cn(
+            "flex size-12 shrink-0 items-center justify-center rounded-xl ring-1 ring-border/40",
+            meta.iconBoxClass
           )}
-        </p>
+          aria-hidden
+        >
+          <Icon className={cn("size-5", meta.iconClass)} />
+        </span>
 
-        <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+        <div className="min-w-0 flex-1">
+          <div className="mb-2 flex flex-wrap items-center gap-2">
+            <span
+              className={cn(
+                "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-semibold leading-none",
+                meta.badgeClass
+              )}
+            >
+              <Icon className="size-3.5" aria-hidden />
+              {RULE_TYPE_LABELS[row.type]}
+            </span>
+            <span
+              className={cn(
+                "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-semibold leading-none",
+                row.isDynamic
+                  ? "border-sky-500/30 bg-sky-500/15 text-sky-700 dark:text-sky-300"
+                  : "border-border/80 bg-muted/30 text-muted-foreground"
+              )}
+            >
+              <Sparkles
+                className={cn("size-3.5", !row.isDynamic && "opacity-60")}
+                aria-hidden
+              />
+              {row.isDynamic ? "Dynamic" : "Static"}
+            </span>
+          </div>
+
+          <p className="min-w-0 min-h-13 wrap-anywhere text-base leading-relaxed text-foreground">
+            {ruleDef || (
+              <span className="text-muted-foreground italic">Chưa có mô tả.</span>
+            )}
+          </p>
+        </div>
+      </div>
+
+      <div className="mt-3 flex min-w-0 flex-wrap items-center justify-between gap-x-3 gap-y-2 text-xs text-muted-foreground">
+        <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 border-l border-border/70 pl-3">
           {source ? (
             <span className="inline-flex min-w-0 items-center gap-1.5">
               <Scale className="size-3.5 shrink-0" aria-hidden />
               <span className="truncate">{source}</span>
             </span>
+          ) : (
+            <span className="inline-flex items-center gap-1.5 italic">
+              <Scale className="size-3.5 shrink-0" aria-hidden />
+              Chưa có source
+            </span>
+          )}
+          {date ? (
+            <span className="inline-flex items-center gap-1.5 tabular-nums">
+              <History className="size-3.5 shrink-0" aria-hidden />
+              {date}
+            </span>
           ) : null}
-          {date ? <span className="tabular-nums">{date}</span> : null}
         </div>
-      </div>
 
-      <div className="flex shrink-0 gap-1 sm:items-start">
-        <Button
-          type="button"
-          variant="outline"
-          size="icon"
-          className="size-9 shrink-0"
-          aria-label="Chỉnh sửa rule"
-          title="Chỉnh sửa"
-          disabled={rowBusy}
-          onClick={onEdit}
-        >
-          <Pencil className="size-4" aria-hidden />
-        </Button>
-        <Button
-          type="button"
-          variant="outline"
-          size="icon"
-          className="size-9 shrink-0 text-muted-foreground hover:border-destructive/40 hover:bg-destructive/10 hover:text-destructive"
-          aria-label="Xóa rule"
-          title="Xóa"
-          disabled={rowBusy}
-          onClick={onDelete}
-        >
-          <Trash2 className="size-4" aria-hidden />
-        </Button>
+        <div className="flex shrink-0 items-center gap-1">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="h-7 gap-1.5 px-2 text-xs text-muted-foreground hover:text-foreground"
+            aria-label="Chỉnh sửa rule"
+            disabled={rowBusy}
+            onClick={onEdit}
+          >
+            <Pencil className="size-3.5" aria-hidden />
+            Sửa
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="h-7 gap-1.5 px-2 text-xs text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+            aria-label="Xóa rule"
+            disabled={rowBusy}
+            onClick={onDelete}
+          >
+            <Trash2 className="size-3.5" aria-hidden />
+            Xóa
+          </Button>
+        </div>
       </div>
     </article>
   );

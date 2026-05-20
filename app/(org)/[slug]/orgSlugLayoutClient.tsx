@@ -44,6 +44,7 @@ function OrgWorkspaceChrome({ children }: { children: ReactNode }) {
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-background">
       <main
+        data-scroll-gutter-scope
         className={
           fullBleedMain
             ? "flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden p-0"

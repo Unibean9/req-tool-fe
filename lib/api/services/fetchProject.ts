@@ -177,6 +177,9 @@ export interface ProjectSetupProgressResponse {
   message: string | null;
 }
 
+/** GET /api/v1/projects/{project_id}/brd/export — plain text BRD export. */
+export type ProjectBrdExportResponse = string;
+
 interface ProjectSetupProgressApiRow {
   core: boolean;
   business_requirements?: Partial<ProjectSetupProgressBusinessRequirements>;
@@ -575,5 +578,16 @@ export const fetchProject = {
     return mapProjectSetupProgressResponse(
       assertProjectSetupProgressSuccess(response.data)
     );
+  },
+
+  /** GET /api/v1/projects/{project_id}/brd/export */
+  getBrdExport: async (
+    projectId: string
+  ): Promise<ProjectBrdExportResponse> => {
+    const pid = resolveProjectId(projectId);
+    const response = await apiService.get<ProjectBrdExportResponse>(
+      `/api/v1/projects/${encodeURIComponent(pid)}/brd/export`
+    );
+    return response.data;
   },
 };
