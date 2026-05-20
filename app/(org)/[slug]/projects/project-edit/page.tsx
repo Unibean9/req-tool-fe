@@ -25,10 +25,10 @@ function decodeProjectSlugParam(raw: string | null): string {
 function EditWizardSkeleton() {
   return (
     <div className="flex h-full min-h-0 flex-1 overflow-hidden bg-background">
-      <Skeleton className="hidden w-[260px] shrink-0 lg:block" />
+      <Skeleton className="hidden w-65 shrink-0 lg:block" />
       <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-4 p-6">
         <Skeleton className="h-10 w-full max-w-md" />
-        <Skeleton className="min-h-[240px] flex-1 w-full" />
+        <Skeleton className="min-h-60 flex-1 w-full" />
         <Skeleton className="h-14 w-full" />
       </div>
     </div>

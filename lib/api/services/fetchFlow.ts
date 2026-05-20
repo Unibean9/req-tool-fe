@@ -505,6 +505,12 @@ export interface ProjectFlowsListResponse {
 
 // --- Flow templates (GET .../flows/{flow_id}/templates) ---
 
+/** Path: `project_id`, `flow_id`. */
+export interface ListProjectFlowTemplatesParams {
+  projectId: string;
+  flowId: string;
+}
+
 interface ProjectFlowTemplateActorWire {
   id: string;
   name: string;
@@ -514,6 +520,7 @@ interface ProjectFlowTemplateStepWire {
   step: number;
   description: string;
   actor: string;
+  rules: unknown[];
 }
 
 interface ProjectFlowTemplateWire {
@@ -539,6 +546,7 @@ export interface ProjectFlowTemplateStep {
   step: number;
   description: string;
   actor: string;
+  rules: unknown[];
 }
 
 export interface ProjectFlowTemplate {
@@ -701,6 +709,7 @@ function mapProjectFlowTemplateRow(
       step: Number(s.step) || 0,
       description: String(s.description ?? ""),
       actor: String(s.actor ?? ""),
+      rules: Array.isArray(s.rules) ? s.rules : [],
     })),
   };
 }
@@ -806,6 +815,9 @@ export const fetchFlow = {
 
   /**
    * GET /api/v1/projects/{project_id}/flows/{flow_id}/templates
+   *
+   * Response: `{ success, data: [{ flow_id, code, name, actors, steps }], message }`
+   * — mỗi `steps[]` có `{ step, description, actor, rules }`.
    */
   listTemplates: async (
     projectId: string,

@@ -27,7 +27,7 @@ export function ProjectEditSidebar({
   return (
     <aside
       className={cn(
-        "flex w-[280px] shrink-0 flex-col border-r border-border/70 bg-card/30",
+        "flex w-70 shrink-0 flex-col border-r border-border/70 bg-card/30",
         className
       )}
     >

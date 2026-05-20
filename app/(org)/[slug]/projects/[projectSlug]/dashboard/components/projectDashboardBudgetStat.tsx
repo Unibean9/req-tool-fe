@@ -18,7 +18,7 @@ export function ProjectDashboardBudgetStat({
   return (
     <div
       className={cn(
-        "inline-flex min-w-[10.5rem] items-center gap-3 rounded-xl border border-border/70 bg-linear-to-br from-muted/50 to-card/80 px-3.5 py-2.5 shadow-sm",
+        "inline-flex min-w-42 items-center gap-3 rounded-xl border border-border/70 bg-linear-to-br from-muted/50 to-card/80 px-3.5 py-2.5 shadow-sm",
         className
       )}
     >
