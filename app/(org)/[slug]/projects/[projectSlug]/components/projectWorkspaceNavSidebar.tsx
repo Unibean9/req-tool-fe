@@ -498,15 +498,12 @@ function ProjectWorkspaceActorsNav({
   actorsBase,
   pathname,
   dashboardHref,
-  canManageActors,
 }: {
   projectId: string | null;
   projectsLoaded: boolean;
   actorsBase: string;
   pathname: string;
   dashboardHref: string;
-  /** Chỉ owner tổ chức (`owner_id`) được sửa/xóa actor — đồng bộ `OrgWorkspaceContext.canManageOrgMembers` */
-  canManageActors: boolean;
 }) {
   const [deleteTarget, setDeleteTarget] = useState<{
     actorId: string;
@@ -613,27 +610,6 @@ function ProjectWorkspaceActorsNav({
             {actors.map((actor) => {
               const actorHref = `${actorsBase}/${encodeURIComponent(actor.id)}`;
               const active = pathsEqualIgnoreQuery(pathname, actorHref);
-              if (!canManageActors) {
-                return (
-                  <li key={actor.id} className="min-w-0">
-                    <Link
-                      href={actorHref}
-                      className={cn(
-                        "flex w-full items-center gap-2.5 rounded-lg border border-transparent px-2.5 py-1.5 text-left text-sm transition-[color,background-color,border-color,box-shadow] duration-200 outline-none focus-visible:ring-2 focus-visible:ring-ring/45 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-                        active
-                          ? "border-primary/30 bg-(--chart-1)/10 font-medium text-foreground shadow-sm ring-1 ring-primary/15"
-                          : "text-muted-foreground hover:bg-muted/40 hover:text-foreground"
-                      )}
-                    >
-                      <PersonStanding
-                        className="size-4 shrink-0 text-muted-foreground opacity-85"
-                        aria-hidden
-                      />
-                      <span className="min-w-0 flex-1 truncate">{actor.name}</span>
-                    </Link>
-                  </li>
-                );
-              }
               return (
                 <li key={actor.id} className="min-w-0">
                   <div
@@ -696,7 +672,7 @@ function ProjectWorkspaceActorsNav({
       </div>
 
       <DeleteProjectActorDialog
-        open={canManageActors && deleteTarget != null}
+        open={deleteTarget != null}
         target={deleteTarget}
         deletePending={deletePending}
         onOpenChange={(next) => {
@@ -707,7 +683,7 @@ function ProjectWorkspaceActorsNav({
       <EditProjectActorDialog
         projectId={projectId}
         actor={editTarget}
-        open={canManageActors && editTarget != null}
+        open={editTarget != null}
         onOpenChange={(open) => {
           if (!open) setEditTarget(null);
         }}
@@ -723,19 +699,16 @@ function ProjectWorkspaceActorsSection({
   actorsBase,
   pathname,
   dashboardHref,
-  canManageActors,
 }: {
   projectId: string | null;
   projectsLoaded: boolean;
   actorsBase: string;
   pathname: string;
   dashboardHref: string;
-  canManageActors: boolean;
 }) {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
 
   const canAdd =
-    canManageActors &&
     projectsLoaded &&
     typeof projectId === "string" &&
     projectId.length > 0;
@@ -743,35 +716,25 @@ function ProjectWorkspaceActorsSection({
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <div className="shrink-0 px-0.5 pb-2">
-        <div
-          className={cn(
-            "flex items-center gap-2 px-0.5",
-            canManageActors ? "justify-between" : ""
-          )}
-        >
+        <div className="flex items-center justify-between gap-2 px-0.5">
           <p className="m-0 flex min-w-0 flex-1 items-center gap-2 text-xs font-semibold tracking-wide text-muted-foreground">
             <span className="leading-snug">Actors</span>
           </p>
-          {canManageActors ? (
-            <div className="-mr-px flex shrink-0 items-center gap-px pr-px">
-              <span
-                className="pointer-events-none size-6 shrink-0"
-                aria-hidden
-              />
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                aria-label="Thêm actor"
-                title="Thêm actor"
-                disabled={!canAdd}
-                className="size-6 shrink-0 text-muted-foreground hover:text-foreground"
-                onClick={() => setCreateDialogOpen(true)}
-              >
-                <UserRoundPlus className="size-3" aria-hidden />
-              </Button>
-            </div>
-          ) : null}
+          <div className="-mr-px flex shrink-0 items-center gap-px pr-px">
+            <span className="pointer-events-none size-6 shrink-0" aria-hidden />
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              aria-label="Thêm actor"
+              title="Thêm actor"
+              disabled={!canAdd}
+              className="size-6 shrink-0 text-muted-foreground hover:text-foreground"
+              onClick={() => setCreateDialogOpen(true)}
+            >
+              <UserRoundPlus className="size-3" aria-hidden />
+            </Button>
+          </div>
         </div>
       </div>
       <div className="flex min-h-0 flex-1 flex-col px-0.5">
@@ -781,13 +744,12 @@ function ProjectWorkspaceActorsSection({
           actorsBase={actorsBase}
           pathname={pathname}
           dashboardHref={dashboardHref}
-          canManageActors={canManageActors}
         />
       </div>
 
       <CreateProjectActorDialog
         projectId={projectId}
-        open={canManageActors && createDialogOpen}
+        open={createDialogOpen}
         onOpenChange={setCreateDialogOpen}
         disabled={!canAdd}
       />
@@ -811,7 +773,7 @@ export function ProjectWorkspaceNavSidebar({
   className,
 }: ProjectWorkspaceNavSidebarProps) {
   const pathname = usePathname() ?? "";
-  const { orgFromList, canManageOrgMembers } = useOrgWorkspace();
+  const { orgFromList } = useOrgWorkspace();
   const encOrg = encodeURIComponent(orgSlug);
   const encProj = encodeURIComponent(projectSlug);
   const base = `/${encOrg}/projects/${encProj}`;
@@ -912,7 +874,6 @@ export function ProjectWorkspaceNavSidebar({
               actorsBase={nav.actorsBase}
               pathname={pathname}
               dashboardHref={nav.dashboard}
-              canManageActors={canManageOrgMembers}
             />
           </div>
         </nav>

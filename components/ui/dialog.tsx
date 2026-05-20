@@ -47,15 +47,18 @@ function DialogContent({
   children,
   showCloseButton = true,
   contentClassName,
+  overlayClassName,
   ...props
 }: DialogPrimitive.Popup.Props & {
   showCloseButton?: boolean
   /** Thay layout wrapper bên trong (mặc định `relative grid gap-4 p-4`). VD: flex column + scroll. */
   contentClassName?: string
+  /** z-index overlay — dialog lồng dialog (vd. picker trên form actions). */
+  overlayClassName?: string
 }) {
   return (
     <DialogPortal>
-      <DialogOverlay />
+      <DialogOverlay className={overlayClassName} />
       <DialogPrimitive.Popup
         data-slot="dialog-content"
         className={cn(

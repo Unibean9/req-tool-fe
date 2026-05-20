@@ -199,8 +199,8 @@ function EditFlowActionFormDialogLoaded({
 
   const title = isCreate ? "Tạo flow actions" : "Sửa flow actions";
   const descriptionLead = isCreate
-    ? "Thêm actor (business) và rules cho các action của "
-    : "Cập nhật actor và rules cho từng action của ";
+    ? "Thêm Actor Business và rule(s) cho các action của "
+    : "Cập nhật Actor Business và rule(s) cho từng action của ";
 
   return (
     <form
@@ -221,9 +221,9 @@ function EditFlowActionFormDialogLoaded({
           </div>
           <Button
             type="button"
-            variant="outline"
+            variant="default"
             size="sm"
-            className="mt-0.5 shrink-0 gap-1.5"
+            className="mt-0.5 shrink-0 gap-1.5 font-semibold"
             disabled={!canAddRow}
             onClick={() => setRows((prev) => appendFlowCatalogActionRow(prev))}
           >
@@ -233,7 +233,7 @@ function EditFlowActionFormDialogLoaded({
         </div>
       </DialogHeader>
 
-      <div className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain [-webkit-overflow-scrolling:touch] [scrollbar-gutter:stable]">
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain [-webkit-overflow-scrolling:touch] scrollbar-gutter-stable">
         <FlowCatalogActionRowsEditor
           rows={rows}
           onChange={setRows}

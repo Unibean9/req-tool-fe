@@ -5,7 +5,6 @@ import { X } from "lucide-react";
 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -26,6 +25,7 @@ import {
   STAKEHOLDER_NOTES_MAX_CHARS,
   STAKEHOLDER_ROLE_MAX_CHARS,
 } from "./stakeHolderFormLimits";
+import { StakeHolderBusinessActorField } from "./stakeHolderBusinessActorField";
 
 const IMPACT_AREA_TAG_SEPARATOR = " · ";
 const IMPACT_AREA_SPLIT = /\s*(?:·|,|;)\s*/;
@@ -158,28 +158,12 @@ export function StakeHolderFormFields({
           className="resize-none"
         />
       </div>
-      <div className="flex items-start gap-3 rounded-lg border border-border/70 bg-muted/20 px-3 py-2.5">
-        <Checkbox
-          id={`${idPrefix}-business-actor`}
-          checked={values.isBusinessActor}
-          onCheckedChange={(checked) =>
-            onChange({ isBusinessActor: checked === true })
-          }
-          disabled={disabled}
-          className="mt-0.5"
-        />
-        <div className="grid gap-0.5 leading-snug">
-          <Label
-            htmlFor={`${idPrefix}-business-actor`}
-            className="cursor-pointer text-sm font-semibold"
-          >
-            Business actor
-          </Label>
-          <p className="text-xs text-muted-foreground">
-            Đánh dấu nếu stakeholder là tác nhân nghiệp vụ trong mô hình (UML / flow).
-          </p>
-        </div>
-      </div>
+      <StakeHolderBusinessActorField
+        id={`${idPrefix}-business-actor`}
+        checked={values.isBusinessActor}
+        onChange={(isBusinessActor) => onChange({ isBusinessActor })}
+        disabled={disabled}
+      />
     </div>
   );
 }

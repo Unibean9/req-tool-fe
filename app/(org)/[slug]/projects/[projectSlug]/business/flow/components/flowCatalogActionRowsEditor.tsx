@@ -1,7 +1,7 @@
 "use client";
 
-import type { ClipboardEvent } from "react";
-import { ChevronDown, ChevronUp, Plus, X } from "lucide-react";
+import { useState, type ClipboardEvent } from "react";
+import { ChevronDown, ChevronUp, ListChecks, Plus, X } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -17,14 +17,15 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import type { ProjectRule } from "@/lib/api/services/fetchRule";
 import type { ProjectStakeholder } from "@/lib/api/services/fetchStakeHolder";
+import { cn } from "@/lib/utils";
 
+import { FlowActionRulesPickerDialog } from "./flowActionRulesPickerDialog";
 import {
   FLOW_ACTION_DESCRIPTION_MAX_CHARS,
   FLOW_MAX_CATALOG_ACTIONS,
 } from "./flowFormLimits";
 
 const ACTOR_NONE_VALUE = "__none__";
-const RULE_NONE_VALUE = "__rule_none__";
 
 export type FlowCatalogActionRowModel = {
   rowKey: string;
@@ -143,27 +144,17 @@ function moveRow(
   return next;
 }
 
-function addRuleId(ruleIds: string[], ruleId: string): string[] {
-  const id = ruleId.trim();
-  if (!id || ruleIds.includes(id)) return ruleIds;
-  return [...ruleIds, id];
-}
-
-function removeRuleId(ruleIds: string[], ruleId: string): string[] {
-  return ruleIds.filter((id) => id !== ruleId);
-}
-
-function ruleLabel(rule: ProjectRule): string {
-  return rule.ruleDef.trim() || rule.id;
+/** Đủ business actor + mô tả — dùng highlight card và validate submit. */
+export function isFlowCatalogActionRowComplete(
+  row: FlowCatalogActionRowModel
+): boolean {
+  return row.description.trim().length > 0 && row.actorId.trim().length > 0;
 }
 
 export function flowCatalogActionRowsValidForSubmit(
   rows: FlowCatalogActionRowModel[]
 ): boolean {
-  const filled = rows.filter(
-    (r) => r.description.trim().length > 0 && r.actorId.trim().length > 0
-  );
-  return filled.length > 0;
+  return rows.some(isFlowCatalogActionRowComplete);
 }
 
 export function FlowCatalogActionRowsEditor({
@@ -179,7 +170,19 @@ export function FlowCatalogActionRowsEditor({
   showOrderControls = false,
   hideFooterAddButton = false,
 }: FlowCatalogActionRowsEditorProps) {
+  const [rulesPickerRowKey, setRulesPickerRowKey] = useState<string | null>(null);
   const canAddRow = canAppendFlowCatalogActionRow(rows, disabled) && allowAddRemove;
+
+  const rulesPickerRowIndex =
+    rulesPickerRowKey == null
+      ? -1
+      : rows.findIndex((r) => r.rowKey === rulesPickerRowKey);
+  const rulesPickerRow =
+    rulesPickerRowIndex >= 0 ? rows[rulesPickerRowIndex] : undefined;
+
+  function openRulesPicker(index: number) {
+    setRulesPickerRowKey(rows[index]!.rowKey);
+  }
 
   function patchRow(index: number, patch: Partial<FlowCatalogActionRowModel>) {
     const next = rows.map((r, i) => (i === index ? { ...r, ...patch } : r));
@@ -264,14 +267,27 @@ export function FlowCatalogActionRowsEditor({
       ) : null}
 
       <ol className="list-none space-y-4">
-        {rows.map((row, index) => (
+        {rows.map((row, index) => {
+          const rowComplete = isFlowCatalogActionRowComplete(row);
+          return (
           <li
             key={row.rowKey}
-            className="rounded-xl border border-border/70 bg-muted/15 p-4"
+            className={cn(
+              "rounded-xl border bg-muted/15 p-4 transition-[border-color] duration-150",
+              rowComplete
+                ? "border-emerald-500/50"
+                : "border-border/70"
+            )}
+            data-complete={rowComplete ? "true" : undefined}
           >
             <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-              <span className="text-sm font-semibold text-foreground">
+              <span className="flex min-w-0 flex-wrap items-center gap-2 text-sm font-semibold text-foreground">
                 Action {index + 1}
+                {rowComplete ? (
+                  <span className="text-[10px] font-medium text-emerald-700 dark:text-emerald-400">
+                    Đủ thông tin
+                  </span>
+                ) : null}
               </span>
               <div className="flex flex-wrap items-center gap-1">
                 {showOrderControls ? (
@@ -322,7 +338,7 @@ export function FlowCatalogActionRowsEditor({
                   htmlFor={`${idPrefix}-actor-${row.rowKey}`}
                   className="text-sm font-semibold"
                 >
-                  Actor (business)
+                  Business Actor
                 </Label>
                 <Select
                   value={row.actorId.trim() ? row.actorId : ACTOR_NONE_VALUE}
@@ -362,7 +378,7 @@ export function FlowCatalogActionRowsEditor({
                     htmlFor={`${idPrefix}-desc-${row.rowKey}`}
                     className="text-sm font-semibold"
                   >
-                    Mô tả action
+                    Mô tả 
                   </Label>
                   <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
                     {row.description.length} / {FLOW_ACTION_DESCRIPTION_MAX_CHARS}
@@ -388,111 +404,40 @@ export function FlowCatalogActionRowsEditor({
 
               <div className="grid min-w-0 gap-2">
                 <Label
-                  htmlFor={`${idPrefix}-rules-add-${row.rowKey}`}
+                  htmlFor={`${idPrefix}-rules-${row.rowKey}`}
                   className="text-sm font-semibold"
                 >
                   Rules
                 </Label>
                 {rulesPending ? (
                   <Skeleton className="h-10 w-full rounded-xl" />
-                ) : rules.length === 0 ? (
-                  <p className="text-xs text-muted-foreground">
-                    Chưa có rule nào trong project.
-                  </p>
                 ) : (
-                  <div className="grid min-w-0 gap-2">
-                    <Select
-                      value={RULE_NONE_VALUE}
-                      onValueChange={(v) => {
-                        if (v == null || v === RULE_NONE_VALUE) return;
-                        const id = String(v).trim();
-                        if (!id) return;
-                        patchRow(index, {
-                          ruleIds: addRuleId(row.ruleIds, id),
-                        });
-                      }}
-                      disabled={
-                        disabled ||
-                        rules.filter((r) => !row.ruleIds.includes(r.id))
-                          .length === 0
-                      }
-                    >
-                      <SelectTrigger
-                        id={`${idPrefix}-rules-add-${row.rowKey}`}
-                        className="w-full"
-                      >
-                        <SelectValue>Thêm rule…</SelectValue>
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value={RULE_NONE_VALUE}>
-                          Thêm rule…
-                        </SelectItem>
-                        {rules
-                          .filter((r) => !row.ruleIds.includes(r.id))
-                          .map((rule) => {
-                            const label = ruleLabel(rule);
-                            return (
-                              <SelectItem
-                                key={rule.id}
-                                value={rule.id}
-                                title={label}
-                              >
-                                {label}
-                              </SelectItem>
-                            );
-                          })}
-                      </SelectContent>
-                    </Select>
-                    {row.ruleIds.length > 0 ? (
-                      <ul
-                        className="grid w-full min-w-0 gap-2"
-                        aria-label="Rules đã chọn"
-                      >
-                        {row.ruleIds.map((rid) => {
-                          const rule = rules.find((r) => r.id === rid);
-                          const text =
-                            rule?.ruleDef?.trim() ||
-                            (rule ? ruleLabel(rule) : rid);
-                          return (
-                            <li key={rid} className="min-w-0 max-w-full">
-                              <span className="flex w-full min-w-0 max-w-full items-start gap-1.5 rounded-lg border border-border/70 bg-muted/40 px-2 py-1.5">
-                                <span
-                                  className="min-h-0 min-w-0 max-h-32 flex-1 overflow-y-auto overscroll-y-contain break-words pr-0.5 text-xs leading-snug text-foreground/90"
-                                  title={text}
-                                >
-                                  {text}
-                                </span>
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="icon"
-                                  className="mt-0.5 size-6 shrink-0 text-muted-foreground hover:text-foreground"
-                                  disabled={disabled}
-                                  aria-label={`Bỏ rule ${rule ? ruleLabel(rule) : rid}`}
-                                  onClick={() =>
-                                    patchRow(index, {
-                                      ruleIds: removeRuleId(row.ruleIds, rid),
-                                    })
-                                  }
-                                >
-                                  <X className="size-3.5" aria-hidden />
-                                </Button>
-                              </span>
-                            </li>
-                          );
-                        })}
-                      </ul>
-                    ) : (
-                      <p className="text-xs text-muted-foreground">
-                        Chưa chọn rule nào (tùy chọn).
-                      </p>
-                    )}
-                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    id={`${idPrefix}-rules-${row.rowKey}`}
+                    className="h-10 w-full justify-start gap-2 px-3 font-normal"
+                    disabled={disabled || rules.length === 0}
+                    onClick={() => openRulesPicker(index)}
+                  >
+                    <ListChecks
+                      className="size-4 shrink-0 text-muted-foreground"
+                      aria-hidden
+                    />
+                    <span className="min-w-0 flex-1 text-left text-sm">
+                      {rules.length === 0
+                        ? "Chưa có rule trong project"
+                        : row.ruleIds.length === 0
+                          ? "Chọn rules…"
+                          : `${row.ruleIds.length} rule đã chọn`}
+                    </span>
+                  </Button>
                 )}
               </div>
             </div>
           </li>
-        ))}
+          );
+        })}
       </ol>
 
       {allowAddRemove && !hideFooterAddButton ? (
@@ -507,6 +452,27 @@ export function FlowCatalogActionRowsEditor({
           Thêm action
         </Button>
       ) : null}
+
+      <FlowActionRulesPickerDialog
+        open={rulesPickerRowKey != null && rulesPickerRow != null}
+        sessionKey={rulesPickerRowKey ?? "closed"}
+        onOpenChange={(open) => {
+          if (!open) setRulesPickerRowKey(null);
+        }}
+        rules={rules}
+        value={rulesPickerRow?.ruleIds ?? []}
+        onConfirm={(ruleIds) => {
+          if (rulesPickerRowIndex >= 0) {
+            patchRow(rulesPickerRowIndex, { ruleIds });
+          }
+          setRulesPickerRowKey(null);
+        }}
+        actionLabel={
+          rulesPickerRowIndex >= 0
+            ? `Action ${rulesPickerRowIndex + 1}`
+            : undefined
+        }
+      />
     </div>
   );
 }

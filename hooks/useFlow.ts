@@ -21,7 +21,9 @@ import {
   type ProjectFlowResponse,
   type ProjectFlowsListResponse,
   type ProjectFlowSwimlane,
+  type ListProjectFlowTemplatesParams,
   type ProjectFlowTemplate,
+  type ProjectFlowTemplateStep,
   type ProjectFlowTemplatesListResponse,
   type UpdateProjectFlowRequest,
   type UpdateProjectFlowResponse,
@@ -213,10 +215,12 @@ export function useProjectFlowFull(
 
 /**
  * GET /api/v1/projects/{project_id}/flows/{flow_id}/templates
+ *
+ * `data[]`: `{ flowId, code, name, actors, steps }` — `steps[]` gồm `rules`.
  */
 export function useProjectFlowTemplates(
-  projectId: string | null | undefined,
-  flowId: string | null | undefined,
+  projectId: ListProjectFlowTemplatesParams["projectId"] | null | undefined,
+  flowId: ListProjectFlowTemplatesParams["flowId"] | null | undefined,
   options?: { enabled?: boolean }
 ) {
   const pid = projectId?.trim() ?? "";
@@ -229,28 +233,35 @@ export function useProjectFlowTemplates(
     ProjectFlowTemplate[]
   >({
     queryKey: projectFlowTemplatesQueryKey(pid, fid),
-    queryFn: async () => fetchFlow.listTemplates(pid, fid),
+    queryFn: () => fetchFlow.listTemplates(pid, fid),
     select: (res) => res.data,
     enabled,
   });
 }
 
-/** Cùng GET templates; trả full envelope `{ success, data, message }`. */
+/** Cùng GET templates; trả envelope `{ success, data, message }`. */
 export function useProjectFlowTemplatesFull(
-  projectId: string | null | undefined,
-  flowId: string | null | undefined,
+  projectId: ListProjectFlowTemplatesParams["projectId"] | null | undefined,
+  flowId: ListProjectFlowTemplatesParams["flowId"] | null | undefined,
   options?: { enabled?: boolean }
 ) {
   const pid = projectId?.trim() ?? "";
   const fid = flowId?.trim() ?? "";
   const enabled = Boolean(pid && fid) && (options?.enabled ?? true);
 
-  return useCachedGet({
+  return useCachedGet<ProjectFlowTemplatesListResponse>({
     queryKey: projectFlowTemplatesQueryKey(pid, fid),
     queryFn: () => fetchFlow.listTemplates(pid, fid),
     enabled,
   });
 }
+
+export type {
+  ListProjectFlowTemplatesParams,
+  ProjectFlowTemplate,
+  ProjectFlowTemplateStep,
+  ProjectFlowTemplatesListResponse,
+};
 
 /**
  * POST /api/v1/projects/{project_id}/flows

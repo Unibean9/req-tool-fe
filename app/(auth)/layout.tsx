@@ -48,7 +48,7 @@ function AuthBrandMark({ className }: { className?: string }) {
       </span>
       <span className="flex min-w-0 flex-col">
         <span className="font-heading text-xl font-semibold leading-none tracking-tight text-foreground sm:text-2xl">
-          REQ-Bean9
+          Requirements | Bean9
         </span>
         <span className="mt-1 text-[11px] font-semibold tracking-[0.16em] text-brand-mint uppercase">
           Requirements workspace

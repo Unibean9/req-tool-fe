@@ -34,10 +34,19 @@ import { getApiErrorMessage } from "@/lib/api/getApiErrorMessage";
 import type {
   ProjectFlowTemplate,
   ProjectFlowTemplateActor,
+  ProjectFlowTemplateStep,
 } from "@/lib/api/services/fetchFlow";
 import { cn } from "@/lib/utils";
 
 const PANEL_MOTION_EASE = [0.22, 1, 0.36, 1] as const;
+
+const STEP_RULES_PANEL_MOTION_CLASS = cn(
+  "overflow-hidden opacity-100",
+  "h-(--collapsible-panel-height)",
+  "transition-[height,opacity] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)]",
+  "data-starting-style:opacity-0 data-ending-style:opacity-0",
+  "motion-reduce:transition-none motion-reduce:opacity-100"
+);
 
 const PANEL_WIDTH_CLASS =
   "w-80 max-w-[min(20rem,calc(100%-0.5rem))] sm:w-96 sm:max-w-[min(24rem,calc(100%-0.5rem))]";
@@ -142,23 +151,90 @@ function sortedTemplateSteps(template: ProjectFlowTemplate) {
   return [...template.steps].sort((a, b) => a.step - b.step);
 }
 
-/** `1. Mô tả bước` — số bước lấy từ field `step` API. */
-function formatTemplateStepsCopyText(template: ProjectFlowTemplate): string {
-  return sortedTemplateSteps(template)
-    .map((s) => `${s.step}. ${s.description.trim() || "—"}`)
-    .join("\n");
+/** Chuẩn hóa `step.rules` (unknown[]) → nhãn hiển thị. */
+function parseTemplateStepRuleLabels(rules: unknown[]): string[] {
+  if (!Array.isArray(rules)) return [];
+  const labels: string[] = [];
+  for (const raw of rules) {
+    if (typeof raw === "string") {
+      const t = raw.trim();
+      if (t) labels.push(t);
+      continue;
+    }
+    if (!raw || typeof raw !== "object") continue;
+    const o = raw as Record<string, unknown>;
+    const def = String(o.rule_def ?? o.ruleDef ?? "").trim();
+    if (def) {
+      labels.push(def);
+      continue;
+    }
+    const id = String(o.id ?? "").trim();
+    if (id) labels.push(id);
+  }
+  return labels;
 }
 
-async function copyTemplateSteps(template: ProjectFlowTemplate) {
+/** Markdown trong fence ` ```markdown ` — title = `code`, có Business Actor + Steps. */
+function formatTemplateMarkdownCopy(template: ProjectFlowTemplate): string {
+  const title = template.code.trim() || "—";
+  const lines: string[] = [`# ${title}`, "", "## Business Actor", ""];
+
+  if (template.actors.length > 0) {
+    for (const actor of template.actors) {
+      lines.push(`- ${actorDisplayName(actor)}`);
+    }
+  } else {
+    lines.push("- —");
+  }
+
+  lines.push("", "## Steps", "");
+
   const steps = sortedTemplateSteps(template);
   if (steps.length === 0) {
-    toast.message("Template chưa có bước để copy");
+    lines.push("_Chưa có bước._");
+  } else {
+    steps.forEach((step, index) => {
+      const actorLabel = resolveActorLabel(template, step.actor);
+      const ruleLabels = parseTemplateStepRuleLabels(step.rules);
+      const description = step.description.trim() || "—";
+
+      lines.push(`### Step ${step.step}`, "");
+      lines.push(
+        description.includes("\n")
+          ? description.split(/\r?\n/).join("<br>")
+          : description,
+        ""
+      );
+      lines.push(`**Actor:** ${actorLabel}`, "");
+
+      if (ruleLabels.length > 0) {
+        lines.push("**Rules:**", "");
+        for (const rule of ruleLabels) {
+          lines.push(`- ${rule}`);
+        }
+        lines.push("");
+      }
+
+      if (index < steps.length - 1) {
+        lines.push("<br>", "");
+      }
+    });
+  }
+
+  const body = lines.join("\n").trimEnd();
+  return `\`\`\`markdown\n${body}\n\`\`\``;
+}
+
+async function copyTemplateMarkdown(template: ProjectFlowTemplate) {
+  const steps = sortedTemplateSteps(template);
+  if (steps.length === 0 && template.actors.length === 0) {
+    toast.message("Template chưa có nội dung để copy");
     return;
   }
-  const text = formatTemplateStepsCopyText(template);
+  const text = formatTemplateMarkdownCopy(template);
   try {
     await navigator.clipboard.writeText(text);
-    toast.success("Đã copy template");
+    toast.success("Đã copy markdown template");
   } catch {
     toast.error("Không copy được — thử lại hoặc cấp quyền clipboard");
   }
@@ -199,6 +275,138 @@ function ActorChip({
       <Icon className="size-3 shrink-0 opacity-80" aria-hidden />
       {name}
     </span>
+  );
+}
+
+function FlowTemplateStepRow({
+  template,
+  step,
+  tone,
+  actorLabel,
+  showActorDivider,
+}: {
+  template: ProjectFlowTemplate;
+  step: ProjectFlowTemplateStep;
+  tone: ActorTone;
+  actorLabel: string;
+  showActorDivider: boolean;
+}) {
+  const [rulesOpen, setRulesOpen] = useState(false);
+  const ruleLabels = useMemo(
+    () => parseTemplateStepRuleLabels(step.rules),
+    [step.rules]
+  );
+  const hasRules = ruleLabels.length > 0;
+  const stepKey = `${template.flowId}-step-${step.step}`;
+
+  return (
+    <li>
+      {showActorDivider ? (
+        <div className="my-2 border-t border-border/45" aria-hidden />
+      ) : null}
+      <Collapsible
+        open={rulesOpen}
+        onOpenChange={setRulesOpen}
+        disabled={!hasRules}
+      >
+        {hasRules ? (
+          <CollapsibleTrigger
+            className={cn(
+              "flex w-full gap-2.5 rounded-md py-1.5 pr-0.5 text-left outline-none",
+              "transition-colors duration-150 ease-out",
+              "hover:bg-muted/35 focus-visible:ring-2 focus-visible:ring-ring/40",
+              rulesOpen && "bg-muted/20"
+            )}
+            aria-expanded={rulesOpen}
+            aria-controls={`${stepKey}-rules`}
+            aria-label={`Bước ${step.step}: ${step.description.trim() || "—"} — ${ruleLabels.length} rule, ${rulesOpen ? "thu gọn" : "mở"} danh sách`}
+          >
+            <span
+              className={cn(
+                "flex size-6 shrink-0 items-center justify-center rounded-full text-[11px] font-bold tabular-nums text-white",
+                tone.stepBg,
+                rulesOpen && "ring-1 ring-primary/40"
+              )}
+              aria-hidden
+            >
+              {step.step}
+            </span>
+
+            <div className="min-w-0 flex-1">
+              <p className="text-sm leading-snug text-foreground">
+                {step.description.trim() || "—"}
+              </p>
+              <p className={cn("mt-1 text-xs font-medium", tone.stepText)}>
+                {actorLabel}
+              </p>
+              {!rulesOpen ? (
+                <p className="mt-1 text-[10px] text-muted-foreground">
+                  {ruleLabels.length} rule
+                </p>
+              ) : null}
+            </div>
+
+            <ChevronDown
+              className={cn(
+                "size-3.5 shrink-0 text-muted-foreground transition-transform duration-200 ease-[cubic-bezier(0.22,1,0.36,1)]",
+                rulesOpen && "rotate-180"
+              )}
+              aria-hidden
+            />
+          </CollapsibleTrigger>
+        ) : (
+          <div className="flex gap-2.5 py-1.5">
+            <span
+              className={cn(
+                "flex size-6 shrink-0 items-center justify-center rounded-full text-[11px] font-bold tabular-nums text-white",
+                tone.stepBg
+              )}
+              aria-hidden
+            >
+              {step.step}
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm leading-snug text-foreground">
+                {step.description.trim() || "—"}
+              </p>
+              <p className={cn("mt-1 text-xs font-medium", tone.stepText)}>
+                {actorLabel}
+              </p>
+            </div>
+          </div>
+        )}
+
+        {hasRules ? (
+          <CollapsibleContent
+            id={`${stepKey}-rules`}
+            className={STEP_RULES_PANEL_MOTION_CLASS}
+          >
+            <div className="min-h-0 pb-1.5 pl-9">
+              <div className="rounded-md border border-border/70 bg-muted/25">
+                <div className="flex items-center justify-between gap-2 border-b border-border/50 px-2 py-1">
+                  <span className="text-[10px] font-semibold tracking-wide text-muted-foreground uppercase">
+                    Rules
+                  </span>
+                  <span className="rounded-full bg-background/80 px-2 py-0.5 text-[10px] font-semibold tabular-nums text-foreground">
+                    {ruleLabels.length}
+                  </span>
+                </div>
+                <ul className="max-h-32 space-y-0.5 overflow-y-auto overscroll-y-contain px-2 py-1.5">
+                  {ruleLabels.map((label, ruleIndex) => (
+                    <li
+                      key={`${stepKey}-rule-${ruleIndex}`}
+                      className="rounded border border-border/50 bg-background/60 px-1.5 py-1 text-[11px] leading-snug text-foreground/90"
+                    >
+                      {label}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </CollapsibleContent>
+        ) : null}
+      </Collapsible>
+    </li>
   );
 }
 
@@ -246,9 +454,9 @@ function FlowSwimlaneTemplateRow({
           variant="ghost"
           size="icon-sm"
           className="mt-2.5 size-8 shrink-0 text-muted-foreground hover:text-foreground"
-          disabled={steps.length === 0}
-          aria-label={`Copy template ${template.name || template.code}`}
-          onClick={() => void copyTemplateSteps(template)}
+          disabled={steps.length === 0 && template.actors.length === 0}
+          aria-label={`Copy markdown template ${template.code || template.name}`}
+          onClick={() => void copyTemplateMarkdown(template)}
         >
           <Copy className="size-3.5" aria-hidden />
         </Button>
@@ -297,38 +505,14 @@ function FlowSwimlaneTemplateRow({
                   index > 0 && prevLabel != null && prevLabel !== label;
 
                 return (
-                  <li key={`${template.flowId}-${step.step}`}>
-                    {showDivider ? (
-                      <div
-                        className="my-2 border-t border-border/45"
-                        aria-hidden
-                      />
-                    ) : null}
-                    <div className="flex gap-3 py-2">
-                      <span
-                        className={cn(
-                          "flex size-6 shrink-0 items-center justify-center rounded-full text-[11px] font-bold tabular-nums text-white",
-                          tone.stepBg
-                        )}
-                        aria-hidden
-                      >
-                        {step.step}
-                      </span>
-                      <div className="min-w-0 flex-1 pt-0.5">
-                        <p className="text-sm leading-snug text-foreground">
-                          {step.description}
-                        </p>
-                        <p
-                          className={cn(
-                            "mt-1 text-xs font-medium",
-                            tone.stepText
-                          )}
-                        >
-                          {label}
-                        </p>
-                      </div>
-                    </div>
-                  </li>
+                  <FlowTemplateStepRow
+                    key={`${template.flowId}-${step.step}`}
+                    template={template}
+                    step={step}
+                    tone={tone}
+                    actorLabel={label}
+                    showActorDivider={showDivider}
+                  />
                 );
               })}
             </ol>

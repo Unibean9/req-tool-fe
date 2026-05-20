@@ -8,10 +8,16 @@ import { cn } from "@/lib/utils";
 const OVERLAY_EASE = [0.22, 1, 0.36, 1] as const;
 
 const SWIMLANE_LANE_LABELS = ["Actor A", "Actor B", "Hệ thống"] as const;
-const LANE_PULSE_CLASS = [
+const LANE_ROW_CLASS = [
   "flow-action-ai-lane-pulse-0",
   "flow-action-ai-lane-pulse-1",
   "flow-action-ai-lane-pulse-2",
+] as const;
+
+const LANE_NODE_CLASS = [
+  "flow-action-ai-node-0",
+  "flow-action-ai-node-1",
+  "flow-action-ai-node-2",
 ] as const;
 
 type EditFlowActionAiLoadingOverlayProps = {
@@ -143,7 +149,7 @@ export function EditFlowActionAiLoadingOverlay({
 function SwimlaneDiagramPreview() {
   return (
     <div
-      className="w-full max-w-[17.5rem] rounded-xl border border-border/70 bg-muted/25 p-3 shadow-inner"
+      className="w-full max-w-70 rounded-xl border border-border/70 bg-muted/25 p-3 shadow-inner"
       aria-hidden
     >
       <div className="mb-2 flex items-center gap-1.5 text-[10px] font-medium text-muted-foreground">
@@ -156,25 +162,24 @@ function SwimlaneDiagramPreview() {
             key={label}
             className={cn(
               "relative h-8 overflow-hidden rounded-md border border-border/60 bg-background/90",
-              LANE_PULSE_CLASS[laneIndex]
+              LANE_ROW_CLASS[laneIndex]
             )}
           >
-            <div className="absolute inset-y-0 left-0 w-[28%] border-r border-dashed border-primary/25 bg-primary/5" />
-            <span className="absolute top-1 left-1.5 max-w-[26%] truncate text-[9px] font-medium text-muted-foreground">
+            <div className="absolute inset-y-0 left-0 z-0 w-[28%] border-r border-dashed border-primary/25 bg-primary/5" />
+            <span className="absolute top-1 left-1.5 z-1 max-w-[26%] truncate text-[9px] font-medium text-muted-foreground">
               {label}
             </span>
-            <motion.span
-              className="absolute top-1/2 size-3.5 -translate-y-1/2 rounded-[3px] bg-primary shadow-sm ring-2 ring-background"
-              initial={false}
-              animate={{ left: ["10%", "68%", "10%"] }}
-              transition={{
-                duration: 2.2,
-                repeat: Infinity,
-                ease: "easeInOut",
-                delay: laneIndex * 0.35,
-              }}
+            <div
+              className="absolute inset-y-0 right-0 left-[28%] overflow-hidden"
               aria-hidden
-            />
+            >
+              <span
+                className={cn(
+                  "flow-action-ai-node bg-primary shadow-sm ring-2 ring-background",
+                  LANE_NODE_CLASS[laneIndex]
+                )}
+              />
+            </div>
           </div>
         ))}
       </div>

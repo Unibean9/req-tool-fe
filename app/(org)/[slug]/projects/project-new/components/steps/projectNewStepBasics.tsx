@@ -81,7 +81,7 @@ export function ProjectNewStepBasics({
               id="pn-name"
               autoComplete="off"
               aria-invalid={Boolean(nameError)}
-              placeholder="Ví dụ: API thanh toán"
+              placeholder="Nhập tên dự án…"
               value={form.name}
               onChange={(e) =>
                 onPatch({
