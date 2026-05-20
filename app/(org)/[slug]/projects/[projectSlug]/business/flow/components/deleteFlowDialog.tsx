@@ -49,7 +49,7 @@ export function DeleteFlowDialog({
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={deletePending}>Cancel</AlertDialogCancel>
+          <AlertDialogCancel disabled={deletePending}>Hủy</AlertDialogCancel>
           <AlertDialogAction
             variant="destructive"
             disabled={deletePending || !target}

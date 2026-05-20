@@ -1,7 +1,14 @@
 "use client";
 
-import { useState, type ClipboardEvent } from "react";
-import { ChevronDown, ChevronUp, ListChecks, Plus, X } from "lucide-react";
+import { useEffect, useState, type ClipboardEvent } from "react";
+import {
+  CheckCircle2,
+  ChevronDown,
+  ChevronUp,
+  ListChecks,
+  Plus,
+  X,
+} from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -128,6 +135,8 @@ type FlowCatalogActionRowsEditorProps = {
   showOrderControls?: boolean;
   /** Ẩn nút «Thêm action» ở cuối danh sách (vd. đặt trên header dialog). */
   hideFooterAddButton?: boolean;
+  /** Row vừa được thêm bằng nút add, dùng để chạy enter animation. */
+  introRowKey?: string | null;
 };
 
 function moveRow(
@@ -169,8 +178,10 @@ export function FlowCatalogActionRowsEditor({
   allowAddRemove = false,
   showOrderControls = false,
   hideFooterAddButton = false,
+  introRowKey = null,
 }: FlowCatalogActionRowsEditorProps) {
   const [rulesPickerRowKey, setRulesPickerRowKey] = useState<string | null>(null);
+  const [deletingRowKey, setDeletingRowKey] = useState<string | null>(null);
   const canAddRow = canAppendFlowCatalogActionRow(rows, disabled) && allowAddRemove;
 
   const rulesPickerRowIndex =
@@ -190,19 +201,32 @@ export function FlowCatalogActionRowsEditor({
   }
 
   function removeRow(index: number) {
+    if (deletingRowKey != null) return;
+    const targetRow = rows[index];
+    if (!targetRow) return;
+
     if (rows.length <= 1) {
-      onChange([
-        {
-          rowKey: rows[0]!.rowKey,
-          persistId: rows[0]!.persistId,
-          description: "",
-          actorId: "",
-          ruleIds: [],
-        },
-      ]);
+      setDeletingRowKey(targetRow.rowKey);
+      window.setTimeout(() => {
+        onChange([
+          {
+            rowKey: targetRow.rowKey,
+            persistId: targetRow.persistId,
+            description: "",
+            actorId: "",
+            ruleIds: [],
+          },
+        ]);
+        setDeletingRowKey(null);
+      }, 220);
       return;
     }
-    onChange(rows.filter((_, i) => i !== index));
+
+    setDeletingRowKey(targetRow.rowKey);
+    window.setTimeout(() => {
+      onChange(rows.filter((r) => r.rowKey !== targetRow.rowKey));
+      setDeletingRowKey(null);
+    }, 220);
   }
 
   function addRow() {
@@ -250,6 +274,12 @@ export function FlowCatalogActionRowsEditor({
 
   const loading = stakeholdersPending || rulesPending;
 
+  useEffect(() => {
+    if (introRowKey == null) return;
+    const input = document.getElementById(`${idPrefix}-desc-${introRowKey}`);
+    window.setTimeout(() => input?.focus(), 260);
+  }, [idPrefix, introRowKey]);
+
   return (
     <div className="grid w-full min-w-0 gap-5 py-2">
       {loading ? (
@@ -266,25 +296,46 @@ export function FlowCatalogActionRowsEditor({
         </p>
       ) : null}
 
-      <ol className="list-none space-y-4">
+      <ol className="relative overflow-hidden rounded-xl border border-border/70 bg-card/35 before:pointer-events-none before:absolute before:bottom-4 before:left-7 before:top-4 before:z-10 before:w-px before:bg-border/60 sm:before:left-8">
         {rows.map((row, index) => {
           const rowComplete = isFlowCatalogActionRowComplete(row);
+          const rowIntro = introRowKey === row.rowKey;
+          const rowDeleting = deletingRowKey === row.rowKey;
           return (
           <li
             key={row.rowKey}
             className={cn(
-              "rounded-xl border bg-muted/15 p-4 transition-[border-color] duration-150",
+              "flow-action-editor-row relative border-b border-border/60 p-3 transition-colors duration-150 last:border-b-0 sm:p-4",
               rowComplete
-                ? "border-emerald-500/50"
-                : "border-border/70"
+                ? "bg-emerald-500/[0.035]"
+                : "bg-transparent",
+              rowDeleting && "flow-action-editor-row-exit"
             )}
             data-complete={rowComplete ? "true" : undefined}
+            aria-hidden={rowDeleting ? "true" : undefined}
           >
+            <div className={cn(rowIntro && "flow-action-editor-row-enter")}>
+            <div className="grid min-w-0 grid-cols-[2rem_minmax(0,1fr)] gap-3">
+              <div className="relative flex justify-center">
+                <span
+                  className={cn(
+                    "relative z-20 flex size-8 items-center justify-center rounded-lg border text-xs font-bold tabular-nums shadow-[0_0_0_4px_hsl(var(--card))]",
+                    rowComplete
+                      ? "border-emerald-500/25 bg-card text-emerald-300"
+                      : "border-primary/20 bg-card text-primary"
+                  )}
+                >
+                  {String(index + 1).padStart(2, "0")}
+                </span>
+              </div>
+
+              <div className="min-w-0">
             <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
               <span className="flex min-w-0 flex-wrap items-center gap-2 text-sm font-semibold text-foreground">
-                Action {index + 1}
+                Action
                 {rowComplete ? (
-                  <span className="text-[10px] font-medium text-emerald-700 dark:text-emerald-400">
+                  <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold text-emerald-300">
+                    <CheckCircle2 className="size-3" aria-hidden />
                     Đủ thông tin
                   </span>
                 ) : null}
@@ -294,9 +345,9 @@ export function FlowCatalogActionRowsEditor({
                   <>
                     <Button
                       type="button"
-                      variant="outline"
+                      variant="ghost"
                       size="icon"
-                      className="size-9 shrink-0"
+                      className="size-8 shrink-0 text-muted-foreground"
                       disabled={disabled || index === 0}
                       aria-label="Đưa action lên"
                       onClick={() => onChange(moveRow(rows, index, -1))}
@@ -305,9 +356,9 @@ export function FlowCatalogActionRowsEditor({
                     </Button>
                     <Button
                       type="button"
-                      variant="outline"
+                      variant="ghost"
                       size="icon"
-                      className="size-9 shrink-0"
+                      className="size-8 shrink-0 text-muted-foreground"
                       disabled={disabled || index === rows.length - 1}
                       aria-label="Đưa action xuống"
                       onClick={() => onChange(moveRow(rows, index, 1))}
@@ -319,10 +370,10 @@ export function FlowCatalogActionRowsEditor({
                 {allowAddRemove ? (
                   <Button
                     type="button"
-                    variant="outline"
+                    variant="ghost"
                     size="icon"
-                    className="size-9 shrink-0 text-muted-foreground"
-                    disabled={disabled || rows.length <= 1}
+                    className="size-8 shrink-0 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                    disabled={disabled || deletingRowKey != null}
                     aria-label={`Xóa action ${index + 1}`}
                     onClick={() => removeRow(index)}
                   >
@@ -332,11 +383,41 @@ export function FlowCatalogActionRowsEditor({
               </div>
             </div>
 
-            <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-[minmax(11rem,14rem)_minmax(0,1fr)_minmax(11rem,16rem)] md:gap-3">
+            <div className="grid grid-cols-1 items-start gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(12rem,15rem)_minmax(12rem,16rem)]">
+              <div className="grid min-w-0 gap-2">
+                <div className="flex items-baseline justify-between gap-2">
+                  <Label
+                    htmlFor={`${idPrefix}-desc-${row.rowKey}`}
+                    className="text-xs font-semibold text-muted-foreground"
+                  >
+                    Mô tả action
+                  </Label>
+                  <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
+                    {row.description.length} / {FLOW_ACTION_DESCRIPTION_MAX_CHARS}
+                  </span>
+                </div>
+                <Input
+                  id={`${idPrefix}-desc-${row.rowKey}`}
+                  value={row.description}
+                  onChange={(e) =>
+                    patchRow(index, {
+                      description: e.target.value.slice(
+                        0,
+                        FLOW_ACTION_DESCRIPTION_MAX_CHARS
+                      ),
+                    })
+                  }
+                  onPaste={(e) => handleDescriptionPaste(index, e)}
+                  disabled={disabled}
+                  placeholder="Mô tả bước… (paste nhiều dòng để tách action)"
+                  className="h-10 min-w-0 border-border/80 bg-background/70"
+                />
+              </div>
+
               <div className="grid min-w-0 gap-2">
                 <Label
                   htmlFor={`${idPrefix}-actor-${row.rowKey}`}
-                  className="text-sm font-semibold"
+                  className="text-xs font-semibold text-muted-foreground"
                 >
                   Business Actor
                 </Label>
@@ -373,39 +454,9 @@ export function FlowCatalogActionRowsEditor({
               </div>
 
               <div className="grid min-w-0 gap-2">
-                <div className="flex items-baseline justify-between gap-2">
-                  <Label
-                    htmlFor={`${idPrefix}-desc-${row.rowKey}`}
-                    className="text-sm font-semibold"
-                  >
-                    Mô tả 
-                  </Label>
-                  <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
-                    {row.description.length} / {FLOW_ACTION_DESCRIPTION_MAX_CHARS}
-                  </span>
-                </div>
-                <Input
-                  id={`${idPrefix}-desc-${row.rowKey}`}
-                  value={row.description}
-                  onChange={(e) =>
-                    patchRow(index, {
-                      description: e.target.value.slice(
-                        0,
-                        FLOW_ACTION_DESCRIPTION_MAX_CHARS
-                      ),
-                    })
-                  }
-                  onPaste={(e) => handleDescriptionPaste(index, e)}
-                  disabled={disabled}
-                  placeholder="Mô tả bước… (paste nhiều dòng để tách action)"
-                  className="h-10 min-w-0 border-border/80 bg-background/70"
-                />
-              </div>
-
-              <div className="grid min-w-0 gap-2">
                 <Label
                   htmlFor={`${idPrefix}-rules-${row.rowKey}`}
-                  className="text-sm font-semibold"
+                  className="text-xs font-semibold text-muted-foreground"
                 >
                   Rules
                 </Label>
@@ -434,6 +485,9 @@ export function FlowCatalogActionRowsEditor({
                   </Button>
                 )}
               </div>
+            </div>
+              </div>
+            </div>
             </div>
           </li>
           );

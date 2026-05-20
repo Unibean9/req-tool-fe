@@ -2,7 +2,13 @@
 
 import { useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { ArrowDown, ArrowUp, Pencil, Target, Trash2 } from "lucide-react";
+import {
+  ArrowDown,
+  ArrowUp,
+  Pencil,
+  Target,
+  Trash2,
+} from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -53,10 +59,10 @@ function goalPreview(description: string, max = 48): string {
 function GoalIndexBadge({ index }: { index: number }) {
   return (
     <span
-      className="flex size-7 shrink-0 items-center justify-center rounded-full border border-border/80 bg-muted/50 text-xs font-semibold tabular-nums text-foreground sm:size-8"
+      className="flex size-11 shrink-0 items-center justify-center rounded-xl border border-primary/20 bg-primary/10 text-sm font-bold tabular-nums text-primary shadow-sm shadow-primary/5"
       aria-hidden
     >
-      {index}
+      {String(index).padStart(2, "0")}
     </span>
   );
 }
@@ -82,67 +88,80 @@ function GoalListRow({
   onEdit: () => void;
   onDelete: () => void;
 }) {
-  return (
-    <article className="flex h-full w-full min-w-0 items-start gap-3 rounded-xl border border-border/70 bg-card/50 p-3.5 shadow-sm transition-colors hover:border-border hover:bg-card/80 sm:gap-4 sm:p-4">
-      <GoalIndexBadge index={displayIndex} />
+  const description = row.description.trim();
 
-      <div className="min-w-0 flex-1 space-y-1 overflow-hidden">
-        <p className="min-w-0 break-words text-base leading-relaxed text-foreground [overflow-wrap:anywhere]">
-          {row.description.trim() || (
-            <span className="text-muted-foreground italic">Chưa có mô tả.</span>
-          )}
-        </p>
+  return (
+    <article className="flex h-full w-full min-w-0 flex-col rounded-xl border border-border/70 bg-card/60 p-4 shadow-sm transition-[border-color,background-color,box-shadow] duration-200 ease-out hover:border-border hover:bg-card hover:shadow-md">
+      <div className="flex min-w-0 items-start gap-3">
+        <GoalIndexBadge index={displayIndex} />
+
+        <div className="min-w-0 flex-1">
+          <div className="mb-1.5 flex flex-wrap items-center gap-2">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-muted/35 px-2.5 py-1 text-[11px] font-semibold text-muted-foreground">
+              <Target className="size-3.5" aria-hidden />
+              Goal #{displayIndex}
+            </span>
+          </div>
+
+          <p className="min-w-0 break-words text-base leading-relaxed text-foreground [overflow-wrap:anywhere]">
+            {description || (
+              <span className="text-muted-foreground italic">Chưa có mô tả.</span>
+            )}
+          </p>
+        </div>
       </div>
 
-      <div className="flex shrink-0 flex-wrap items-center justify-end gap-1">
-        <Button
-          type="button"
-          variant="outline"
-          size="icon"
-          className="size-9 shrink-0"
-          aria-label="Đưa goal lên đầu"
-          title="Lên đầu"
-          disabled={rowBusy || !canMoveUp}
-          onClick={onMoveUp}
-        >
-          <ArrowUp className="size-4" aria-hidden />
-        </Button>
-        <Button
-          type="button"
-          variant="outline"
-          size="icon"
-          className="size-9 shrink-0"
-          aria-label="Đưa goal xuống một bậc"
-          title="Xuống một bậc"
-          disabled={rowBusy || !canMoveDown}
-          onClick={onMoveDown}
-        >
-          <ArrowDown className="size-4" aria-hidden />
-        </Button>
-        <Button
-          type="button"
-          variant="outline"
-          size="icon"
-          className="size-9 shrink-0"
-          aria-label="Chỉnh sửa goal"
-          title="Chỉnh sửa"
-          disabled={rowBusy}
-          onClick={onEdit}
-        >
-          <Pencil className="size-4" aria-hidden />
-        </Button>
-        <Button
-          type="button"
-          variant="outline"
-          size="icon"
-          className="size-9 shrink-0 text-muted-foreground hover:border-destructive/40 hover:bg-destructive/10 hover:text-destructive"
-          aria-label="Xóa goal"
-          title="Xóa"
-          disabled={rowBusy}
-          onClick={onDelete}
-        >
-          <Trash2 className="size-4" aria-hidden />
-        </Button>
+      <div className="mt-4 flex flex-wrap items-center justify-end gap-2 border-t border-border/60 pt-3">
+        <div className="flex flex-wrap items-center justify-end gap-1.5">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="h-8 gap-1.5 text-xs"
+            aria-label="Đưa goal lên đầu"
+            disabled={rowBusy || !canMoveUp}
+            onClick={onMoveUp}
+          >
+            <ArrowUp className="size-3.5" aria-hidden />
+            Lên đầu
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="h-8 gap-1.5 text-xs"
+            aria-label="Đưa goal xuống một bậc"
+            disabled={rowBusy || !canMoveDown}
+            onClick={onMoveDown}
+          >
+            <ArrowDown className="size-3.5" aria-hidden />
+            Xuống
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="h-8 gap-1.5 text-xs"
+            aria-label="Chỉnh sửa goal"
+            disabled={rowBusy}
+            onClick={onEdit}
+          >
+            <Pencil className="size-3.5" aria-hidden />
+            Sửa
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="h-8 gap-1.5 text-xs text-muted-foreground hover:border-destructive/40 hover:bg-destructive/10 hover:text-destructive"
+            aria-label="Xóa goal"
+            disabled={rowBusy}
+            onClick={onDelete}
+          >
+            <Trash2 className="size-3.5" aria-hidden />
+            Xóa
+          </Button>
+        </div>
       </div>
     </article>
   );

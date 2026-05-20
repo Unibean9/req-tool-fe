@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { Layers, Sparkles } from "lucide-react";
+import { BrainCircuit, Layers, Sparkles } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
@@ -19,6 +19,8 @@ const LANE_NODE_CLASS = [
   "flow-action-ai-node-1",
   "flow-action-ai-node-2",
 ] as const;
+
+const PIPELINE_STEPS = ["Parse flow", "Map actors", "Bind rules"] as const;
 
 type EditFlowActionAiLoadingOverlayProps = {
   open: boolean;
@@ -63,6 +65,7 @@ export function EditFlowActionAiLoadingOverlay({
               "bg-card/98 px-6 py-7 shadow-2xl shadow-primary/15 sm:px-8 sm:py-8"
             )}
           >
+            <div className="flow-action-ai-scanline" aria-hidden />
             <div
               className="pointer-events-none absolute -top-20 left-1/2 size-56 -translate-x-1/2 rounded-full bg-primary/20 blur-3xl"
               aria-hidden
@@ -101,8 +104,12 @@ export function EditFlowActionAiLoadingOverlay({
                     "ring-1 ring-primary/30"
                   )}
                 >
+                  <BrainCircuit
+                    className="flow-action-ai-circuit-drift absolute size-8 text-primary/20"
+                    aria-hidden
+                  />
                   <Sparkles
-                    className="flow-action-ai-icon-pulse size-6 text-primary motion-safe:opacity-100"
+                    className="flow-action-ai-icon-pulse relative size-6 text-primary motion-safe:opacity-100"
                     aria-hidden
                   />
                 </span>
@@ -127,6 +134,23 @@ export function EditFlowActionAiLoadingOverlay({
                   Đồng bộ actions, lanes, nodes và luồng điều khiển. Quá trình có
                   thể mất vài giây — vui lòng không đóng cửa sổ.
                 </p>
+              </div>
+
+              <div className="mt-5 grid w-full grid-cols-3 gap-2" aria-hidden>
+                {PIPELINE_STEPS.map((step, index) => (
+                  <div
+                    key={step}
+                    className={cn(
+                      "flow-action-ai-step rounded-lg border border-border/70 bg-muted/25 px-2 py-2 text-left",
+                      `flow-action-ai-step-${index}`
+                    )}
+                  >
+                    <span className="mb-1 block size-1.5 rounded-full bg-primary" />
+                    <span className="block truncate text-[10px] font-semibold text-foreground/90">
+                      {step}
+                    </span>
+                  </div>
+                ))}
               </div>
 
               <div
@@ -173,6 +197,8 @@ function SwimlaneDiagramPreview() {
               className="absolute inset-y-0 right-0 left-[28%] overflow-hidden"
               aria-hidden
             >
+              <span className="flow-action-ai-packet flow-action-ai-packet-a" />
+              <span className="flow-action-ai-packet flow-action-ai-packet-b" />
               <span
                 className={cn(
                   "flow-action-ai-node bg-primary shadow-sm ring-2 ring-background",

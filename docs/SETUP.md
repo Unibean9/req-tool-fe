@@ -299,9 +299,9 @@ export function getSecureCookieConfig(customOptions: Partial<CookieOptions> = {}
   return { ...defaultConfig, ...customOptions };
 }
 
-export function getAuthCookieConfig(rememberMe = false): CookieOptions {
+export function getAuthCookieConfig(): CookieOptions {
   return getSecureCookieConfig({
-    maxAge: rememberMe ? 60 * 60 * 24 * 30 : 60 * 60 * 24 * 7, // 30 days or 7 days
+    maxAge: 60 * 60 * 24 * 7,
   });
 }
 ```

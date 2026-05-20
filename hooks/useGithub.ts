@@ -122,10 +122,7 @@ function navigateAfterOAuthLogin(targetPath: string) {
   window.location.replace(targetPath);
 }
 
-export function useGithubOAuthPopupResult(
-  redirectTo?: string,
-  rememberMe = false
-) {
+export function useGithubOAuthPopupResult(redirectTo?: string) {
   const dispatch = useAppDispatch();
   const queryClient = useQueryClient();
   const appOrigin = React.useMemo(
@@ -190,7 +187,7 @@ export function useGithubOAuthPopupResult(
         return;
       }
 
-      persistAccessTokenCookie(tokens.accessToken, rememberMe);
+      persistAccessTokenCookie(tokens.accessToken);
       dispatch(setTokenWithRefresh(tokens));
       setupAutoRefresh(tokens.accessToken, dispatch as AppDispatch);
       void queryClient.invalidateQueries({ queryKey: queryKeys.auth.all });
@@ -204,12 +201,5 @@ export function useGithubOAuthPopupResult(
 
     window.addEventListener("message", onMessage);
     return () => window.removeEventListener("message", onMessage);
-  }, [
-    apiOrigin,
-    appOrigin,
-    dispatch,
-    postLoginTarget,
-    queryClient,
-    rememberMe,
-  ]);
+  }, [apiOrigin, appOrigin, dispatch, postLoginTarget, queryClient]);
 }

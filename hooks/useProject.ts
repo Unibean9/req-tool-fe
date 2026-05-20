@@ -12,6 +12,7 @@ import { getApiErrorMessage } from "@/lib/api/getApiErrorMessage";
 import { fetchProject } from "@/lib/api/services/fetchProject";
 import { getNextProjectSlugAfterDelete } from "@/lib/project/projectListNav";
 import {
+  projectBrdExportQueryKey,
   orgProjectQueryKey,
   orgProjectsQueryKey,
   projectSetupProgressQueryKey,
@@ -24,6 +25,7 @@ import type {
   OrgProject,
   OrgProjectDetailResponse,
   OrgProjectsListResponse,
+  ProjectBrdExportResponse,
   ProjectSetupProgress,
   ProjectSetupProgressResponse,
   UpdateOrgProjectRequest,
@@ -164,6 +166,26 @@ export function useProjectSetupProgressFull(
     queryFn: () => fetchProject.getSetupProgress(pid),
     enabled,
   });
+}
+
+/**
+ * GET /api/v1/projects/{project_id}/brd/export — trả nội dung BRD dạng string.
+ * Thiếu `projectId` thì `enabled: false`.
+ */
+export function useProjectBrdExport(
+  projectId: string | null | undefined,
+  options?: { enabled?: boolean }
+) {
+  const pid = projectId?.trim() ?? "";
+  const enabled = Boolean(pid) && (options?.enabled ?? true);
+
+  return useCachedGet<ProjectBrdExportResponse, Error, ProjectBrdExportResponse>(
+    {
+      queryKey: projectBrdExportQueryKey(pid),
+      queryFn: async () => fetchProject.getBrdExport(pid),
+      enabled,
+    }
+  );
 }
 
 /** Cùng GET detail; trả full envelope `{ success, data, message }`. */
@@ -398,6 +420,7 @@ export type {
   OrgProjectApiRow,
   OrgProjectDetailResponse,
   OrgProjectsListResponse,
+  ProjectBrdExportResponse,
   ProjectSetupProgress,
   ProjectSetupProgressResponse,
   UpdateOrgProjectRequest,

@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Plus } from "lucide-react";
+import { CheckCircle2, ListChecks, Plus, UsersRound } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -31,9 +31,9 @@ import { EditFlowActionAiLoadingOverlay } from "./editFlowActionAiLoadingOverlay
 import { parseFlowCatalogActions } from "./flowCatalogActions";
 import {
   FlowCatalogActionRowsEditor,
-  appendFlowCatalogActionRow,
   canAppendFlowCatalogActionRow,
   flowCatalogActionRowsValidForSubmit,
+  isFlowCatalogActionRowComplete,
   newFlowCatalogActionRow,
   type FlowCatalogActionRowModel,
 } from "./flowCatalogActionRowsEditor";
@@ -115,10 +115,24 @@ function EditFlowActionFormDialogLoaded({
     : flowCatalogActionRowsValidForSubmit(rows) && !pending;
 
   const canAddRow = canAppendFlowCatalogActionRow(rows, pending);
+  const [introRowKey, setIntroRowKey] = useState<string | null>(null);
 
   useEffect(() => {
     onSavePendingChange?.(pending);
   }, [pending, onSavePendingChange]);
+
+  useEffect(() => {
+    if (introRowKey == null) return;
+    const timer = window.setTimeout(() => setIntroRowKey(null), 1200);
+    return () => window.clearTimeout(timer);
+  }, [introRowKey]);
+
+  function handleAddAction() {
+    if (!canAddRow) return;
+    const nextRow = newFlowCatalogActionRow();
+    setRows((prev) => [...prev, nextRow]);
+    setIntroRowKey(nextRow.rowKey);
+  }
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -201,6 +215,7 @@ function EditFlowActionFormDialogLoaded({
   const descriptionLead = isCreate
     ? "Thêm Actor Business và rule(s) cho các action của "
     : "Cập nhật Actor Business và rule(s) cho từng action của ";
+  const completeCount = rows.filter(isFlowCatalogActionRowComplete).length;
 
   return (
     <form
@@ -210,22 +225,40 @@ function EditFlowActionFormDialogLoaded({
     >
       <EditFlowActionAiLoadingOverlay open={pending} />
 
-      <DialogHeader className="shrink-0 space-y-0">
-        <div className="flex items-start justify-between gap-3 pr-8">
-          <div className="min-w-0 flex-1 space-y-1">
-            <DialogTitle className="text-lg">{title}</DialogTitle>
-            <DialogDescription>
-              {descriptionLead}
-              <span className="font-medium text-foreground">{flow.name}</span>.
-            </DialogDescription>
+      <DialogHeader className="shrink-0 pr-10 sm:pr-10">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+          <div className="min-w-0 flex-1 space-y-2">
+            <div className="space-y-1">
+              <DialogTitle className="text-lg">{title}</DialogTitle>
+              <DialogDescription>
+                {descriptionLead}
+                <span className="font-medium text-foreground">{flow.name}</span>.
+              </DialogDescription>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-background/60 px-2.5 py-1 text-[11px] font-semibold text-muted-foreground">
+                <ListChecks className="size-3.5" aria-hidden />
+                {rows.length} actions
+              </span>
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/25 bg-emerald-500/10 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 dark:text-emerald-300">
+                <CheckCircle2 className="size-3.5" aria-hidden />
+                {completeCount} đủ thông tin
+              </span>
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-background/60 px-2.5 py-1 text-[11px] font-semibold text-muted-foreground">
+                <UsersRound className="size-3.5" aria-hidden />
+                Business actors only
+              </span>
+            </div>
           </div>
+
           <Button
             type="button"
             variant="default"
             size="sm"
-            className="mt-0.5 shrink-0 gap-1.5 font-semibold"
+            className="shrink-0 gap-1.5 font-semibold"
             disabled={!canAddRow}
-            onClick={() => setRows((prev) => appendFlowCatalogActionRow(prev))}
+            onClick={handleAddAction}
           >
             <Plus className="size-4" aria-hidden />
             Thêm action
@@ -233,25 +266,28 @@ function EditFlowActionFormDialogLoaded({
         </div>
       </DialogHeader>
 
-      <div className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain [-webkit-overflow-scrolling:touch] scrollbar-gutter-stable">
-        <FlowCatalogActionRowsEditor
-          rows={rows}
-          onChange={setRows}
-          stakeholders={stakeholders}
-          stakeholdersPending={stakeholdersPending}
-          rules={rules}
-          rulesPending={rulesPending}
-          disabled={pending}
-          idPrefix={
-            isCreate ? "create-flow-actions-inline" : "edit-flow-actions"
-          }
-          allowAddRemove
-          showOrderControls
-          hideFooterAddButton
-        />
+      <div className="min-h-0 flex-1 pr-3">
+        <div className="h-full overflow-y-auto overscroll-y-contain pr-6 [-webkit-overflow-scrolling:touch] [scrollbar-gutter:stable]">
+          <FlowCatalogActionRowsEditor
+            rows={rows}
+            onChange={setRows}
+            stakeholders={stakeholders}
+            stakeholdersPending={stakeholdersPending}
+            rules={rules}
+            rulesPending={rulesPending}
+            disabled={pending}
+            idPrefix={
+              isCreate ? "create-flow-actions-inline" : "edit-flow-actions"
+            }
+            allowAddRemove
+            showOrderControls
+            hideFooterAddButton
+            introRowKey={introRowKey}
+          />
+        </div>
       </div>
 
-      <DialogFooter className="mt-2 shrink-0 gap-2 sm:justify-end">
+      <DialogFooter className="mt-2 shrink-0 gap-2 border-t border-border/60 pt-3 sm:justify-end">
         <Button
           type="button"
           variant="outline"
