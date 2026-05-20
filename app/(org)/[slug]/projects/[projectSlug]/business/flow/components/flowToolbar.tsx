@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
-import { FlowFormDialog } from "./flowFormDialog";
+import { CreateFlowFormDialog } from "./createFlowFormDialog";
 
 type FlowToolbarProps = {
   search: string;
@@ -73,7 +73,7 @@ export function FlowToolbar({
         </div>
       </header>
 
-      <FlowFormDialog
+      <CreateFlowFormDialog
         projectId={projectId}
         open={createOpen}
         onOpenChange={setCreateOpen}

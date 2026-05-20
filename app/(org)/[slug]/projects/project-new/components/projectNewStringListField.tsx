@@ -36,11 +36,13 @@ export function ProjectNewStringListField({
   addButtonInHeader = false,
   showSubmitErrors = false,
   errors,
+  required = false,
   className,
 }: {
   id: string;
   fieldKey: string;
   label: string;
+  required?: boolean;
   hint?: string;
   placeholder?: string;
   items: string[];
@@ -166,6 +168,12 @@ export function ProjectNewStringListField({
         <div className="min-w-0">
           <Label htmlFor={`${id}-0`} className="text-sm font-semibold">
             {label}
+            {required ? (
+              <>
+                {" "}
+                <span className="text-destructive">*</span>
+              </>
+            ) : null}
           </Label>
           {hint ? (
             <p className="mt-0.5 text-xs text-muted-foreground">{hint}</p>

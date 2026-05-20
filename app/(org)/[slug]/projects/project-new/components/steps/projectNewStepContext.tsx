@@ -38,8 +38,8 @@ export function ProjectNewStepContext({
           Ngữ cảnh và vấn đề
         </h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Ngữ cảnh và mỗi vấn đề cần ít nhất {PROJECT_MIN_TEXT_CHARS} ký tự; cần
-          ít nhất một vấn đề.
+          Tất cả trường bắt buộc — ngữ cảnh và mỗi vấn đề tối thiểu{" "}
+          {PROJECT_MIN_TEXT_CHARS} ký tự; cần ít nhất một vấn đề.
         </p>
       </div>
 
@@ -80,6 +80,7 @@ export function ProjectNewStepContext({
           id="pn-problems"
           fieldKey="problems"
           label="Vấn đề cần giải quyết"
+          required
           hint={`Ít nhất một mục, mỗi mục tối thiểu ${PROJECT_MIN_TEXT_CHARS} ký tự`}
           placeholder="Vd: Thanh toán chậm, thiếu báo cáo…"
           items={form.problems}

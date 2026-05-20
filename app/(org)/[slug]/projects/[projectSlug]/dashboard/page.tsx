@@ -2,23 +2,19 @@
 
 import { useParams } from "next/navigation";
 import { useMemo } from "react";
-import { toast } from "sonner";
-
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useOrgProjects } from "@/hooks/useProject";
+import { useOrgProject, useOrgProjects } from "@/hooks/useProject";
 
+import { PROJECT_BUSINESS_VALUE_LABEL } from "../../project-new/components/projectFormLimits";
 import { useOrgWorkspace } from "../../../orgWorkspaceContext";
 import { ProjectDashboardHeader } from "./components/projectDashboardHeader";
 import { ProjectDashboardIndexedList } from "./components/projectDashboardIndexedList";
+import { ProjectDashboardProse } from "./components/projectDashboardProse";
 import { ProjectDashboardSection } from "./components/projectDashboardSection";
 
 const DASHBOARD_PAIR_ROW_CLASS =
   "grid gap-8 lg:grid-cols-2 lg:items-start lg:gap-x-12 xl:gap-x-16";
-
-function showEditSoon() {
-  toast.message("Chức năng chỉnh sửa sẽ có trong bản cập nhật tới.");
-}
 
 function EmptyHint({ children }: { children: string }) {
   return (
@@ -31,15 +27,23 @@ function EmptyHint({ children }: { children: string }) {
 function DashboardSkeleton() {
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-8 overflow-y-auto">
-      <div className="space-y-3">
+      <div className="space-y-4 border-b border-border/50 pb-6">
         <Skeleton className="h-10 w-72" />
-        <Skeleton className="h-5 w-full" />
+        <Skeleton className="h-5 w-full max-w-2xl" />
+        <div className="flex gap-3">
+          <Skeleton className="h-12 w-44 rounded-xl" />
+          <Skeleton className="h-12 w-36 rounded-xl" />
+        </div>
       </div>
       <div className="grid gap-8 lg:grid-cols-2">
+        <Skeleton className="h-36 w-full" />
         <Skeleton className="h-28 w-full" />
-        <Skeleton className="h-44 w-full" />
       </div>
-      <Skeleton className="h-48 w-full" />
+      <div className="grid gap-8 lg:grid-cols-2">
+        <Skeleton className="h-32 w-full" />
+        <Skeleton className="h-32 w-full" />
+      </div>
+      <Skeleton className="h-28 w-full" />
     </div>
   );
 }
@@ -71,29 +75,43 @@ export default function ProjectDashboardPage() {
     refetch,
   } = useOrgProjects(orgId);
 
-  const project = useMemo(
+  const listProject = useMemo(
     () => projects?.find((p) => p.slug === projectSlug) ?? null,
     [projects, projectSlug]
   );
 
-  if (isPending) {
+  const {
+    data: detailProject,
+    isPending: isDetailPending,
+    isError: isDetailError,
+    error: detailError,
+    refetch: refetchDetail,
+  } = useOrgProject(orgId, listProject?.id ?? null, {
+    enabled: Boolean(listProject?.id),
+  });
+
+  const project = detailProject ?? listProject;
+
+  if (isPending || (listProject && isDetailPending && !detailProject)) {
     return <DashboardSkeleton />;
   }
 
-  if (isError) {
+  if (isError || isDetailError) {
+    const err = detailError ?? error;
     return (
       <div className="rounded-xl border border-border/70 bg-card/50 px-5 py-8 text-center">
         <p className="text-sm text-destructive">
-          {error instanceof Error
-            ? error.message
-            : "Không tải được dự án."}
+          {err instanceof Error ? err.message : "Không tải được dự án."}
         </p>
         <Button
           type="button"
           variant="outline"
           size="sm"
           className="mt-4"
-          onClick={() => void refetch()}
+          onClick={() => {
+            void refetch();
+            void refetchDetail();
+          }}
         >
           Thử lại
         </Button>
@@ -113,39 +131,51 @@ export default function ProjectDashboardPage() {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-8 overflow-y-auto pb-2">
-      <ProjectDashboardHeader
-        title={project.name}
-        description={project.description || undefined}
-        orgId={orgId}
-        projectId={project.id}
-        onEdit={showEditSoon}
-      />
+      <ProjectDashboardHeader project={project} orgId={orgId} />
 
       <div className={DASHBOARD_PAIR_ROW_CLASS}>
+        <ProjectDashboardSection title="Mô tả" accent="violet">
+          {project.description.trim() ? (
+            <ProjectDashboardProse>{project.description}</ProjectDashboardProse>
+          ) : (
+            <EmptyHint>Chưa có mô tả chi tiết.</EmptyHint>
+          )}
+        </ProjectDashboardSection>
+
         <ProjectDashboardSection title="Ngữ cảnh" accent="sky">
-          {project.context ? (
-            <p className="text-sm leading-relaxed whitespace-pre-wrap text-foreground/90">
-              {project.context}
-            </p>
+          {project.context.trim() ? (
+            <ProjectDashboardProse>{project.context}</ProjectDashboardProse>
           ) : (
             <EmptyHint>Chưa có ngữ cảnh.</EmptyHint>
           )}
         </ProjectDashboardSection>
+      </div>
 
+      <div className={DASHBOARD_PAIR_ROW_CLASS}>
         <ProjectDashboardSection title="Vấn đề" accent="orange">
           <ProjectDashboardIndexedList
             items={project.problems}
             emptyLabel="Chưa có vấn đề nào."
           />
         </ProjectDashboardSection>
+
+        <ProjectDashboardSection title="Giải pháp đề xuất" accent="fuchsia">
+          <ProjectDashboardIndexedList
+            items={project.proposedSolutions}
+            emptyLabel="Chưa có đề xuất giải pháp."
+          />
+        </ProjectDashboardSection>
       </div>
 
-      <ProjectDashboardSection title="Giải pháp đề xuất" accent="fuchsia">
-        <ProjectDashboardIndexedList
-          items={project.proposedSolutions}
-          emptyLabel="Chưa có đề xuất giải pháp."
-          className="[&_li]:rounded-xl [&_li]:border [&_li]:border-border/70 [&_li]:bg-card/40 [&_li]:p-4 [&_li]:shadow-sm"
-        />
+      <ProjectDashboardSection
+        title={PROJECT_BUSINESS_VALUE_LABEL}
+        accent="teal"
+      >
+        {project.roiNotes.trim() ? (
+          <ProjectDashboardProse>{project.roiNotes}</ProjectDashboardProse>
+        ) : (
+          <EmptyHint>Chưa có mục đích kinh doanh.</EmptyHint>
+        )}
       </ProjectDashboardSection>
     </div>
   );

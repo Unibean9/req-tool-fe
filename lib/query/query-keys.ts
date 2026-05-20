@@ -21,9 +21,21 @@ export function projectActorsQueryKey(projectId: string) {
   return [...PROJECTS_ROOT, "actors", projectId] as const;
 }
 
-/** Key danh sách stakeholders theo `project_id`. */
-export function projectStakeholdersQueryKey(projectId: string) {
-  return [...PROJECTS_ROOT, "stakeholders", projectId] as const;
+/**
+ * Key danh sách stakeholders theo `project_id`.
+ * `isBusinessActor`: `undefined` = không gửi query (toàn bộ); `true` / `false` = filter API `is_business_actor`.
+ */
+export function projectStakeholdersQueryKey(
+  projectId: string,
+  params?: { isBusinessActor?: boolean }
+) {
+  const filterKey =
+    params?.isBusinessActor === undefined
+      ? "all"
+      : params.isBusinessActor
+        ? "business_actor"
+        : "not_business_actor";
+  return [...PROJECTS_ROOT, "stakeholders", projectId, filterKey] as const;
 }
 
 /** Key chi tiết một stakeholder. */
@@ -42,6 +54,19 @@ export function projectStakeholderQueryKey(
 /** Key danh sách flows theo `project_id`. */
 export function projectFlowsQueryKey(projectId: string) {
   return [...PROJECTS_ROOT, "flows", projectId] as const;
+}
+
+/** Key chi tiết một flow (GET đầy đủ + swimlane). */
+export function projectFlowQueryKey(projectId: string, flowId: string) {
+  return [...PROJECTS_ROOT, "flows", projectId, flowId] as const;
+}
+
+/** Key danh sách template theo flow. */
+export function projectFlowTemplatesQueryKey(
+  projectId: string,
+  flowId: string
+) {
+  return [...PROJECTS_ROOT, "flows", projectId, flowId, "templates"] as const;
 }
 
 /** Key danh sách goals theo `project_id`. */
@@ -220,6 +245,8 @@ export const queryKeys = {
     stakeholders: projectStakeholdersQueryKey,
     stakeholder: projectStakeholderQueryKey,
     flows: projectFlowsQueryKey,
+    flow: projectFlowQueryKey,
+    flowTemplates: projectFlowTemplatesQueryKey,
     goals: projectGoalsQueryKey,
     rules: projectRulesQueryKey,
     nfrs: projectNfrsQueryKey,

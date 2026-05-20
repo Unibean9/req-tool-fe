@@ -3,8 +3,10 @@ import apiService from "../core";
 interface ProjectRuleRowApi {
   id: string;
   project_id: string;
-  description: string;
-  linked_feature_id: string | null;
+  rule_def: string;
+  type: string;
+  is_dynamic: boolean;
+  source: string;
   created_at: string;
   updated_at: string;
 }
@@ -21,17 +23,32 @@ interface ListProjectRulesApiResponse {
   message: string | null;
 }
 
+export const PROJECT_RULE_TYPES = [
+  "constraint",
+  "calculation",
+  "validation",
+  "process",
+  "policy",
+  "regulation",
+] as const;
+
+export type ProjectRuleType = (typeof PROJECT_RULE_TYPES)[number];
+
 /** POST/PATCH body (camelCase trong app → snake_case trên wire). */
 export interface ProjectRuleWriteRequest {
-  description: string;
-  linkedFeatureId: string | null;
+  ruleDef: string;
+  type: ProjectRuleType;
+  isDynamic: boolean;
+  source: string;
 }
 
 export interface ProjectRule {
   id: string;
   projectId: string;
-  description: string;
-  linkedFeatureId: string | null;
+  ruleDef: string;
+  type: ProjectRuleType;
+  isDynamic: boolean;
+  source: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -66,22 +83,31 @@ function resolveRuleId(ruleId: string): string {
   return id;
 }
 
+function parseProjectRuleType(type: string): ProjectRuleType {
+  return (PROJECT_RULE_TYPES as readonly string[]).includes(type)
+    ? (type as ProjectRuleType)
+    : "constraint";
+}
+
 function mapProjectRuleRow(row: ProjectRuleRowApi): ProjectRule {
   return {
     id: row.id,
     projectId: row.project_id,
-    description: row.description ?? "",
-    linkedFeatureId: row.linked_feature_id?.trim() || null,
+    ruleDef: row.rule_def ?? "",
+    type: parseProjectRuleType(row.type),
+    isDynamic: Boolean(row.is_dynamic),
+    source: row.source ?? "",
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
 }
 
 function toProjectRuleApiBody(body: ProjectRuleWriteRequest) {
-  const linked = body.linkedFeatureId?.trim() ?? "";
   return {
-    description: body.description.trim(),
-    linked_feature_id: linked || null,
+    rule_def: body.ruleDef.trim(),
+    type: body.type,
+    is_dynamic: body.isDynamic,
+    source: body.source.trim(),
   };
 }
 

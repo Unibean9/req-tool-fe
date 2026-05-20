@@ -11,7 +11,7 @@ import { selectUser } from "@/lib/redux/slices/authSlice";
 
 import {
   isOrgMembersWorkbenchPath,
-  isOrgProjectNewWizardPath,
+  isOrgProjectWizardPath,
   isOrgProjectSlugWorkspacePath,
 } from "../components/orgWorkspacePaths";
 
@@ -37,7 +37,7 @@ function OrgWorkspaceLoading() {
 function OrgWorkspaceChrome({ children }: { children: ReactNode }) {
   const pathname = usePathname() ?? "";
   const fullBleedMain =
-    isOrgProjectNewWizardPath(pathname) ||
+    isOrgProjectWizardPath(pathname) ||
     isOrgProjectSlugWorkspacePath(pathname) ||
     isOrgMembersWorkbenchPath(pathname);
 

@@ -5,13 +5,50 @@ import { Plus, Scale, Search } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  PROJECT_RULE_TYPES,
+  type ProjectRuleType,
+} from "@/lib/api/services/fetchRule";
 import { cn } from "@/lib/utils";
 
 import { RuleFormDialog } from "./ruleFormDialog";
 
+export type RuleTypeFilter = ProjectRuleType | "all";
+export type RuleDynamicFilter = "all" | "dynamic" | "static";
+
+const RULE_TYPE_LABELS: Record<ProjectRuleType, string> = {
+  constraint: "Constraint",
+  calculation: "Calculation",
+  validation: "Validation",
+  process: "Process",
+  policy: "Policy",
+  regulation: "Regulation",
+};
+
+function ruleTypeFilterLabel(value: RuleTypeFilter): string {
+  if (value === "all") return "Tất cả";
+  return RULE_TYPE_LABELS[value];
+}
+
+function ruleDynamicFilterLabel(value: RuleDynamicFilter): string {
+  if (value === "all") return "Tất cả";
+  return value === "dynamic" ? "Dynamic" : "Static";
+}
+
 type RuleToolbarProps = {
   search: string;
   onSearchChange: (value: string) => void;
+  typeFilter: RuleTypeFilter;
+  onTypeFilterChange: (value: RuleTypeFilter) => void;
+  dynamicFilter: RuleDynamicFilter;
+  onDynamicFilterChange: (value: RuleDynamicFilter) => void;
   projectId: string | null;
   canCreate?: boolean;
   className?: string;
@@ -20,6 +57,10 @@ type RuleToolbarProps = {
 export function RuleToolbar({
   search,
   onSearchChange,
+  typeFilter,
+  onTypeFilterChange,
+  dynamicFilter,
+  onDynamicFilterChange,
   projectId,
   canCreate = true,
   className,
@@ -56,20 +97,73 @@ export function RuleToolbar({
           </Button>
         </div>
 
-        <div className="relative min-h-10 w-full">
-          <Search
-            className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
-            aria-hidden
-          />
-          <Input
-            type="search"
-            value={search}
-            onChange={(e) => onSearchChange(e.target.value)}
-            placeholder="Tìm theo mô tả rule hoặc ID feature…"
-            autoComplete="off"
-            aria-label="Tìm rule"
-            className="h-10 w-full border-border/80 bg-muted/40 pr-3 pl-10 text-sm shadow-none"
-          />
+        <div className="flex flex-row flex-wrap items-center gap-3">
+          <div className="relative min-h-10 min-w-0 flex-1">
+            <Search
+              className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
+              aria-hidden
+            />
+            <Input
+              type="search"
+              value={search}
+              onChange={(e) => onSearchChange(e.target.value)}
+              placeholder="Tìm theo rule definition, type hoặc source…"
+              autoComplete="off"
+              aria-label="Tìm rule"
+              className="h-10 w-full border-border/80 bg-muted/40 pr-3 pl-10 text-sm shadow-none"
+            />
+          </div>
+
+          <Select
+            value={typeFilter}
+            onValueChange={(value) => onTypeFilterChange(value as RuleTypeFilter)}
+          >
+            <SelectTrigger
+              className="h-10 w-full shrink-0 border-border/80 bg-muted/40 sm:w-45"
+              aria-label="Lọc rule theo type"
+            >
+              <SelectValue placeholder="Type">
+                {ruleTypeFilterLabel(typeFilter)}
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all" label="Tất cả">
+                Tất cả
+              </SelectItem>
+              {PROJECT_RULE_TYPES.map((type) => (
+                <SelectItem key={type} value={type} label={RULE_TYPE_LABELS[type]}>
+                  {RULE_TYPE_LABELS[type]}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select
+            value={dynamicFilter}
+            onValueChange={(value) =>
+              onDynamicFilterChange(value as RuleDynamicFilter)
+            }
+          >
+            <SelectTrigger
+              className="h-10 w-full shrink-0 border-border/80 bg-muted/40 sm:w-40"
+              aria-label="Lọc rule theo dynamic"
+            >
+              <SelectValue placeholder="Dynamic">
+                {ruleDynamicFilterLabel(dynamicFilter)}
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all" label="Tất cả">
+                Tất cả
+              </SelectItem>
+              <SelectItem value="dynamic" label="Dynamic">
+                Dynamic
+              </SelectItem>
+              <SelectItem value="static" label="Static">
+                Static
+              </SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </header>
 

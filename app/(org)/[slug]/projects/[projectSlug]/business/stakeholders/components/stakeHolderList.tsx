@@ -1,13 +1,15 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Pencil, Trash2, UsersRound } from "lucide-react";
+import { Pencil, Trash2, UserRoundCheck, UsersRound } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   useDeleteProjectStakeholder,
   useProjectStakeholders,
+  useUpdateProjectStakeholder,
   type ProjectStakeholder,
 } from "@/hooks/useStakeHolder";
 import type { StakeholderInfluenceLevel } from "@/lib/api/services/fetchStakeHolder";
@@ -16,6 +18,15 @@ import { cn } from "@/lib/utils";
 import { DeleteStakeHolderDialog } from "./deleteStakeHolderDialog";
 import { StakeHolderFormDialog } from "./stakeHolderFormDialog";
 import { parseImpactAreaTags } from "./stakeHolderFormFields";
+import type { StakeholderBusinessActorFilter } from "./stakeHolderToolbar";
+
+function listIsBusinessActorQueryParam(
+  filter: StakeholderBusinessActorFilter
+): boolean | undefined {
+  if (filter === "all") return undefined;
+  if (filter === "business") return true;
+  return false;
+}
 
 const INFLUENCE_LEVEL_LABELS: Record<StakeholderInfluenceLevel, string> = {
   high: "High",
@@ -87,10 +98,22 @@ function matchesSearch(row: ProjectStakeholder, query: string): boolean {
     row.notes,
     row.influenceLevel,
     INFLUENCE_LEVEL_LABELS[row.influenceLevel],
+    ...(row.isBusinessActor ? ["business actor", "tác nhân nghiệp vụ"] : []),
   ]
     .map((part) => foldForSearch(part))
     .join(" ");
   return haystack.includes(q);
+}
+
+function stakeholderToWriteBody(row: ProjectStakeholder) {
+  return {
+    name: row.name,
+    role: row.role,
+    impactArea: row.impactArea,
+    influenceLevel: row.influenceLevel,
+    notes: row.notes,
+    isBusinessActor: row.isBusinessActor,
+  };
 }
 
 function StakeHolderListRow({
@@ -98,11 +121,13 @@ function StakeHolderListRow({
   rowBusy,
   onEdit,
   onDelete,
+  onToggleBusinessActor,
 }: {
   row: ProjectStakeholder;
   rowBusy: boolean;
   onEdit: () => void;
   onDelete: () => void;
+  onToggleBusinessActor: (row: ProjectStakeholder) => void;
 }) {
   const initials = stakeholderInitials(row.name);
 
@@ -117,9 +142,19 @@ function StakeHolderListRow({
 
       <div className="min-w-0 flex-1 space-y-2">
         <div className="space-y-0.5">
-          <h2 className="text-base font-semibold leading-snug text-foreground">
-            {row.name}
-          </h2>
+          <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+            <h2 className="min-w-0 truncate text-base font-semibold leading-snug text-foreground">
+              {row.name}
+            </h2>
+            {row.isBusinessActor ? (
+              <Badge
+                variant="secondary"
+                className="shrink-0 text-xs font-medium tabular-nums"
+              >
+                Business actor
+              </Badge>
+            ) : null}
+          </div>
           {row.role.trim() ? (
             <p className="text-sm leading-snug text-muted-foreground">{row.role}</p>
           ) : null}
@@ -154,6 +189,31 @@ function StakeHolderListRow({
           type="button"
           variant="outline"
           size="icon"
+          className={cn(
+            "size-9 shrink-0",
+            row.isBusinessActor
+              ? "border-primary/40 bg-primary/10 text-primary"
+              : "text-muted-foreground"
+          )}
+          aria-label={
+            row.isBusinessActor
+              ? `Tắt business actor — ${row.name}`
+              : `Bật business actor — ${row.name}`
+          }
+          title={
+            row.isBusinessActor
+              ? "Tắt business actor (bấm để false)"
+              : "Bật business actor (bấm để true)"
+          }
+          disabled={rowBusy}
+          onClick={() => onToggleBusinessActor(row)}
+        >
+          <UserRoundCheck className="size-5" aria-hidden />
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          size="icon"
           className="size-9 shrink-0 text-muted-foreground hover:border-destructive/40 hover:bg-destructive/10 hover:text-destructive"
           aria-label={`Xóa ${row.name}`}
           title="Xóa"
@@ -170,12 +230,14 @@ function StakeHolderListRow({
 type StakeHolderListProps = {
   projectId: string | null;
   search: string;
+  businessActorFilter: StakeholderBusinessActorFilter;
   className?: string;
 };
 
 export function StakeHolderList({
   projectId,
   search,
+  businessActorFilter,
   className,
 }: StakeHolderListProps) {
   const [editTarget, setEditTarget] = useState<ProjectStakeholder | null>(null);
@@ -185,19 +247,40 @@ export function StakeHolderList({
   } | null>(null);
   const [rowMutationBusy, setRowMutationBusy] = useState(false);
 
+  const isBusinessActorParam = listIsBusinessActorQueryParam(businessActorFilter);
+
   const {
     data: stakeholders = [],
     isPending,
     isError,
     error,
     refetch,
-  } = useProjectStakeholders(projectId);
+  } = useProjectStakeholders(projectId, {
+    ...(isBusinessActorParam === undefined
+      ? {}
+      : { isBusinessActor: isBusinessActorParam }),
+  });
 
   const deleteMutation = useDeleteProjectStakeholder({
     onSuccess: () => setDeleteTarget(null),
   });
 
-  const rowBusy = rowMutationBusy || deleteMutation.isPending;
+  const updateMutation = useUpdateProjectStakeholder();
+
+  const rowBusy =
+    rowMutationBusy || deleteMutation.isPending || updateMutation.isPending;
+
+  function handleToggleBusinessActor(row: ProjectStakeholder) {
+    if (!projectId) return;
+    void updateMutation.mutate({
+      projectId,
+      stakeholderId: row.id,
+      body: {
+        ...stakeholderToWriteBody(row),
+        isBusinessActor: !row.isBusinessActor,
+      },
+    });
+  }
 
   const filtered = useMemo(() => {
     const q = search.trim();
@@ -225,7 +308,7 @@ export function StakeHolderList({
     return (
       <div className={cn("grid grid-cols-1 gap-3 sm:grid-cols-2", className)}>
         {Array.from({ length: 4 }).map((_, i) => (
-          <Skeleton key={i} className="h-[7.5rem] w-full rounded-xl" />
+          <Skeleton key={i} className="h-30 w-full rounded-xl" />
         ))}
       </div>
     );
@@ -258,6 +341,13 @@ export function StakeHolderList({
   }
 
   if (stakeholders.length === 0) {
+    const filterHint =
+      businessActorFilter === "business"
+        ? "Không có stakeholder nào được đánh dấu business actor. Đổi bộ lọc hoặc cập nhật từng dòng."
+        : businessActorFilter === "non_business"
+          ? "Không có stakeholder nào ngoài business actor với bộ lọc hiện tại."
+          : null;
+
     return (
       <div
         className={cn(
@@ -270,10 +360,10 @@ export function StakeHolderList({
         </span>
         <div className="space-y-1">
           <p className="text-sm font-medium text-foreground">
-            Chưa có stakeholder
+            {filterHint ? "Không có stakeholder phù hợp" : "Chưa có stakeholder"}
           </p>
           <p className="text-sm text-muted-foreground">
-            Dùng nút &quot;Thêm stakeholder&quot; để bắt đầu.
+            {filterHint ?? 'Dùng nút "Thêm stakeholder" để bắt đầu.'}
           </p>
         </div>
       </div>
@@ -312,6 +402,7 @@ export function StakeHolderList({
               onDelete={() =>
                 setDeleteTarget({ stakeholderId: row.id, name: row.name })
               }
+              onToggleBusinessActor={handleToggleBusinessActor}
             />
           </li>
         ))}

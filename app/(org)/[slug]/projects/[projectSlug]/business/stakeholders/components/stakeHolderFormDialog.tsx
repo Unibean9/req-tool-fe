@@ -30,6 +30,7 @@ const EMPTY_FORM: StakeHolderFormValues = {
   impactArea: "",
   influenceLevel: "medium",
   notes: "",
+  isBusinessActor: false,
 };
 
 function valuesFromStakeholder(row: ProjectStakeholder): StakeHolderFormValues {
@@ -39,6 +40,7 @@ function valuesFromStakeholder(row: ProjectStakeholder): StakeHolderFormValues {
     impactArea: row.impactArea,
     influenceLevel: row.influenceLevel,
     notes: row.notes,
+    isBusinessActor: row.isBusinessActor,
   };
 }
 

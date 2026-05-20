@@ -268,7 +268,7 @@ function projectsStoriesPath(projectId: string) {
 }
 
 function userStoryPath(projectId: string, userStoryId: string) {
-  return `/api/v1/projects/${encodeURIComponent(projectId)}/user-stories/${encodeURIComponent(userStoryId)}`;
+  return `/api/v1/projects/${encodeURIComponent(projectId)}/stories/${encodeURIComponent(userStoryId)}`;
 }
 
 export const fetchStory = {
@@ -302,7 +302,7 @@ export const fetchStory = {
   },
 
   /**
-   * PATCH /api/v1/projects/:project_id/user-stories/:user_story_id
+   * PATCH /api/v1/projects/:project_id/stories/:user_story_id
    * Sau mutation: `invalidateActorWorkspaceQueries` (requirement-model + canvas-layout).
    */
   update: async (
@@ -321,7 +321,7 @@ export const fetchStory = {
   },
 
   /**
-   * DELETE /api/v1/projects/:project_id/user-stories/:user_story_id
+   * DELETE /api/v1/projects/:project_id/stories/:user_story_id
    * Sau mutation: `invalidateActorWorkspaceQueries` (requirement-model + canvas-layout).
    */
   delete: async (projectId: string, userStoryId: string): Promise<void> => {

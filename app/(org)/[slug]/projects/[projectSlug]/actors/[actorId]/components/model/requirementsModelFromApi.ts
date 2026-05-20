@@ -20,7 +20,6 @@ import { REQUIREMENT_EDGE_DEFAULT_OPTIONS } from "./requirementsModelConstants";
 import { layoutRequirementTree } from "./requirementsModelLayout";
 import { parseWorkItemLabels } from "./requirementWorkItemCard";
 import {
-  isEpicNodeData,
   isFeatureNodeData,
   isUserStoryNodeData,
 } from "./requirementsModelTypes";

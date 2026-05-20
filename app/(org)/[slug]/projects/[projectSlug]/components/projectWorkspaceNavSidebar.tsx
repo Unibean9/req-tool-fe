@@ -139,24 +139,57 @@ const SETUP_PROGRESS_STEP_COUNT = 7;
 const SETUP_PROGRESS_STEPS: {
   key: keyof ProjectSetupProgress;
   label: string;
+  group: "Core" | "Business requirements" | "User requirements" | "Functional requirements";
   icon: LucideIcon;
   /** Path segment(s) sau `{org}/projects/{project}` */
   hrefPath: string;
 }[] = [
-  { key: "core", label: "Core", icon: LayoutDashboard, hrefPath: "dashboard" },
+  {
+    key: "core",
+    label: "Core setup",
+    group: "Core",
+    icon: LayoutDashboard,
+    hrefPath: "dashboard",
+  },
   {
     key: "stakeholders",
     label: "Stakeholders",
+    group: "Business requirements",
     icon: UsersRound,
     hrefPath: "business/stakeholders",
   },
-  { key: "goals", label: "Goals", icon: Target, hrefPath: "business/goals" },
-  { key: "flows", label: "Flows", icon: Workflow, hrefPath: "business/flow" },
-  { key: "rules", label: "Rules", icon: Scale, hrefPath: "business/rules" },
-  { key: "nfrs", label: "NFRs", icon: Gauge, hrefPath: "nfr" },
+  {
+    key: "goals",
+    label: "Goals",
+    group: "Business requirements",
+    icon: Target,
+    hrefPath: "business/goals",
+  },
+  {
+    key: "flows",
+    label: "Flows",
+    group: "Business requirements",
+    icon: Workflow,
+    hrefPath: "business/flow",
+  },
+  {
+    key: "rules",
+    label: "Rules",
+    group: "Business requirements",
+    icon: Scale,
+    hrefPath: "business/rules",
+  },
+  {
+    key: "nfrs",
+    label: "NFRs",
+    group: "User requirements",
+    icon: Gauge,
+    hrefPath: "nfr",
+  },
   {
     key: "requirements",
-    label: "Requirements",
+    label: "Actors",
+    group: "Functional requirements",
     icon: PersonStanding,
     hrefPath: "actors",
   },
@@ -189,6 +222,13 @@ function setupProgressPercent(doneCount: number): number {
   return Math.round((doneCount / SETUP_PROGRESS_STEP_COUNT) * 100);
 }
 
+function setupProgressStatusLabel(percent: number): string {
+  if (percent === 100) return "Sẵn sàng";
+  if (percent >= 60) return "Gần xong";
+  if (percent > 0) return "Đang tiến hành";
+  return "Chưa bắt đầu";
+}
+
 function SetupProgressHoverPanel({
   steps,
   percent,
@@ -200,85 +240,119 @@ function SetupProgressHoverPanel({
   doneCount: number;
   pathname: string;
 }) {
+  const groupedSteps = SETUP_PROGRESS_STEPS.map((step) => step.group).filter(
+    (group, index, groups) => groups.indexOf(group) === index
+  ).map((group) => ({
+    group,
+    steps: steps.filter((step) => step.group === group),
+  }));
+
   return (
-    <div className="overflow-hidden">
-      <div className="border-b border-border/50 px-4 pb-3.5 pt-3.5">
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <p className="text-[10px] font-semibold tracking-[0.14em] text-muted-foreground uppercase">
-              Project setup
+    <div className="overflow-hidden rounded-xl bg-popover text-popover-foreground">
+      <div className="border-b border-border/60 bg-muted/30 px-4 py-4">
+        <div className="flex items-center justify-between gap-3">
+          <div className="min-w-0 space-y-1">
+            <p className="text-sm font-semibold tracking-tight text-foreground">
+              Tiến độ setup
             </p>
-            <p className="mt-1 text-[1.75rem] font-bold leading-none tracking-tight text-foreground tabular-nums">
-              {percent}%
+            <p className="text-xs leading-snug text-muted-foreground">
+              Theo dõi từng khu vực để hoàn thành cấu trúc dự án.
             </p>
           </div>
-          <span className="mt-0.5 shrink-0 rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-foreground tabular-nums">
+          <div className="flex size-16 shrink-0 items-center justify-center rounded-full border border-primary/20 bg-primary/10">
+            <span className="text-lg font-bold tabular-nums text-primary">
+              {percent}%
+            </span>
+          </div>
+        </div>
+        <div className="mt-3 flex items-center justify-between gap-3">
+          <span className="rounded-full bg-background/80 px-2.5 py-1 text-xs font-semibold text-foreground shadow-sm ring-1 ring-border/60">
+            {setupProgressStatusLabel(percent)}
+          </span>
+          <span className="text-xs font-medium text-muted-foreground tabular-nums">
             {doneCount} / {SETUP_PROGRESS_STEP_COUNT}
           </span>
         </div>
-        <div className="mt-3.5 flex gap-1" aria-hidden>
+        <div className="mt-3 flex gap-1.5" aria-hidden>
           {steps.map((step) => (
             <span
               key={step.key}
               className={cn(
-                "h-2 min-w-0 flex-1 rounded-sm",
-                step.done ? "bg-emerald-500" : "bg-muted"
+                "h-1.5 min-w-0 flex-1 rounded-full transition-colors",
+                step.done ? "bg-primary" : "bg-background"
               )}
             />
           ))}
         </div>
       </div>
 
-      <ul className="list-none space-y-0.5 px-2 py-2" role="list">
-        {steps.map((step) => {
-          const Icon = step.icon;
-          const active = pathActive(pathname, step.href);
+      <div className="space-y-3 px-3 py-3">
+        {groupedSteps.map(({ group, steps: groupSteps }) => {
+          const groupDoneCount = groupSteps.filter((step) => step.done).length;
           return (
-            <li key={step.key}>
-              <Link
-                href={step.href}
-                className={cn(
-                  "flex items-center gap-3 rounded-md px-1 py-1.5 outline-none transition-colors",
-                  "hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-ring/45",
-                  active && "bg-muted/40 ring-1 ring-border/60"
-                )}
-              >
-                {step.done ? (
-                  <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-emerald-500">
-                    <Check
-                      className="size-4 text-white"
-                      strokeWidth={2.5}
-                      aria-hidden
-                    />
-                  </span>
-                ) : (
-                  <span className="flex size-8 shrink-0 items-center justify-center rounded-full border border-border/80 bg-muted/60 text-muted-foreground">
-                    <Icon className="size-3.5" strokeWidth={1.75} aria-hidden />
-                  </span>
-                )}
-                <span
-                  className={cn(
-                    "min-w-0 flex-1 truncate text-sm",
-                    step.done
-                      ? "font-semibold text-foreground"
-                      : "font-medium text-muted-foreground"
-                  )}
-                >
-                  {step.label}
+            <section key={group} className="space-y-1.5">
+              <div className="flex items-center justify-between px-1">
+                <p className="text-[10px] font-semibold tracking-[0.12em] text-muted-foreground uppercase">
+                  {group}
+                </p>
+                <span className="text-[10px] font-medium text-muted-foreground tabular-nums">
+                  {groupDoneCount}/{groupSteps.length}
                 </span>
-                <span
-                  className={cn(
-                    "shrink-0 text-xs font-medium",
-                    step.done ? "text-emerald-500" : "text-muted-foreground"
-                  )}
-                >
-                  {step.done ? "Done" : "Pending"}
-                </span>
-              </Link>
-            </li>
+              </div>
+              <ul className="list-none space-y-1" role="list">
+                {groupSteps.map((step) => {
+                  const Icon = step.icon;
+                  const active = pathActive(pathname, step.href);
+                  return (
+                    <li key={step.key}>
+                      <Link
+                        href={step.href}
+                        className={cn(
+                          "group flex items-center gap-3 rounded-lg px-2 py-2 outline-none transition-colors",
+                          "hover:bg-muted/70 focus-visible:ring-2 focus-visible:ring-ring/45",
+                          active && "bg-muted ring-1 ring-border/70"
+                        )}
+                      >
+                        <span
+                          className={cn(
+                            "flex size-8 shrink-0 items-center justify-center rounded-full border transition-colors",
+                            step.done
+                              ? "border-emerald-200 bg-emerald-50 text-emerald-600 dark:border-emerald-500/30 dark:bg-emerald-500/15 dark:text-emerald-300"
+                              : "border-border bg-background text-muted-foreground group-hover:text-foreground"
+                          )}
+                        >
+                          {step.done ? (
+                            <Check
+                              className="size-4"
+                              strokeWidth={2.5}
+                              aria-hidden
+                            />
+                          ) : (
+                            <Icon className="size-3.5" strokeWidth={1.75} aria-hidden />
+                          )}
+                        </span>
+                        <span className="min-w-0 flex-1 truncate text-sm font-medium text-foreground">
+                          {step.label}
+                        </span>
+                        <span
+                          className={cn(
+                            "shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold",
+                            step.done
+                              ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300"
+                              : "bg-muted text-muted-foreground"
+                          )}
+                        >
+                          {step.done ? "Hoàn thành" : "Chưa hoàn thành"}
+                        </span>
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            </section>
           );
         })}
-      </ul>
+      </div>
     </div>
   );
 }
@@ -319,21 +393,26 @@ function ProjectWorkspaceSetupProgress({
   const progressBody = (
     <div
       className={cn(
-        "rounded-lg border border-border/50 bg-card/40 px-2.5 py-2 outline-none transition-colors",
-        "hover:border-border/80 hover:bg-card/60",
+        "rounded-xl border border-border/60 bg-card/70 px-3 py-2.5 outline-none transition-colors",
+        "hover:border-border hover:bg-card",
         "focus-visible:ring-2 focus-visible:ring-ring/45"
       )}
     >
-      <div className="mb-2 flex items-center justify-between gap-2">
-        <span className="text-xs font-medium text-muted-foreground">
-          Setup progress
-        </span>
-        <span className="text-xs font-semibold tabular-nums text-foreground">
+      <div className="mb-2.5 flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <span className="block text-xs font-semibold text-foreground">
+            Tiến độ setup
+          </span>
+          <span className="mt-0.5 block text-[10px] text-muted-foreground">
+            {setupProgressStatusLabel(percent)}
+          </span>
+        </div>
+        <span className="rounded-full bg-primary/10 px-2 py-1 text-xs font-bold tabular-nums text-primary">
           {percent}%
         </span>
       </div>
       <div
-        className="flex gap-1"
+        className="flex gap-1.5"
         role="progressbar"
         aria-valuemin={0}
         aria-valuemax={100}
@@ -351,8 +430,8 @@ function ProjectWorkspaceSetupProgress({
           />
         ))}
       </div>
-      <p className="mt-1.5 text-[10px] tabular-nums text-muted-foreground">
-        {doneCount}/{SETUP_PROGRESS_STEP_COUNT} completed
+      <p className="mt-2 text-[10px] font-medium tabular-nums text-muted-foreground">
+        {doneCount}/{SETUP_PROGRESS_STEP_COUNT} completed · Hover to view steps
       </p>
     </div>
   );
@@ -391,7 +470,7 @@ function ProjectWorkspaceSetupProgress({
           side="top"
           sideOffset={10}
           align="start"
-          className="w-72 border-border/70 bg-[#1a1a1a] p-0 shadow-xl ring-0"
+          className="w-80 border-border/70 bg-popover p-0 shadow-xl ring-0"
         >
           <SetupProgressHoverPanel
             steps={steps}

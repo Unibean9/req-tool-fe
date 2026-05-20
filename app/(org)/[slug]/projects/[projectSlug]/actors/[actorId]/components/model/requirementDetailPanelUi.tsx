@@ -24,7 +24,7 @@ import {
   WorkItemColoredPill,
 } from "./requirementWorkItemLabels";
 
-/** Tiêu đề nhóm field trong sidebar — phẳng, không bọc card. */
+/** Tiêu đề nhóm field trong dialog. */
 export function DetailPanelSection({
   title,
   hint,
@@ -37,9 +37,14 @@ export function DetailPanelSection({
   className?: string;
 }) {
   return (
-    <section className={cn("space-y-3", className)}>
+    <section
+      className={cn(
+        "space-y-3",
+        className
+      )}
+    >
       <div>
-        <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+        <h3 className="text-[11px] font-bold tracking-[0.14em] text-foreground/90 uppercase">
           {title}
         </h3>
         {hint ? (
@@ -153,7 +158,7 @@ export function DetailTextField({
         maxLength={maxLength}
         placeholder={placeholder}
         onChange={(e) => onChange(clampText(e.target.value, maxLength))}
-        className={cn("text-sm", className)}
+        className={cn("border-border/80 bg-muted/30 text-sm", className)}
         {...inputProps}
       />
       {hint ? (
@@ -201,7 +206,7 @@ export function DetailTextAreaField({
         rows={rows}
         placeholder={placeholder}
         onChange={(e) => onChange(clampText(e.target.value, maxLength))}
-        className={cn("resize-none text-sm", className)}
+        className={cn("resize-none border-border/80 bg-muted/30 text-sm", className)}
         {...textareaProps}
       />
       {hint ? (
@@ -259,11 +264,11 @@ export function DetailLabelTagsField({
       <Label htmlFor={id} className="text-sm font-medium">
         {label}
       </Label>
-      <div className="flex min-h-10 flex-wrap items-center gap-1.5 rounded-md border border-border/80 bg-muted/30 px-2 py-1.5">
+      <div className="flex min-h-10 flex-wrap items-center gap-1.5 rounded-xl border border-border/80 bg-muted/30 px-2 py-1.5">
         {tags.map((tag, index) => (
           <span
             key={`${tag}-${index}`}
-            className="inline-flex max-w-full items-center gap-1 rounded-md border border-border/80 bg-background px-2 py-0.5 text-xs text-foreground"
+            className="inline-flex max-w-full items-center gap-1 rounded-md border border-border/80 bg-background px-2 py-0.5 text-xs text-foreground shadow-sm"
           >
             <span className="truncate">{tag}</span>
             <button
@@ -280,7 +285,7 @@ export function DetailLabelTagsField({
           <input
             id={id}
             type="text"
-            className="min-w-[7rem] flex-1 border-0 bg-transparent px-1 py-0.5 text-sm outline-none placeholder:text-muted-foreground"
+            className="min-w-28 flex-1 border-0 bg-transparent px-1 py-0.5 text-sm outline-none placeholder:text-muted-foreground"
             placeholder={tags.length === 0 ? placeholder : "Thêm…"}
             onKeyDown={(e) => {
               if (e.key === "Enter" || e.key === ",") {
@@ -341,7 +346,7 @@ export function DetailStatusSelect<T extends string>({
           if (v != null) onChange(v as T);
         }}
       >
-        <SelectTrigger id={id} className="w-full text-sm">
+        <SelectTrigger id={id} className="w-full border-border/80 bg-muted/30 text-sm">
           <SelectValue placeholder="Chọn trạng thái">
             {colored ? (
               <WorkItemColoredPill
@@ -397,7 +402,7 @@ export function DetailPrioritySelect<T extends string>({
         {label}
       </Label>
       <Select value={value} onValueChange={(v) => onChange(v as T)}>
-        <SelectTrigger id={id} className="w-full text-sm">
+        <SelectTrigger id={id} className="w-full border-border/80 bg-muted/30 text-sm">
           <SelectValue placeholder="Chọn độ ưu tiên">
             {colored ? (
               <WorkItemColoredPill

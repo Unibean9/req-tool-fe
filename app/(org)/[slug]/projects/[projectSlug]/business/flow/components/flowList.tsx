@@ -1,36 +1,33 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
-import { ArrowDown, ArrowUp, Pencil, Trash2, Workflow } from "lucide-react";
-import { toast } from "sonner";
+import { ListOrdered, MoreHorizontal, Pencil, Trash2, Workflow } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   useDeleteProjectFlow,
   useProjectFlows,
   type ProjectFlow,
 } from "@/hooks/useFlow";
-import { getApiErrorMessage } from "@/lib/api/getApiErrorMessage";
-import { fetchFlow } from "@/lib/api/services/fetchFlow";
-import {
-  projectFlowsQueryKey,
-  projectSetupProgressQueryKey,
-} from "@/lib/query/query-keys";
 import { cn } from "@/lib/utils";
 
 import { DeleteFlowDialog } from "./deleteFlowDialog";
-import { FlowFormDialog } from "./flowFormDialog";
-import { FlowStepsPreview } from "./flowFormFields";
 import {
-  canMoveFlowDown,
-  canMoveFlowUp,
-  planMoveFlowDown,
-  planMoveFlowToTop,
-  sortFlows,
-  type FlowOrderPatch,
-} from "./flowReorder";
+  EditFlowActionFormDialog,
+  type FlowActionsDialogVariant,
+} from "./editFlowActionFormDialog";
+import { EditFlowFormDialog } from "./editFlowFormDialog";
+import { FlowSwimlaneDetailDialog } from "./flowSwimlaneDialog";
+import { hasFlowCatalogActions } from "./flowCatalogActions";
+import { FlowStepsPreview } from "./flowFormFields";
+import { sortFlows } from "./flowReorder";
 import { parseFlowSteps } from "./flowSteps";
 
 function foldForSearch(s: string): string {
@@ -41,7 +38,14 @@ function matchesSearch(row: ProjectFlow, query: string): boolean {
   const q = foldForSearch(query);
   if (!q) return true;
   const stepParts = parseFlowSteps(row.description).filter(Boolean);
-  const haystack = [row.title, String(row.order), row.description, ...stepParts]
+  const haystack = [
+    row.code,
+    row.name,
+    row.title,
+    String(row.order),
+    row.description,
+    ...stepParts,
+  ]
     .map((part) => foldForSearch(part))
     .join(" ");
   return haystack.includes(q);
@@ -62,21 +66,19 @@ function FlowListRow({
   row,
   displayIndex,
   rowBusy,
-  canMoveUp,
-  canMoveDown,
-  onMoveUp,
-  onMoveDown,
+  hasCatalogActions,
   onEdit,
+  onEditActions,
+  onOpenSwimlane,
   onDelete,
 }: {
   row: ProjectFlow;
   displayIndex: number;
   rowBusy: boolean;
-  canMoveUp: boolean;
-  canMoveDown: boolean;
-  onMoveUp: () => void;
-  onMoveDown: () => void;
+  hasCatalogActions: boolean;
   onEdit: () => void;
+  onEditActions: () => void;
+  onOpenSwimlane: () => void;
   onDelete: () => void;
 }) {
   return (
@@ -84,66 +86,77 @@ function FlowListRow({
       <FlowIndexBadge index={displayIndex} />
 
       <div className="min-w-0 flex-1 space-y-1.5">
-        <h2 className="text-base font-semibold leading-snug text-foreground">
-          {row.title}
-        </h2>
+        <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+          <h2 className="text-base font-semibold leading-snug text-foreground">
+            {row.name}
+          </h2>
+          {row.code.trim() ? (
+            <span className="font-mono text-xs text-muted-foreground">
+              {row.code}
+            </span>
+          ) : null}
+        </div>
         {row.description.trim() ? (
           <FlowStepsPreview description={row.description} compact />
         ) : (
           <p className="text-sm text-muted-foreground">Chưa có bước nào.</p>
         )}
+        {hasCatalogActions ? (
+          <Button
+            type="button"
+            variant="link"
+            className="h-auto min-h-0 p-0 text-sm font-medium text-primary underline-offset-4 hover:underline"
+            disabled={rowBusy}
+            onClick={onOpenSwimlane}
+          >
+            Xem chi tiết swimlane
+          </Button>
+        ) : null}
       </div>
 
-      <div className="flex shrink-0 flex-wrap items-center justify-end gap-1">
-        <Button
-          type="button"
-          variant="outline"
-          size="icon"
-          className="size-9 shrink-0"
-          aria-label={`Đưa ${row.title} lên đầu`}
-          title="Lên đầu"
-          disabled={rowBusy || !canMoveUp}
-          onClick={onMoveUp}
+      <DropdownMenu>
+        <DropdownMenuTrigger
+          render={
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              className="size-9 shrink-0"
+              aria-label={`Thao tác flow ${row.name}`}
+              disabled={rowBusy}
+            />
+          }
         >
-          <ArrowUp className="size-4" aria-hidden />
-        </Button>
-        <Button
-          type="button"
-          variant="outline"
-          size="icon"
-          className="size-9 shrink-0"
-          aria-label={`Đưa ${row.title} xuống một bậc`}
-          title="Xuống một bậc"
-          disabled={rowBusy || !canMoveDown}
-          onClick={onMoveDown}
-        >
-          <ArrowDown className="size-4" aria-hidden />
-        </Button>
-        <Button
-          type="button"
-          variant="outline"
-          size="icon"
-          className="size-9 shrink-0"
-          aria-label={`Chỉnh sửa ${row.title}`}
-          title="Chỉnh sửa"
-          disabled={rowBusy}
-          onClick={onEdit}
-        >
-          <Pencil className="size-4" aria-hidden />
-        </Button>
-        <Button
-          type="button"
-          variant="outline"
-          size="icon"
-          className="size-9 shrink-0 text-muted-foreground hover:border-destructive/40 hover:bg-destructive/10 hover:text-destructive"
-          aria-label={`Xóa ${row.title}`}
-          title="Xóa"
-          disabled={rowBusy}
-          onClick={onDelete}
-        >
-          <Trash2 className="size-4" aria-hidden />
-        </Button>
-      </div>
+          <MoreHorizontal className="size-4" aria-hidden />
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" sideOffset={4} className="min-w-44">
+          <DropdownMenuItem
+            className="gap-2"
+            disabled={rowBusy}
+            onClick={onEdit}
+          >
+            <Pencil className="size-4 text-muted-foreground" aria-hidden />
+            Chỉnh sửa
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            className="gap-2"
+            disabled={rowBusy}
+            onClick={onEditActions}
+          >
+            <ListOrdered className="size-4 text-muted-foreground" aria-hidden />
+            {hasCatalogActions ? "Cập nhật actions" : "Thêm actions"}
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            variant="destructive"
+            className="gap-2"
+            disabled={rowBusy}
+            onClick={onDelete}
+          >
+            <Trash2 className="size-4" aria-hidden />
+            Xóa
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </article>
   );
 }
@@ -155,14 +168,19 @@ type FlowListProps = {
 };
 
 export function FlowList({ projectId, search, className }: FlowListProps) {
-  const queryClient = useQueryClient();
-  const [editTarget, setEditTarget] = useState<ProjectFlow | null>(null);
+  const [editFlowTarget, setEditFlowTarget] = useState<ProjectFlow | null>(null);
+  const [swimlaneDetailFlow, setSwimlaneDetailFlow] = useState<ProjectFlow | null>(
+    null
+  );
+  const [flowActionsDialog, setFlowActionsDialog] = useState<{
+    flow: ProjectFlow;
+    variant: FlowActionsDialogVariant;
+  } | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<{
     flowId: string;
-    title: string;
+    flowName: string;
   } | null>(null);
   const [rowMutationBusy, setRowMutationBusy] = useState(false);
-  const [reorderingFlowId, setReorderingFlowId] = useState<string | null>(null);
 
   const {
     data: flows = [],
@@ -184,56 +202,7 @@ export function FlowList({ projectId, search, className }: FlowListProps) {
     return allSorted.filter((row) => matchesSearch(row, q));
   }, [allSorted, search]);
 
-  const rowBusy =
-    rowMutationBusy || deleteMutation.isPending || reorderingFlowId != null;
-
-  async function applyOrderPatches(patches: FlowOrderPatch[]) {
-    if (!projectId) return;
-    const pid = projectId.trim();
-    for (const { flow, order } of patches) {
-      await fetchFlow.update(pid, flow.id, {
-        title: flow.title,
-        description: flow.description,
-        order,
-      });
-    }
-    void queryClient.invalidateQueries({ queryKey: projectFlowsQueryKey(pid) });
-    void queryClient.invalidateQueries({
-      queryKey: projectSetupProgressQueryKey(pid),
-    });
-  }
-
-  async function handleMoveUp(row: ProjectFlow) {
-    if (!projectId || rowBusy) return;
-    const patches = planMoveFlowToTop(allSorted, row);
-    if (!patches?.length) return;
-
-    setReorderingFlowId(row.id);
-    try {
-      await applyOrderPatches(patches);
-      toast.success("Đã cập nhật thứ tự flow");
-    } catch (err) {
-      toast.error(getApiErrorMessage(err, "Không thể đổi thứ tự flow"));
-    } finally {
-      setReorderingFlowId(null);
-    }
-  }
-
-  async function handleMoveDown(row: ProjectFlow) {
-    if (!projectId || rowBusy) return;
-    const patches = planMoveFlowDown(allSorted, row);
-    if (!patches?.length) return;
-
-    setReorderingFlowId(row.id);
-    try {
-      await applyOrderPatches(patches);
-      toast.success("Đã cập nhật thứ tự flow");
-    } catch (err) {
-      toast.error(getApiErrorMessage(err, "Không thể đổi thứ tự flow"));
-    } finally {
-      setReorderingFlowId(null);
-    }
-  }
+  const rowBusy = rowMutationBusy || deleteMutation.isPending;
 
   async function confirmDelete() {
     if (!projectId || !deleteTarget) return;
@@ -255,7 +224,7 @@ export function FlowList({ projectId, search, className }: FlowListProps) {
     return (
       <div className={cn("grid grid-cols-1 gap-3 sm:grid-cols-2", className)}>
         {Array.from({ length: 4 }).map((_, i) => (
-          <Skeleton key={i} className="h-[5.5rem] w-full rounded-xl" />
+          <Skeleton key={i} className="h-30 w-full rounded-xl" />
         ))}
       </div>
     );
@@ -332,21 +301,25 @@ export function FlowList({ projectId, search, className }: FlowListProps) {
         aria-label="Danh sách flow"
       >
         {filtered.map((row) => {
-          const displayIndex =
-            allSorted.findIndex((f) => f.id === row.id) + 1;
+          const displayIndex = allSorted.findIndex((f) => f.id === row.id) + 1;
+          const hasCatalogActions = hasFlowCatalogActions(row.actions);
           return (
             <li key={row.id} className="flex min-w-0">
               <FlowListRow
                 row={row}
                 displayIndex={displayIndex > 0 ? displayIndex : 1}
                 rowBusy={rowBusy}
-                canMoveUp={canMoveFlowUp(allSorted, row)}
-                canMoveDown={canMoveFlowDown(allSorted, row)}
-                onMoveUp={() => void handleMoveUp(row)}
-                onMoveDown={() => void handleMoveDown(row)}
-                onEdit={() => setEditTarget(row)}
+                hasCatalogActions={hasCatalogActions}
+                onEdit={() => setEditFlowTarget(row)}
+                onEditActions={() =>
+                  setFlowActionsDialog({
+                    flow: row,
+                    variant: hasCatalogActions ? "patch" : "post",
+                  })
+                }
+                onOpenSwimlane={() => setSwimlaneDetailFlow(row)}
                 onDelete={() =>
-                  setDeleteTarget({ flowId: row.id, title: row.title })
+                  setDeleteTarget({ flowId: row.id, flowName: row.name })
                 }
               />
             </li>
@@ -354,14 +327,35 @@ export function FlowList({ projectId, search, className }: FlowListProps) {
         })}
       </ul>
 
-      <FlowFormDialog
+      <EditFlowFormDialog
         projectId={projectId}
-        flow={editTarget}
-        open={editTarget != null}
+        flow={editFlowTarget}
+        open={editFlowTarget != null}
         onOpenChange={(open) => {
-          if (!open) setEditTarget(null);
+          if (!open) setEditFlowTarget(null);
         }}
         onRowInteractBusy={setRowMutationBusy}
+      />
+
+      <EditFlowActionFormDialog
+        projectId={projectId}
+        flow={flowActionsDialog?.flow ?? null}
+        variant={flowActionsDialog?.variant ?? "patch"}
+        open={flowActionsDialog != null}
+        onOpenChange={(open) => {
+          if (!open) setFlowActionsDialog(null);
+        }}
+        onRowInteractBusy={setRowMutationBusy}
+      />
+
+      <FlowSwimlaneDetailDialog
+        projectId={projectId}
+        flow={swimlaneDetailFlow}
+        open={swimlaneDetailFlow != null}
+        onOpenChange={(open) => {
+          if (!open) setSwimlaneDetailFlow(null);
+        }}
+        onBusy={setRowMutationBusy}
       />
 
       <DeleteFlowDialog

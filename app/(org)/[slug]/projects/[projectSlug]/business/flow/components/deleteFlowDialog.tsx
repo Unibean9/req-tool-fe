@@ -13,7 +13,7 @@ import {
 
 export type DeleteFlowDialogTarget = {
   flowId: string;
-  title: string;
+  flowName: string;
 };
 
 type DeleteFlowDialogProps = {
@@ -41,7 +41,7 @@ export function DeleteFlowDialog({
               <>
                 Flow{" "}
                 <span className="font-medium text-foreground">
-                  «{target.title}»
+                  «{target.flowName}»
                 </span>{" "}
                 will be removed from the project. This cannot be undone.
               </>
@@ -55,7 +55,7 @@ export function DeleteFlowDialog({
             disabled={deletePending || !target}
             onClick={() => void onConfirmDelete()}
           >
-            {deletePending ? "Deleting…" : "Delete"}
+            {deletePending ? "Đang xóa…" : "Xóa"}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
