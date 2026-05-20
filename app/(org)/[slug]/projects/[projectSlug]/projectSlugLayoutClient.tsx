@@ -36,15 +36,15 @@ export function ProjectSlugLayoutClient({
   }, [raw]);
 
   const { orgId, slug: orgSlug } = useOrgWorkspace();
-  const { data: projects, isPending, isError, isFetching, isLoading } =
-    useOrgProjects(orgId);
+  const { data: projects, isPending, isError } = useOrgProjects(orgId);
 
   const projectsList = useMemo(() => projects ?? [], [projects]);
-  const projectsReady = !isLoading && !isPending && !isFetching;
+  /** Có cache list — không chờ `isFetching` (tránh skeleton khi quay từ wizard). */
+  const projectsListReady = projects !== undefined && !isPending;
   const projectExists = projectsList.some((p) => p.slug === projectSlug);
 
   useLayoutEffect(() => {
-    if (!projectsReady || projectExists || !projectSlug) return;
+    if (!projectsListReady || projectExists || !projectSlug) return;
 
     const encOrg = encodeURIComponent(orgSlug);
     const redirectSlug = getRedirectSlugWhenCurrentMissing(
@@ -68,7 +68,7 @@ export function ProjectSlugLayoutClient({
     projectExists,
     projectSlug,
     projectsList,
-    projectsReady,
+    projectsListReady,
     router,
   ]);
 
@@ -80,7 +80,7 @@ export function ProjectSlugLayoutClient({
     notFound();
   }
 
-  if (projectsReady && !projectExists) {
+  if (projectsListReady && !projectExists) {
     return (
       <ProjectWorkspaceLayout
         orgSlug={orgSlug}

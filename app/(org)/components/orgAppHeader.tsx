@@ -35,6 +35,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import { startNavigationProgress } from "@/components/ui/navigation-progress";
 import { useAuth } from "@/hooks/useAuth";
 import { useMobile } from "@/hooks/use-mobile";
 import { useOrgMe } from "@/hooks/useOrg";
@@ -414,7 +415,7 @@ function OrgWorkspaceMobileBottomNav({
         <span className="relative flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-lg ring-1 ring-border/50">
           <Image
             src="/Logo.png"
-            alt="REQ-Bean9"
+            alt="Requirements | Bean9"
             width={36}
             height={36}
             className="size-9 rounded-[inherit] object-contain"
@@ -516,6 +517,7 @@ export function OrgAppHeader({ className }: { className?: string }) {
     async (org: Org) => {
       if (org.slug === orgSlug) return;
       setSwitchingOrgId(org.id);
+      startNavigationProgress();
       const key = orgProjectsQueryKey(org.id);
       const goMembers = section === "members";
 
@@ -620,15 +622,15 @@ export function OrgAppHeader({ className }: { className?: string }) {
               <span className="relative shrink-0 rounded-xl ring-1 ring-border/50 shadow-md shadow-black/10 dark:shadow-black/30">
                 <Image
                   src="/Logo.png"
-                  alt="REQ-Bean9"
+                  alt="Requirements | Bean9"
                   width={48}
                   height={48}
                   className="size-12 rounded-[inherit] object-contain"
                   priority
                 />
               </span>
-              <span className="font-heading text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
-                REQ-Bean9
+              <span className="font-display text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
+                Bean9
               </span>
             </Link>
           </div>

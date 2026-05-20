@@ -1306,7 +1306,7 @@ export function useSignalRNotifications() {
 
 ### `app/layout.tsx`
 
-**Dùng Open Sans + Quicksand với Vietnamese subsets, next-themes dark mode, full SEO metadata.**
+**Dùng Inter (body) + Roboto Condensed (heading) + Rubik (display/brand) qua `next/font/google`, dark mode, full SEO metadata.**
 
 ```typescript
 import type { Metadata } from 'next'

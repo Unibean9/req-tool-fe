@@ -7,7 +7,10 @@ import { useSearchParams } from "next/navigation";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useOrgProject, useOrgProjects } from "@/hooks/useProject";
-import { buildProjectWorkspacePath } from "@/app/(org)/components/orgWorkspacePaths";
+import {
+  buildProjectWorkspacePath,
+  resolveWizardExitHref,
+} from "@/app/(org)/components/orgWorkspacePaths";
 
 import { useOrgWorkspace } from "../../orgWorkspaceContext";
 import { ProjectEditWizard } from "./components/projectEditWizard";
@@ -45,9 +48,15 @@ function OrgProjectEditPageContent() {
     [searchParams]
   );
 
-  const dashboardHref = projectSlug
+  const defaultExitHref = projectSlug
     ? buildProjectWorkspacePath(slug, projectSlug, "dashboard")
     : `/${encSlug}/projects`;
+
+  const dashboardHref = resolveWizardExitHref(
+    slug,
+    searchParams.get("returnTo"),
+    defaultExitHref
+  );
 
   const {
     data: projects,

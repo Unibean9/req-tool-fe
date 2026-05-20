@@ -22,7 +22,7 @@ Tài liệu chuẩn triển khai SEO/metadata trong dự án. Đối chiếu cod
 
 - Tham số: `title`, `description?`, `path` (đường dẫn pathname, có hoặc không `/` đầu), `noindex?`.
 - Output: `Metadata` Next.js với **canonical**, **robots**, **openGraph**, **twitter** (card `summary_large_image`).
-- Tiêu đề social: nếu `title` chưa chứa `REQ-Bean9` thì thêm hậu tố `| REQ-Bean9` cho OG/Twitter (title template của layout không áp dụng trực tiếp cho OG).
+- Tiêu đề social: nếu `title` chưa chứa `Requirements | Bean9` thì thêm hậu tố `| REQ-Bean9` cho OG/Twitter (title template của layout không áp dụng trực tiếp cho OG).
 
 ### `getSiteUrlFromRequest()` — `lib/seo/request-site-url.ts`
 

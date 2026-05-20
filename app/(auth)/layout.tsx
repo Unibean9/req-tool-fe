@@ -38,7 +38,7 @@ function AuthBrandMark({ className }: { className?: string }) {
         <span className="relative size-full">
           <SafeImage
             src="/Logo.png"
-            alt="REQ-Bean9"
+            alt="Requirements | Bean9"
             fill
             priority
             sizes="110px"
@@ -47,7 +47,7 @@ function AuthBrandMark({ className }: { className?: string }) {
         </span>
       </span>
       <span className="flex min-w-0 flex-col">
-        <span className="font-heading text-xl font-semibold leading-none tracking-tight text-foreground sm:text-2xl">
+        <span className="font-display text-xl font-semibold leading-none tracking-tight text-foreground sm:text-2xl">
           Requirements | Bean9
         </span>
         <span className="mt-1 text-[11px] font-semibold tracking-[0.16em] text-brand-mint uppercase">
@@ -114,7 +114,7 @@ function AuthMarketingAside() {
           <div className="relative h-full min-h-[min(38vh,20rem)] w-full xl:min-h-[min(44vh,24rem)]">
             <SafeImage
               src="/auth-image.png"
-              alt="Minh họa làm việc với REQ-Bean9"
+              alt="Minh họa làm việc với Requirements | Bean9"
               fill
               priority
               sizes="(max-width: 1024px) 50vw, 640px"

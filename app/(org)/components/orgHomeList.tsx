@@ -33,6 +33,9 @@ import {
 } from "@/lib/api/services/fetchProject";
 import { orgProjectsQueryKey } from "@/lib/query/query-keys";
 
+import { startNavigationProgress } from "@/components/ui/navigation-progress";
+import { DEFAULT_QUERY_STALE_MS } from "@/lib/query/defaults";
+
 import { buildOrgEntryPath } from "./orgWorkspacePaths";
 import { cn } from "@/lib/utils";
 
@@ -93,19 +96,29 @@ function OrgHomeOrgCard({ org }: { org: Org }) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [isOpening, setIsOpening] = useState(false);
+  const projectsQueryKey = orgProjectsQueryKey(org.id);
+
+  const prefetchProjects = useCallback(() => {
+    void queryClient.prefetchQuery({
+      queryKey: projectsQueryKey,
+      queryFn: () => fetchProject.listOrgProjects(org.id),
+      staleTime: DEFAULT_QUERY_STALE_MS,
+    });
+  }, [org.id, projectsQueryKey, queryClient]);
 
   const openOrg = useCallback(async () => {
     if (isOpening) return;
     setIsOpening(true);
-    const key = orgProjectsQueryKey(org.id);
+    startNavigationProgress();
 
     try {
       let projects =
-        queryClient.getQueryData<OrgProjectsListResponse>(key)?.data;
+        queryClient.getQueryData<OrgProjectsListResponse>(projectsQueryKey)
+          ?.data;
 
       if (!projects) {
         const res = await queryClient.fetchQuery({
-          queryKey: key,
+          queryKey: projectsQueryKey,
           queryFn: () => fetchProject.listOrgProjects(org.id),
         });
         projects = res.data;
@@ -114,15 +127,16 @@ function OrgHomeOrgCard({ org }: { org: Org }) {
       router.push(buildOrgEntryPath(org.slug, projects));
     } catch {
       router.push(`/${encodeURIComponent(org.slug)}/projects`);
-    } finally {
-      setIsOpening(false);
     }
-  }, [isOpening, org.id, org.slug, queryClient, router]);
+  }, [isOpening, org.id, org.slug, projectsQueryKey, queryClient, router]);
 
   return (
     <button
       type="button"
+      data-navigation-progress
       disabled={isOpening}
+      onPointerEnter={prefetchProjects}
+      onFocus={prefetchProjects}
       onClick={() => void openOrg()}
       className={cn(
         "group/card block h-full w-full rounded-xl text-left outline-none",
@@ -237,7 +251,8 @@ export function OrgHomeList({ orgs }: OrgHomeListProps) {
     onSuccess: (res) => {
       setCreateOpen(false);
       setNewOrgName("");
-      router.push(`/${res.data.slug}`);
+      startNavigationProgress();
+      router.push(`/${encodeURIComponent(res.data.slug)}/projects`);
     },
   });
 
