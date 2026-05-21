@@ -229,7 +229,7 @@ export function straightenSwimlaneEdgeSegmentAt(
     axis
   );
 
-  let interiorNext = simplifyCollinearWaypoints(
+  const interiorNext = simplifyCollinearWaypoints(
     interiorFromPolyline(straightened),
     epsilon
   );

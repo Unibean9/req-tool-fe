@@ -166,62 +166,336 @@
 }
 
 /* Flow action dialog — AI swimlane loading overlay */
-@keyframes flow-action-ai-ring-spin {
+@keyframes flow-action-ai-title-sheen {
+  0% {
+    background-position: 140% 50%;
+  }
+  100% {
+    background-position: -40% 50%;
+  }
+}
+
+@keyframes flow-action-ai-title-glitch {
+  0%,
+  100% {
+    filter: drop-shadow(0 0 0 transparent);
+    transform: translateX(0);
+  }
+  48% {
+    filter: drop-shadow(0.08rem 0 color-mix(in oklab, var(--primary) 50%, transparent));
+    transform: translateX(0);
+  }
+  50% {
+    filter: drop-shadow(-0.08rem 0 color-mix(in oklab, var(--primary) 55%, transparent));
+    transform: translateX(-0.03rem);
+  }
+  52% {
+    filter: drop-shadow(0.08rem 0 color-mix(in oklab, var(--primary) 55%, transparent));
+    transform: translateX(0.03rem);
+  }
+  54% {
+    filter: drop-shadow(0 0 0 transparent);
+    transform: translateX(0);
+  }
+}
+
+@keyframes flow-action-ai-title-rail {
+  0%,
+  100% {
+    opacity: 0.28;
+    transform: scaleX(0.45);
+  }
+  50% {
+    opacity: 0.9;
+    transform: scaleX(1);
+  }
+}
+
+@keyframes flow-action-ai-ambient-dash {
+  to {
+    stroke-dashoffset: -220;
+  }
+}
+
+@keyframes flow-action-ai-ambient-ring {
+  0%,
+  100% {
+    opacity: 0.16;
+    transform: scale(0.88) rotate(0deg);
+  }
+  50% {
+    opacity: 0.48;
+    transform: scale(1.08) rotate(18deg);
+  }
+}
+
+@keyframes flow-action-ai-ambient-shard {
+  0%,
+  100% {
+    opacity: 0.18;
+    transform: translate3d(0, 0, 0) rotate(0deg);
+  }
+  50% {
+    opacity: 0.75;
+    transform: translate3d(0.75rem, -0.5rem, 0) rotate(8deg);
+  }
+}
+
+@keyframes flow-action-ai-ambient-stream {
+  0% {
+    opacity: 0;
+    transform: translateY(-120%);
+  }
+  22%,
+  74% {
+    opacity: 0.8;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(120%);
+  }
+}
+
+@keyframes flow-action-ai-ambient-ribbon {
+  0% {
+    opacity: 0;
+    transform: translateX(-35%) scaleX(0.72);
+  }
+  18%,
+  72% {
+    opacity: 0.9;
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(35%) scaleX(1);
+  }
+}
+
+@keyframes flow-action-ai-matrix-column {
+  0%,
+  100% {
+    opacity: 0.25;
+    transform: translateY(-0.75rem);
+  }
+  50% {
+    opacity: 0.95;
+    transform: translateY(0.75rem);
+  }
+}
+
+@keyframes flow-action-ai-composer-aura {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: scaleX(0.82);
+  }
+  50% {
+    opacity: 0.9;
+    transform: scaleX(1.08);
+  }
+}
+
+@keyframes flow-action-ai-composer-grid {
+  0% {
+    background-position:
+      0 0,
+      0 0;
+  }
+  100% {
+    background-position:
+      1.5rem 1.5rem,
+      0 0;
+  }
+}
+
+@keyframes flow-action-ai-composer-beam {
+  0% {
+    opacity: 0;
+    transform: translateX(-110%);
+  }
+  15%,
+  68% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(320%);
+  }
+}
+
+@keyframes flow-action-ai-composer-diagonal {
+  0% {
+    opacity: 0;
+    transform: translateX(-80%) skewX(-18deg);
+  }
+  24%,
+  64% {
+    opacity: 0.52;
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(240%) skewX(-18deg);
+  }
+}
+
+@keyframes flow-action-ai-composer-radar {
   to {
     transform: rotate(360deg);
   }
 }
 
-@keyframes flow-action-ai-icon-pulse {
+@keyframes flow-action-ai-composer-satellite-orbit {
+  from {
+    transform: rotate(var(--flow-action-ai-satellite-start))
+      translateX(var(--flow-action-ai-satellite-distance));
+  }
+  to {
+    transform: rotate(calc(var(--flow-action-ai-satellite-start) + 360deg))
+      translateX(var(--flow-action-ai-satellite-distance));
+  }
+}
+
+@keyframes flow-action-ai-composer-path {
+  0% {
+    stroke-dashoffset: 340;
+  }
+  100% {
+    stroke-dashoffset: -340;
+  }
+}
+
+@keyframes flow-action-ai-composer-core {
   0%,
   100% {
-    opacity: 0.75;
-    transform: scale(0.94);
+    opacity: 0.8;
+    transform: scale(0.88);
   }
   50% {
     opacity: 1;
-    transform: scale(1);
+    transform: scale(1.08);
   }
 }
 
-@keyframes flow-action-ai-bar-slide {
-  0% {
-    transform: translateX(-120%);
-  }
-  100% {
-    transform: translateX(320%);
+@keyframes flow-action-ai-composer-halo {
+  to {
+    transform: rotate(360deg);
   }
 }
 
-@keyframes flow-action-ai-shimmer {
-  0% {
-    transform: translateX(-100%);
-  }
-  100% {
-    transform: translateX(100%);
+@keyframes flow-action-ai-composer-orbit-field {
+  to {
+    transform: rotate(-360deg);
   }
 }
 
-@keyframes flow-action-ai-lane-pulse {
+@keyframes flow-action-ai-composer-meter {
   0%,
   100% {
-    opacity: 0.55;
+    opacity: 0.35;
+    transform: scaleY(0.35);
+  }
+  48% {
+    opacity: 1;
+    transform: scaleY(1);
+  }
+}
+
+@keyframes flow-action-ai-composer-data-stack {
+  0%,
+  100% {
+    opacity: 0.3;
+    transform: scaleX(0.55);
+  }
+  42% {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+}
+
+@keyframes flow-action-ai-composer-wave {
+  0%,
+  100% {
+    opacity: 0.34;
+    transform: scaleY(0.28);
   }
   50% {
     opacity: 1;
+    transform: scaleY(1);
   }
 }
 
-/** Node chạy ngang — `left` % theo track cha (translateX(100%) = % theo cục 14px → không chạy). */
-@keyframes flow-action-ai-node-travel {
+@keyframes flow-action-ai-composer-spark-a {
+  0% {
+    opacity: 0;
+    left: 7%;
+    transform: translate3d(0, 3.25rem, 0) scale(0.55);
+  }
+  18%,
+  72% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    left: 93%;
+    transform: translate3d(0, 3.25rem, 0) scale(1);
+  }
+}
+
+@keyframes flow-action-ai-composer-spark-b {
+  0% {
+    opacity: 0;
+    left: 7%;
+    transform: translate3d(0, 5.75rem, 0) scale(0.55);
+  }
+  18%,
+  72% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    left: 93%;
+    transform: translate3d(0, 5.75rem, 0) scale(1);
+  }
+}
+
+@keyframes flow-action-ai-composer-spark-c {
+  0% {
+    opacity: 0;
+    left: 7%;
+    transform: translate3d(0, 8.25rem, 0) scale(0.55);
+  }
+  18%,
+  72% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    left: 93%;
+    transform: translate3d(0, 8.25rem, 0) scale(1);
+  }
+}
+
+@keyframes flow-action-ai-composer-particle {
   0%,
   100% {
-    left: 6%;
-    transform: translateY(-50%);
+    opacity: 0.18;
+    transform: translate3d(0, 0, 0) scale(0.8);
   }
   50% {
-    left: calc(100% - 0.875rem - 6%);
-    transform: translateY(-50%);
+    opacity: 0.9;
+    transform: translate3d(0.5rem, -0.625rem, 0) scale(1.1);
+  }
+}
+
+@keyframes flow-action-ai-composer-chip {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: scaleX(0.72);
+  }
+  45% {
+    opacity: 1;
+    transform: scaleX(1);
   }
 }
 
@@ -237,47 +511,6 @@
   100% {
     transform: translateY(120%);
     opacity: 0;
-  }
-}
-
-@keyframes flow-action-ai-circuit-drift {
-  0%,
-  100% {
-    opacity: 0.25;
-    transform: rotate(-8deg) scale(0.92);
-  }
-  50% {
-    opacity: 0.65;
-    transform: rotate(8deg) scale(1.05);
-  }
-}
-
-@keyframes flow-action-ai-step-pulse {
-  0%,
-  100% {
-    border-color: color-mix(in oklab, var(--border) 70%, transparent);
-    opacity: 0.62;
-  }
-  45% {
-    border-color: color-mix(in oklab, var(--primary) 45%, transparent);
-    opacity: 1;
-  }
-}
-
-@keyframes flow-action-ai-packet-travel {
-  0% {
-    left: 4%;
-    opacity: 0;
-    transform: translateY(-50%) scale(0.8);
-  }
-  12%,
-  72% {
-    opacity: 1;
-  }
-  100% {
-    left: calc(100% - 0.5rem - 4%);
-    opacity: 0;
-    transform: translateY(-50%) scale(1);
   }
 }
 
@@ -341,58 +574,258 @@
   will-change: max-height, opacity, padding, transform;
 }
 
-.flow-action-ai-ring-spin {
-  animation: flow-action-ai-ring-spin 1.1s linear infinite;
+.flow-action-ai-title-stack {
+  text-shadow: 0 0 2rem color-mix(in oklab, var(--primary) 10%, transparent);
 }
 
-.flow-action-ai-icon-pulse {
-  animation: flow-action-ai-icon-pulse 1.8s ease-in-out infinite;
+.flow-action-ai-kicker {
+  background: linear-gradient(
+    90deg,
+    color-mix(in oklab, var(--primary) 64%, transparent),
+    color-mix(in oklab, var(--foreground) 76%, transparent),
+    color-mix(in oklab, var(--primary) 64%, transparent)
+  );
+  background-size: 220% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: flow-action-ai-title-sheen 2.8s linear infinite;
 }
 
-.flow-action-ai-bar-slide {
-  animation: flow-action-ai-bar-slide 1.35s ease-in-out infinite;
+.flow-action-ai-title-effect {
+  background: linear-gradient(
+    90deg,
+    var(--foreground),
+    color-mix(in oklab, var(--primary) 40%, var(--foreground)),
+    var(--foreground)
+  );
+  background-size: 220% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation:
+    flow-action-ai-title-sheen 3.2s linear infinite,
+    flow-action-ai-title-glitch 4.8s steps(1, end) infinite;
 }
 
-.flow-action-ai-shimmer {
-  animation: flow-action-ai-shimmer 1.8s ease-in-out infinite;
+.flow-action-ai-title-rail {
+  display: grid;
+  grid-template-columns: 1fr 2fr 1fr;
+  gap: 0.75rem;
+  margin: 0.875rem auto 0;
+  max-width: 16rem;
 }
 
-.flow-action-ai-lane-pulse-0 {
-  animation: flow-action-ai-lane-pulse 2.4s ease-in-out infinite;
+.flow-action-ai-title-rail span {
+  height: 1px;
+  border-radius: 9999px;
+  background: linear-gradient(
+    to right,
+    transparent,
+    color-mix(in oklab, var(--primary) 72%, transparent),
+    transparent
+  );
+  animation: flow-action-ai-title-rail 1.8s ease-in-out infinite;
 }
 
-.flow-action-ai-lane-pulse-1 {
-  animation: flow-action-ai-lane-pulse 2.4s ease-in-out 0.22s infinite;
+.flow-action-ai-title-rail span:nth-child(2) {
+  animation-delay: 0.18s;
 }
 
-.flow-action-ai-lane-pulse-2 {
-  animation: flow-action-ai-lane-pulse 2.4s ease-in-out 0.44s infinite;
+.flow-action-ai-title-rail span:nth-child(3) {
+  animation-delay: 0.36s;
 }
 
-.flow-action-ai-node {
+.flow-action-ai-ambient-map path {
+  stroke: currentColor;
+  stroke-width: 1;
+  stroke-linecap: round;
+  stroke-dasharray: 42 178;
+  stroke-dashoffset: 0;
+  opacity: 0.16;
+  animation: flow-action-ai-ambient-dash 6s linear infinite;
+}
+
+.flow-action-ai-ambient-map path:nth-child(2) {
+  animation-delay: 0.6s;
+}
+
+.flow-action-ai-ambient-map path:nth-child(3) {
+  animation-delay: 1.2s;
+}
+
+.flow-action-ai-ambient-map path:nth-child(4) {
+  animation-delay: 1.8s;
+}
+
+.flow-action-ai-ambient-ring {
   position: absolute;
-  top: 50%;
-  left: 6%;
-  z-index: 2;
-  display: block;
-  width: 0.875rem;
-  height: 0.875rem;
-  border-radius: 3px;
-  transform: translateY(-50%);
-  will-change: left;
-  animation: flow-action-ai-node-travel 2.2s ease-in-out infinite;
+  border-radius: 9999px;
+  border: 1px solid color-mix(in oklab, var(--primary) 28%, transparent);
+  box-shadow:
+    inset 0 0 3rem color-mix(in oklab, var(--primary) 10%, transparent),
+    0 0 4rem color-mix(in oklab, var(--primary) 9%, transparent);
+  animation: flow-action-ai-ambient-ring 5.5s ease-in-out infinite;
 }
 
-.flow-action-ai-node-0 {
-  animation: flow-action-ai-node-travel 2.2s ease-in-out 0s infinite;
+.flow-action-ai-ambient-ring-0 {
+  top: 12%;
+  left: 8%;
+  width: 18rem;
+  height: 18rem;
 }
 
-.flow-action-ai-node-1 {
-  animation: flow-action-ai-node-travel 2.2s ease-in-out 0.35s infinite;
+.flow-action-ai-ambient-ring-1 {
+  right: 9%;
+  bottom: 8%;
+  width: 22rem;
+  height: 22rem;
+  animation-delay: 0.75s;
 }
 
-.flow-action-ai-node-2 {
-  animation: flow-action-ai-node-travel 2.2s ease-in-out 0.7s infinite;
+.flow-action-ai-ambient-ring-2 {
+  top: 18%;
+  right: 18%;
+  width: 12rem;
+  height: 12rem;
+  animation-delay: 1.5s;
+}
+
+.flow-action-ai-ambient-shard {
+  position: absolute;
+  width: 8rem;
+  height: 1px;
+  border-radius: 9999px;
+  background: linear-gradient(
+    to right,
+    transparent,
+    color-mix(in oklab, var(--primary) 62%, transparent),
+    transparent
+  );
+  animation: flow-action-ai-ambient-shard 3.8s ease-in-out infinite;
+}
+
+.flow-action-ai-ambient-shard-0 {
+  top: 22%;
+  left: 15%;
+}
+
+.flow-action-ai-ambient-shard-1 {
+  top: 32%;
+  right: 10%;
+  animation-delay: 0.6s;
+}
+
+.flow-action-ai-ambient-shard-2 {
+  bottom: 20%;
+  left: 18%;
+  animation-delay: 1.2s;
+}
+
+.flow-action-ai-ambient-shard-3 {
+  right: 18%;
+  bottom: 28%;
+  animation-delay: 1.8s;
+}
+
+.flow-action-ai-ambient-stream {
+  position: absolute;
+  top: 0;
+  width: 1px;
+  height: 11rem;
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    color-mix(in oklab, var(--primary) 34%, transparent),
+    transparent
+  );
+  animation: flow-action-ai-ambient-stream 3.4s cubic-bezier(0.22, 1, 0.36, 1)
+    infinite;
+}
+
+.flow-action-ai-ambient-stream-0 {
+  left: 18%;
+}
+
+.flow-action-ai-ambient-stream-1 {
+  left: 35%;
+  animation-delay: 0.55s;
+}
+
+.flow-action-ai-ambient-stream-2 {
+  right: 32%;
+  animation-delay: 1.1s;
+}
+
+.flow-action-ai-ambient-stream-3 {
+  right: 16%;
+  animation-delay: 1.65s;
+}
+
+.flow-action-ai-ambient-ribbon {
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  height: 5rem;
+  border-radius: 9999px;
+  background:
+    linear-gradient(
+      90deg,
+      transparent,
+      color-mix(in oklab, var(--primary) 12%, transparent),
+      color-mix(in oklab, var(--primary) 28%, transparent),
+      color-mix(in oklab, var(--primary) 12%, transparent),
+      transparent
+    );
+  filter: blur(1rem);
+  animation: flow-action-ai-ambient-ribbon 4.6s cubic-bezier(0.22, 1, 0.36, 1)
+    infinite;
+}
+
+.flow-action-ai-ambient-ribbon-0 {
+  top: 26%;
+}
+
+.flow-action-ai-ambient-ribbon-1 {
+  bottom: 16%;
+  animation-delay: 1.4s;
+  animation-direction: reverse;
+}
+
+.flow-action-ai-matrix-column {
+  position: absolute;
+  display: grid;
+  gap: 0.45rem;
+  width: 7rem;
+  animation: flow-action-ai-matrix-column 2.8s ease-in-out infinite;
+}
+
+.flow-action-ai-matrix-column span {
+  height: 0.2rem;
+  border-radius: 9999px;
+  background: linear-gradient(
+    to right,
+    transparent,
+    color-mix(in oklab, var(--primary) 72%, transparent),
+    transparent
+  );
+}
+
+.flow-action-ai-matrix-column-0 {
+  top: 16%;
+  left: 7%;
+}
+
+.flow-action-ai-matrix-column-1 {
+  right: 7%;
+  bottom: 18%;
+  animation-delay: 0.75s;
+}
+
+.flow-action-ai-matrix-column-2 {
+  top: 20%;
+  right: 18%;
+  animation-delay: 1.5s;
 }
 
 .flow-action-ai-scanline {
@@ -412,54 +845,439 @@
   animation: flow-action-ai-scanline 3.2s cubic-bezier(0.22, 1, 0.36, 1) infinite;
 }
 
-.flow-action-ai-circuit-drift {
-  animation: flow-action-ai-circuit-drift 2.4s ease-in-out infinite;
+.flow-action-ai-composer-aura {
+  animation: flow-action-ai-composer-aura 2.2s ease-in-out infinite;
+  will-change: opacity, transform;
 }
 
-.flow-action-ai-step {
-  animation: flow-action-ai-step-pulse 2.1s ease-in-out infinite;
+.flow-action-ai-composer-grid {
+  background-image:
+    linear-gradient(
+      to right,
+      color-mix(in oklab, var(--primary) 22%, transparent) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      to bottom,
+      color-mix(in oklab, var(--primary) 22%, transparent) 1px,
+      transparent 1px
+    );
+  background-size: 1.5rem 1.5rem;
+  mask-image: radial-gradient(ellipse at center, black 0%, transparent 76%);
+  animation: flow-action-ai-composer-grid 3.6s linear infinite;
 }
 
-.flow-action-ai-step-1 {
-  animation-delay: 0.28s;
+.flow-action-ai-composer-halo {
+  border: 1px solid color-mix(in oklab, var(--primary) 22%, transparent);
+  box-shadow:
+    inset 0 0 1.25rem color-mix(in oklab, var(--primary) 10%, transparent),
+    0 0 1.75rem color-mix(in oklab, var(--primary) 12%, transparent);
+  mask-image: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    black 46deg,
+    transparent 92deg,
+    transparent 180deg,
+    black 224deg,
+    transparent 282deg,
+    transparent 360deg
+  );
+  animation: flow-action-ai-composer-halo 5s linear infinite;
+  will-change: transform;
 }
 
-.flow-action-ai-step-2 {
-  animation-delay: 0.56s;
+.flow-action-ai-composer-orbit-field {
+  border: 1px solid color-mix(in oklab, var(--primary) 12%, transparent);
+  box-shadow: inset 0 0 2rem color-mix(in oklab, var(--primary) 8%, transparent);
+  opacity: 0.82;
+  mask-image: conic-gradient(
+    from 20deg,
+    black 0deg,
+    transparent 42deg,
+    transparent 92deg,
+    black 126deg,
+    transparent 172deg,
+    transparent 244deg,
+    black 290deg,
+    transparent 360deg
+  );
+  animation: flow-action-ai-composer-orbit-field 8s linear infinite;
 }
 
-.flow-action-ai-packet {
+.flow-action-ai-composer-orbit-field-right {
+  animation-duration: 10s;
+  animation-direction: reverse;
+}
+
+.flow-action-ai-composer-beam {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    color-mix(in oklab, var(--primary) 20%, transparent) 38%,
+    color-mix(in oklab, var(--primary) 45%, transparent) 50%,
+    color-mix(in oklab, var(--primary) 20%, transparent) 62%,
+    transparent 100%
+  );
+  animation: flow-action-ai-composer-beam 2.9s cubic-bezier(0.22, 1, 0.36, 1)
+    infinite;
+  will-change: opacity, transform;
+}
+
+.flow-action-ai-composer-diagonal {
+  position: absolute;
+  top: -15%;
+  width: 14rem;
+  height: 130%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in oklab, var(--primary) 28%, transparent),
+    transparent
+  );
+  animation: flow-action-ai-composer-diagonal 4.2s cubic-bezier(0.22, 1, 0.36, 1)
+    infinite;
+}
+
+.flow-action-ai-composer-radar {
+  background: conic-gradient(
+    from 0deg,
+    color-mix(in oklab, var(--primary) 28%, transparent) 0deg,
+    color-mix(in oklab, var(--primary) 10%, transparent) 42deg,
+    transparent 82deg,
+    transparent 360deg
+  );
+  mask-image: radial-gradient(circle, transparent 0 18%, black 19% 44%, transparent 45%);
+  animation: flow-action-ai-composer-radar 5.5s linear infinite;
+  opacity: 0.7;
+  will-change: transform;
+}
+
+.flow-action-ai-composer-diagonal-0 {
+  left: 18%;
+}
+
+.flow-action-ai-composer-diagonal-1 {
+  left: 52%;
+  animation-delay: 1.4s;
+}
+
+.flow-action-ai-composer-path {
+  stroke-dasharray: 90 340;
+  animation: flow-action-ai-composer-path 2.4s linear infinite;
+  will-change: stroke-dashoffset;
+}
+
+.flow-action-ai-composer-path-b {
+  animation-delay: 0.18s;
+}
+
+.flow-action-ai-composer-path-c {
+  animation-delay: 0.36s;
+}
+
+.flow-action-ai-composer-node {
+  fill: currentColor;
+  opacity: 0.45;
+}
+
+.flow-action-ai-composer-node-hot {
+  opacity: 0.78;
+}
+
+.flow-action-ai-composer-core,
+.flow-action-ai-composer-core-glow,
+.flow-action-ai-composer-core-ring {
+  fill: currentColor;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: flow-action-ai-composer-core 1.7s ease-in-out infinite;
+}
+
+.flow-action-ai-composer-core {
+  opacity: 0.95;
+}
+
+.flow-action-ai-composer-core-glow {
+  opacity: 0.5;
+}
+
+.flow-action-ai-composer-core-ring {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  opacity: 0.62;
+}
+
+.flow-action-ai-composer-core-ring-outer {
+  stroke-dasharray: 10 16;
+  opacity: 0.44;
+}
+
+.flow-action-ai-composer-satellite {
+  --flow-action-ai-satellite-distance: 7rem;
+  --flow-action-ai-satellite-start: 0deg;
   position: absolute;
   top: 50%;
-  z-index: 1;
-  display: block;
-  width: 0.5rem;
-  height: 0.5rem;
-  border-radius: 2px;
-  background: color-mix(in oklab, var(--primary) 65%, transparent);
-  box-shadow: 0 0 0 2px color-mix(in oklab, var(--background) 85%, transparent);
-  transform: translateY(-50%);
-  will-change: left, opacity, transform;
-  animation: flow-action-ai-packet-travel 2.2s ease-in-out infinite;
+  left: 50%;
+  width: 0.65rem;
+  height: 0.65rem;
+  margin-top: -0.325rem;
+  margin-left: -0.325rem;
+  border-radius: 9999px;
+  background: var(--primary);
+  box-shadow: 0 0 1.25rem color-mix(in oklab, var(--primary) 82%, transparent);
+  transform-origin: center;
+  animation: flow-action-ai-composer-satellite-orbit 4.6s linear infinite;
 }
 
-.flow-action-ai-packet-b {
-  animation-delay: 0.5s;
+.flow-action-ai-composer-satellite-0 {
+  --flow-action-ai-satellite-start: 0deg;
+}
+
+.flow-action-ai-composer-satellite-1 {
+  --flow-action-ai-satellite-distance: 8.5rem;
+  --flow-action-ai-satellite-start: 90deg;
+  animation-delay: -1.15s;
+}
+
+.flow-action-ai-composer-satellite-2 {
+  --flow-action-ai-satellite-start: 180deg;
+  animation-delay: -2.3s;
+}
+
+.flow-action-ai-composer-satellite-3 {
+  --flow-action-ai-satellite-distance: 8.5rem;
+  --flow-action-ai-satellite-start: 270deg;
+  animation-delay: -3.45s;
+}
+
+.flow-action-ai-composer-meter {
+  display: block;
+  width: 0.25rem;
+  height: 1.125rem;
+  border-radius: 9999px;
+  background: var(--primary);
+  transform-origin: bottom;
+  animation: flow-action-ai-composer-meter 1.2s ease-in-out infinite;
+}
+
+.flow-action-ai-composer-meter-1 {
+  animation-delay: 0.12s;
+}
+
+.flow-action-ai-composer-meter-2 {
+  animation-delay: 0.24s;
+}
+
+.flow-action-ai-composer-meter-3 {
+  animation-delay: 0.36s;
+}
+
+.flow-action-ai-composer-data-stack {
+  position: absolute;
+  top: 18%;
+  display: grid;
+  width: 8rem;
+  gap: 0.45rem;
+}
+
+.flow-action-ai-composer-data-stack span {
+  height: 0.25rem;
+  border-radius: 9999px;
+  background: linear-gradient(
+    to right,
+    transparent,
+    color-mix(in oklab, var(--primary) 48%, transparent),
+    transparent
+  );
+  transform-origin: left;
+  animation: flow-action-ai-composer-data-stack 1.9s ease-in-out infinite;
+}
+
+.flow-action-ai-composer-data-stack span:nth-child(2) {
+  animation-delay: 0.12s;
+}
+
+.flow-action-ai-composer-data-stack span:nth-child(3) {
+  animation-delay: 0.24s;
+}
+
+.flow-action-ai-composer-data-stack span:nth-child(4) {
+  animation-delay: 0.36s;
+}
+
+.flow-action-ai-composer-data-stack span:nth-child(5) {
+  animation-delay: 0.48s;
+}
+
+.flow-action-ai-composer-data-stack-left {
+  left: 6%;
+}
+
+.flow-action-ai-composer-data-stack-right {
+  right: 6%;
+}
+
+.flow-action-ai-composer-wave {
+  width: 0.25rem;
+  height: 100%;
+  border-radius: 9999px;
+  background: color-mix(in oklab, var(--primary) 75%, transparent);
+  transform-origin: bottom;
+  animation: flow-action-ai-composer-wave 1.35s ease-in-out infinite;
+}
+
+.flow-action-ai-composer-wave-1 {
+  animation-delay: 0.11s;
+}
+
+.flow-action-ai-composer-wave-2 {
+  animation-delay: 0.22s;
+}
+
+.flow-action-ai-composer-wave-3 {
+  animation-delay: 0.33s;
+}
+
+.flow-action-ai-composer-wave-4 {
+  animation-delay: 0.44s;
+}
+
+.flow-action-ai-composer-spark {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 9999px;
+  background: var(--primary);
+  box-shadow: 0 0 1.125rem color-mix(in oklab, var(--primary) 80%, transparent);
+  will-change: opacity, transform;
+}
+
+.flow-action-ai-composer-spark-a {
+  animation: flow-action-ai-composer-spark-a 2.4s cubic-bezier(0.22, 1, 0.36, 1)
+    infinite;
+}
+
+.flow-action-ai-composer-spark-b {
+  animation: flow-action-ai-composer-spark-b 2.4s cubic-bezier(0.22, 1, 0.36, 1)
+    0.18s infinite;
+}
+
+.flow-action-ai-composer-spark-c {
+  animation: flow-action-ai-composer-spark-c 2.4s cubic-bezier(0.22, 1, 0.36, 1)
+    0.36s infinite;
+}
+
+.flow-action-ai-composer-particle {
+  position: absolute;
+  width: 0.375rem;
+  height: 0.375rem;
+  border-radius: 9999px;
+  background: var(--primary);
+  box-shadow: 0 0 0.875rem color-mix(in oklab, var(--primary) 62%, transparent);
+  animation: flow-action-ai-composer-particle 2.7s ease-in-out infinite;
+  will-change: opacity, transform;
+}
+
+.flow-action-ai-composer-particle-0 {
+  top: 24%;
+  left: 37%;
+}
+
+.flow-action-ai-composer-particle-1 {
+  top: 31%;
+  right: 28%;
+  animation-delay: 0.35s;
+}
+
+.flow-action-ai-composer-particle-2 {
+  bottom: 23%;
+  left: 27%;
+  animation-delay: 0.7s;
+}
+
+.flow-action-ai-composer-particle-3 {
+  right: 36%;
+  bottom: 19%;
+  animation-delay: 1.05s;
+}
+
+.flow-action-ai-composer-particle-4 {
+  top: 18%;
+  left: 14%;
+  animation-delay: 1.4s;
+}
+
+.flow-action-ai-composer-particle-5 {
+  top: 16%;
+  right: 13%;
+  animation-delay: 1.75s;
+}
+
+.flow-action-ai-composer-particle-6 {
+  bottom: 16%;
+  left: 12%;
+  animation-delay: 2.1s;
+}
+
+.flow-action-ai-composer-particle-7 {
+  right: 16%;
+  bottom: 14%;
+  animation-delay: 2.45s;
+}
+
+.flow-action-ai-composer-chip {
+  height: 0.1875rem;
+  border-radius: 9999px;
+  background: linear-gradient(
+    to right,
+    transparent,
+    color-mix(in oklab, var(--primary) 80%, transparent),
+    transparent
+  );
+  transform-origin: left;
+  animation: flow-action-ai-composer-chip 1.9s ease-in-out infinite;
+}
+
+.flow-action-ai-composer-chip-1 {
+  animation-delay: 0.24s;
+}
+
+.flow-action-ai-composer-chip-2 {
+  animation-delay: 0.48s;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .flow-action-ai-ring-spin,
-  .flow-action-ai-icon-pulse,
-  .flow-action-ai-bar-slide,
-  .flow-action-ai-shimmer,
-  .flow-action-ai-lane-pulse-0,
-  .flow-action-ai-lane-pulse-1,
-  .flow-action-ai-lane-pulse-2,
-  .flow-action-ai-node,
+  .flow-action-ai-composer-aura,
+  .flow-action-ai-title-rail span,
+  .flow-action-ai-kicker,
+  .flow-action-ai-title-effect,
+  .flow-action-ai-ambient-map path,
+  .flow-action-ai-ambient-ring,
+  .flow-action-ai-ambient-shard,
+  .flow-action-ai-ambient-stream,
+  .flow-action-ai-ambient-ribbon,
+  .flow-action-ai-matrix-column,
+  .flow-action-ai-composer-grid,
+  .flow-action-ai-composer-beam,
+  .flow-action-ai-composer-diagonal,
+  .flow-action-ai-composer-radar,
+  .flow-action-ai-composer-halo,
+  .flow-action-ai-composer-orbit-field,
+  .flow-action-ai-composer-path,
+  .flow-action-ai-composer-core,
+  .flow-action-ai-composer-core-glow,
+  .flow-action-ai-composer-core-ring,
+  .flow-action-ai-composer-satellite,
+  .flow-action-ai-composer-meter,
+  .flow-action-ai-composer-data-stack span,
+  .flow-action-ai-composer-wave,
+  .flow-action-ai-composer-spark,
+  .flow-action-ai-composer-particle,
+  .flow-action-ai-composer-chip,
   .flow-action-ai-scanline,
-  .flow-action-ai-circuit-drift,
-  .flow-action-ai-step,
-  .flow-action-ai-packet,
   .flow-action-editor-row-enter,
   .flow-action-editor-row-exit {
     animation: none;
