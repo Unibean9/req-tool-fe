@@ -11,7 +11,6 @@ import {
   LayoutGrid,
   Plus,
   Search,
-  Users,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -139,62 +138,56 @@ function OrgHomeOrgCard({ org }: { org: Org }) {
       onFocus={prefetchProjects}
       onClick={() => void openOrg()}
       className={cn(
-        "group/card block h-full w-full rounded-xl text-left outline-none",
+        "group/card block h-full w-full rounded-2xl text-left outline-none",
         "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
         "disabled:pointer-events-none disabled:opacity-70"
       )}
     >
       <article
         className={cn(
-          "relative flex h-full min-h-44 flex-col overflow-hidden rounded-xl",
-          "border border-border/55 bg-card/45 ring-1 ring-white/[0.04]",
-          "transition-[border-color,transform,background-color] duration-200 ease-out",
-          "group-hover/card:-translate-y-0.5 group-hover/card:border-brand-jade/35 group-hover/card:bg-card/65"
+          "relative flex h-full min-h-52 flex-col overflow-hidden rounded-2xl",
+          "border border-border/60 bg-card/55 shadow-sm ring-1 ring-white/[0.03]",
+          "transition-[border-color,box-shadow,transform,background-color] duration-200 ease-out",
+          "group-hover/card:-translate-y-0.5 group-hover/card:border-brand-jade/35 group-hover/card:bg-card/75 group-hover/card:shadow-lg group-hover/card:shadow-black/10"
         )}
       >
-        <span
-          className="absolute inset-y-3 left-0 w-0.5 rounded-full bg-brand-jade/0 transition-colors duration-200 group-hover/card:bg-brand-mint/80"
-          aria-hidden
-        />
         <div
-          className="pointer-events-none absolute -top-12 -right-8 size-32 rounded-full bg-brand-jade/10 opacity-0 blur-2xl transition-opacity duration-300 group-hover/card:opacity-100"
+          className="pointer-events-none absolute -top-24 right-0 size-44 rounded-full bg-brand-jade/10 opacity-0 blur-3xl transition-opacity duration-300 group-hover/card:opacity-100"
           aria-hidden
         />
 
-        <div className="flex flex-1 flex-col gap-4 p-5 sm:p-6">
-          <div className="flex items-start gap-3.5">
+        <div className="flex flex-1 flex-col gap-5 p-5 sm:p-6">
+          <div className="flex items-start justify-between gap-4">
             <span
               className={cn(
-                "flex size-12 shrink-0 items-center justify-center rounded-xl bg-linear-to-br text-base font-bold text-white shadow-sm ring-1 ring-white/15",
+                "flex size-12 shrink-0 items-center justify-center rounded-2xl bg-linear-to-br text-base font-bold text-white shadow-sm ring-1 ring-white/15",
                 orgCardToneFromSeed(org.id)
               )}
               aria-hidden
             >
               {orgInitial(org.name)}
             </span>
-            <div className="min-w-0 flex-1 space-y-1.5 pt-0.5">
-              <h2 className="font-heading line-clamp-2 text-lg font-semibold leading-snug tracking-tight text-foreground sm:text-xl">
-                {org.name}
-              </h2>
-              <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                <CalendarDays className="size-3.5 shrink-0 opacity-80" aria-hidden />
-                <time dateTime={org.createdAt}>{formatOrgCreatedAt(org.createdAt)}</time>
-              </p>
-            </div>
+            <span className="rounded-full border border-border/50 bg-muted/20 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+              Org
+            </span>
           </div>
 
-          <div className="mt-auto flex flex-wrap items-center justify-between gap-2 border-t border-border/40 pt-3">
-            <div className="flex flex-wrap gap-1.5">
-              <span className="inline-flex items-center gap-1 rounded-md border border-border/50 bg-muted/30 px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
-                <Users className="size-3 shrink-0" aria-hidden />
-                Thành viên
-              </span>
-              <span className="inline-flex items-center gap-1 rounded-md border border-border/50 bg-muted/30 px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
-                <LayoutGrid className="size-3 shrink-0" aria-hidden />
-                Dự án
-              </span>
-            </div>
-            <span className="inline-flex items-center gap-1 text-xs font-semibold text-brand-mint transition-[gap] duration-200 group-hover/card:gap-1.5">
+          <div className="min-w-0 flex-1 space-y-2">
+            <h2 className="font-heading line-clamp-2 text-xl font-semibold leading-snug tracking-tight text-foreground">
+              {org.name}
+            </h2>
+            <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
+              <CalendarDays className="size-4 shrink-0 opacity-75" aria-hidden />
+              <time dateTime={org.createdAt}>{formatOrgCreatedAt(org.createdAt)}</time>
+            </p>
+          </div>
+
+          <div className="mt-auto flex items-center justify-between gap-3 border-t border-border/45 pt-4">
+            <span className="inline-flex items-center gap-2 text-xs font-medium text-muted-foreground">
+              <LayoutGrid className="size-3.5 shrink-0" aria-hidden />
+              Workspace
+            </span>
+            <span className="inline-flex min-w-28 items-center justify-end gap-1 text-xs font-semibold text-brand-mint transition-[gap] duration-200 group-hover/card:gap-1.5">
               {isOpening ? "Đang mở…" : "Mở workspace"}
               <ArrowRight
                 className={cn(
@@ -223,17 +216,17 @@ function CreateOrgCard({
       type="button"
       onClick={onClick}
       className={cn(
-        "group/create flex h-full min-h-44 w-full flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-border/60 bg-transparent px-4 py-8 text-center outline-none",
-        "transition-[border-color,background-color,transform] duration-200",
-        "hover:-translate-y-0.5 hover:border-brand-jade/40 hover:bg-brand-jade/[0.06]",
+        "group/create flex h-full min-h-52 w-full flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-border/70 bg-muted/[0.08] px-4 py-8 text-center outline-none",
+        "transition-[border-color,background-color,transform,box-shadow] duration-200",
+        "hover:-translate-y-0.5 hover:border-brand-jade/45 hover:bg-brand-jade/[0.06] hover:shadow-lg hover:shadow-black/10",
         "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
         className
       )}
     >
-      <span className="flex size-11 items-center justify-center rounded-xl border border-border/60 bg-muted/25 text-muted-foreground transition-colors group-hover/create:border-brand-jade/30 group-hover/create:bg-brand-jade/10 group-hover/create:text-brand-mint">
+      <span className="flex size-12 items-center justify-center rounded-2xl border border-border/60 bg-background/45 text-muted-foreground transition-colors group-hover/create:border-brand-jade/30 group-hover/create:bg-brand-jade/10 group-hover/create:text-brand-mint">
         <Plus className="size-5" aria-hidden />
       </span>
-      <span className="font-heading text-sm font-semibold tracking-tight text-muted-foreground transition-colors group-hover/create:text-foreground">
+      <span className="font-heading text-base font-semibold tracking-tight text-muted-foreground transition-colors group-hover/create:text-foreground">
         Tạo tổ chức mới
       </span>
     </button>
@@ -266,46 +259,54 @@ export function OrgHomeList({ orgs }: OrgHomeListProps) {
   const listCount = filtered.length;
 
   return (
-    <div className="flex min-h-full w-full flex-1 flex-col gap-8 px-6 py-8 sm:gap-10 sm:px-8 sm:py-10">
-      <header className="flex flex-col gap-5">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+    <div className="flex min-h-full w-full flex-1 flex-col gap-7 px-5 py-6 sm:px-8 sm:py-8 lg:px-10">
+      <header className="relative overflow-hidden rounded-3xl border border-border/60 bg-card/35 p-5 shadow-sm ring-1 ring-white/[0.03] sm:p-7">
+        <div
+          className="pointer-events-none absolute -top-28 left-1/2 size-72 -translate-x-1/2 rounded-full bg-brand-jade/10 blur-3xl"
+          aria-hidden
+        />
+        <div className="relative flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
           <div className="min-w-0 space-y-2">
-            <p className="text-xs font-medium tracking-wide text-brand-mint">Workspace</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-brand-mint">
+              Workspace
+            </p>
             <h1 className="font-heading text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
               Tổ chức của bạn
             </h1>
-            <p className="text-sm leading-relaxed text-muted-foreground sm:text-base">
-              Chọn workspace để vào dự án, thành viên và mô hình yêu cầu.
+            <p className="max-w-2xl text-sm leading-relaxed text-muted-foreground sm:text-base">
+              Chọn nơi làm việc để tiếp tục với dự án, thành viên và mô hình yêu cầu.
             </p>
           </div>
-          <Button
-            type="button"
-            size="lg"
-            className="h-11 w-full shrink-0 gap-2 rounded-xl font-semibold shadow-none sm:w-auto"
-            onClick={() => setCreateOpen(true)}
-          >
-            <Plus className="size-4" aria-hidden />
-            Tạo tổ chức
-          </Button>
-        </div>
 
-        {orgs.length > 0 ? (
-          <div className="relative min-h-11 w-full max-w-md">
-            <Search
-              className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-muted-foreground"
-              aria-hidden
-            />
-            <Input
-              type="search"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Tìm tổ chức…"
-              autoComplete="off"
-              aria-label="Tìm tổ chức"
-              className="h-11 rounded-xl border-border/70 bg-muted/30 pl-10 shadow-none ring-1 ring-white/[0.03] focus-visible:ring-brand-jade/30"
-            />
+          <div className="flex w-full flex-col gap-3 sm:flex-row lg:w-auto lg:min-w-[30rem]">
+            {orgs.length > 0 ? (
+              <div className="relative min-h-11 flex-1">
+                <Search
+                  className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-muted-foreground"
+                  aria-hidden
+                />
+                <Input
+                  type="search"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Tìm tổ chức..."
+                  autoComplete="off"
+                  aria-label="Tìm tổ chức"
+                  className="h-11 rounded-2xl border-border/70 bg-background/45 pl-10 shadow-none ring-1 ring-white/[0.03] focus-visible:ring-brand-jade/30"
+                />
+              </div>
+            ) : null}
+            <Button
+              type="button"
+              size="lg"
+              className="h-11 shrink-0 gap-2 rounded-2xl px-5 font-semibold shadow-none"
+              onClick={() => setCreateOpen(true)}
+            >
+              <Plus className="size-4" aria-hidden />
+              Tạo tổ chức
+            </Button>
           </div>
-        ) : null}
+        </div>
       </header>
 
       <Dialog
@@ -365,9 +366,16 @@ export function OrgHomeList({ orgs }: OrgHomeListProps) {
 
       {orgs.length > 0 ? (
         <section className="flex flex-col gap-5">
-          <div className="flex items-end justify-between gap-3 border-b border-border/45 pb-3">
-            <p className="text-sm font-medium text-foreground">Đã tham gia</p>
-            <p className="text-sm tabular-nums text-muted-foreground">
+          <div className="flex items-end justify-between gap-3">
+            <div className="space-y-1">
+              <h2 className="font-heading text-lg font-semibold tracking-tight text-foreground">
+                Đã tham gia
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                Các workspace bạn có thể truy cập.
+              </p>
+            </div>
+            <p className="rounded-full border border-border/55 bg-muted/20 px-3 py-1 text-sm tabular-nums text-muted-foreground">
               {listCount === joinedCount
                 ? `${joinedCount} tổ chức`
                 : `${listCount} / ${joinedCount}`}
@@ -375,13 +383,13 @@ export function OrgHomeList({ orgs }: OrgHomeListProps) {
           </div>
 
           {filtered.length === 0 ? (
-            <p className="rounded-lg border border-border/50 bg-muted/20 px-4 py-6 text-center text-sm text-muted-foreground">
+            <p className="rounded-2xl border border-border/55 bg-muted/15 px-4 py-8 text-center text-sm text-muted-foreground">
               Không có tổ chức khớp với từ khóa &ldquo;{search.trim()}&rdquo;.
             </p>
           ) : null}
 
           <motion.ul
-            className="grid list-none grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+            className="grid list-none grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4"
             role="list"
             variants={listStagger}
             initial="hidden"
@@ -398,7 +406,7 @@ export function OrgHomeList({ orgs }: OrgHomeListProps) {
           </motion.ul>
         </section>
       ) : (
-        <section className="flex flex-col items-center gap-8 py-10 text-center">
+        <section className="flex flex-col items-center gap-7 rounded-3xl border border-border/55 bg-card/25 px-6 py-12 text-center">
           <div className="flex size-14 items-center justify-center rounded-2xl border border-border/60 bg-brand-jade/10 text-brand-mint">
             <Building2 className="size-7" aria-hidden />
           </div>
