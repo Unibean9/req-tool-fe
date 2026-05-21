@@ -132,7 +132,7 @@ export function ProjectNewStepBasics({
               disabled={disabled}
               maxLength={PROJECT_SHORT_SUMMARY_MAX_CHARS}
               className={cn(
-                "min-h-28 resize-y border-2 border-border/90 pl-10 dark:border-zinc-600",
+                "min-h-28 border-2 border-border/90 pl-10 dark:border-zinc-600",
                 executiveError && "border-destructive"
               )}
             />
@@ -161,7 +161,7 @@ export function ProjectNewStepBasics({
               disabled={disabled}
               maxLength={PROJECT_DESCRIPTION_MAX_CHARS}
               className={cn(
-                "min-h-48 resize-y border-2 border-border/90 pb-8 sm:min-h-52 dark:border-zinc-600",
+                "min-h-48 border-2 border-border/90 pb-8 sm:min-h-52 dark:border-zinc-600",
                 descriptionError && "border-destructive"
               )}
             />

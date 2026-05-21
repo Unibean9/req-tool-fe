@@ -62,7 +62,7 @@ export function ProjectNewStepContext({
               disabled={disabled}
               maxLength={PROJECT_CONTEXT_MAX_CHARS}
               className={cn(
-                "min-h-36 resize-y border-2 border-border/90 pb-8 sm:min-h-40 dark:border-zinc-600",
+                "min-h-36 border-2 border-border/90 pb-8 sm:min-h-40 dark:border-zinc-600",
                 contextError && "border-destructive"
               )}
             />

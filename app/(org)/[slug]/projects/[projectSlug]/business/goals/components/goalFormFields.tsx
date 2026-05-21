@@ -61,7 +61,7 @@ export function GoalFormFields({
           disabled={disabled}
           placeholder="Mục tiêu kinh doanh hoặc tiêu chí thành công…"
           rows={4}
-          className="min-h-[6rem] resize-y text-sm"
+          className="min-h-[6rem] text-sm"
           onChange={(e) =>
             onChange({
               description: e.target.value.slice(0, GOAL_DESCRIPTION_MAX_CHARS),
