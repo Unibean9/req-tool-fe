@@ -108,7 +108,7 @@ export function ProjectNewStepPlan({
             disabled={disabled}
             maxLength={PROJECT_ROI_NOTES_MAX_CHARS}
             className={cn(
-              "min-h-28 resize-y border-2 border-border/90 pl-10 dark:border-zinc-600",
+              "min-h-28 border-2 border-border/90 pl-10 dark:border-zinc-600",
               roiError && "border-destructive"
             )}
           />

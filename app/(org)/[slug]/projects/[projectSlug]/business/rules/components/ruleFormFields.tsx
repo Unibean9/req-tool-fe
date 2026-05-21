@@ -77,7 +77,7 @@ export function RuleFormFields({
           disabled={disabled}
           placeholder="VD: Không cho phép tạo yêu cầu nếu thiếu actor chính…"
           rows={4}
-          className="min-h-24 resize-y text-sm"
+          className="min-h-24 text-sm"
           onChange={(e) =>
             onChange({
               ruleDef: e.target.value.slice(0, RULE_DEF_MAX_CHARS),

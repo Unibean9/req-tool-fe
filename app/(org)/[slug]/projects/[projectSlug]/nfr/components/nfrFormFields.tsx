@@ -121,7 +121,7 @@ export function NfrFormFields({
           disabled={disabled}
           placeholder="Ví dụ: Thời gian phản hồi API ≤ 300ms ở p95…"
           rows={4}
-          className="min-h-[6rem] resize-y text-sm"
+          className="min-h-[6rem] text-sm"
           onChange={(e) =>
             onChange({
               description: e.target.value.slice(0, NFR_DESCRIPTION_MAX_CHARS),

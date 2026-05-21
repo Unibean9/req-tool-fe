@@ -136,7 +136,7 @@ export function FlowBasicsFormFields({
           disabled={disabled}
           placeholder="Mô tả ngắn gọn luồng nghiệp vụ…"
           rows={5}
-          className="min-h-30 min-w-0 resize-y border-border/80 bg-muted/30 text-sm"
+          className="min-h-30 min-w-0 border-border/80 bg-muted/30 text-sm"
         />
       </div>
     </div>
