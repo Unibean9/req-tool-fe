@@ -34,8 +34,7 @@ const Noise: React.FC<NoiseProps> = ({
       canvas.width = canvasSize;
       canvas.height = canvasSize;
 
-      canvas.style.width = '100vw';
-      canvas.style.height = '100vh';
+      canvas.style.cssText = "width: 100vw; height: 100vh;";
     };
 
     const drawGrain = () => {

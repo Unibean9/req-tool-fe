@@ -109,7 +109,7 @@ export function ProjectNewStringListField({
   );
 
   const listItems = (
-    <ul className="space-y-2" role="list">
+    <ul className="space-y-2">
       {items.map((item, index) => {
         const itemError = resolveProjectNewListItemError(
           item,

@@ -155,13 +155,15 @@ function FlowActionRulesPickerBody({
             Không có rule khớp &quot;{search.trim()}&quot;.
           </p>
         ) : (
-          <ul className="grid list-none gap-2" role="list">
+          <ul className="grid list-none gap-2">
             {filtered.map((rule) => {
               const checked = selectedSet.has(rule.id);
               const text = ruleDisplayText(rule);
+              const checkboxId = `flow-action-rule-${rule.id}`;
               return (
                 <li key={rule.id}>
                   <label
+                    htmlFor={checkboxId}
                     className={cn(
                       "flex cursor-pointer items-start gap-3 rounded-xl border px-3.5 py-3 transition-colors",
                       checked
@@ -170,6 +172,7 @@ function FlowActionRulesPickerBody({
                     )}
                   >
                     <Checkbox
+                      id={checkboxId}
                       checked={checked}
                       onCheckedChange={() => toggleRule(rule.id)}
                       className="mt-0.5 size-4.5 shrink-0"

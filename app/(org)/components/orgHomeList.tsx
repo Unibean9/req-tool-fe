@@ -390,7 +390,7 @@ export function OrgHomeList({ orgs }: OrgHomeListProps) {
 
           <motion.ul
             className="grid list-none grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4"
-            role="list"
+           
             variants={listStagger}
             initial="hidden"
             animate="show"

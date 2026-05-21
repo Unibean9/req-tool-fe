@@ -123,7 +123,7 @@ function AuthMarketingAside() {
           </div>
         </div>
 
-        <ul className="grid w-full shrink-0 grid-cols-1 gap-3 sm:grid-cols-3" role="list">
+        <ul className="grid w-full shrink-0 grid-cols-1 gap-3 sm:grid-cols-3">
           {features.map((feature) => {
             const Icon = feature.icon;
             return (

@@ -1,4 +1,21 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+
+import { buildPageMetadata, segmentForMetadataPath } from "@/lib/seo/metadata";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  const { slug } = await params;
+  return buildPageMetadata({
+    title: "Workspace",
+    description: "Không gian làm việc tổ chức trên Requirements | Bean9.",
+    path: `/${segmentForMetadataPath(slug)}`,
+    noindex: true,
+  });
+}
 
 export default async function OrgSlugPage({
   params,

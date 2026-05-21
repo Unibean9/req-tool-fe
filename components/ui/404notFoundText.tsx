@@ -293,7 +293,6 @@ export function FuzzyText({
 
       const handleTouchMove = (e: TouchEvent) => {
         if (!enableHover) return;
-        e.preventDefault();
         const rect = canvas.getBoundingClientRect();
         const touch = e.touches[0];
         if (!touch) return;
@@ -310,9 +309,9 @@ export function FuzzyText({
         canvas.addEventListener("mousemove", handleMouseMove);
         canvas.addEventListener("mouseleave", handleMouseLeave);
         canvas.addEventListener("touchmove", handleTouchMove, {
-          passive: false,
+          passive: true,
         });
-        canvas.addEventListener("touchend", handleTouchEnd);
+        canvas.addEventListener("touchend", handleTouchEnd, { passive: true });
       }
 
       if (clickEffect) {

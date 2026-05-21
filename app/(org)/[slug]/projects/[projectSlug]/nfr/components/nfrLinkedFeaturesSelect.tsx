@@ -191,7 +191,7 @@ export function NfrLinkedFeaturesSelect({
                   : "Chưa có feature trong dự án."}
               </p>
             ) : (
-              <ul className="space-y-0.5" role="list">
+              <ul className="space-y-0.5">
                 {filteredFeatures.map((feature) => {
                   const label = formatFeaturePrefixTitle(feature);
                   const selected = selectedSet.has(feature.id);
