@@ -92,7 +92,7 @@ function GoalListRow({
 
   return (
     <article className="flex h-full w-full min-w-0 flex-col rounded-xl border border-border/70 bg-card/60 p-4 shadow-sm transition-[border-color,background-color,box-shadow] duration-200 ease-out hover:border-border hover:bg-card hover:shadow-md">
-      <div className="flex min-w-0 items-start gap-3">
+      <div className="flex min-w-0 items-start gap-3 pb-4">
         <GoalIndexBadge index={displayIndex} />
 
         <div className="min-w-0 flex-1">
@@ -111,7 +111,7 @@ function GoalListRow({
         </div>
       </div>
 
-      <div className="mt-4 flex flex-wrap items-center justify-end gap-2 border-t border-border/60 pt-3">
+      <div className="mt-auto flex flex-wrap items-center justify-end gap-2 border-t border-border/60 pt-3">
         <div className="flex flex-wrap items-center justify-end gap-1.5">
           <Button
             type="button"

@@ -185,7 +185,7 @@ function StakeHolderListRow({
         </div>
       </div>
 
-      <div className="mt-3 min-w-0 space-y-2.5">
+      <div className="mt-3 min-w-0 space-y-2.5 pb-4">
         <div className="flex min-w-0 items-start gap-2">
           <Tags
             className="mt-1 size-3.5 shrink-0 text-muted-foreground"
@@ -207,7 +207,7 @@ function StakeHolderListRow({
         ) : null}
       </div>
 
-      <div className="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-border/60 pt-3">
+      <div className="mt-auto flex flex-wrap items-center justify-between gap-2 border-t border-border/60 pt-3">
         <Button
           type="button"
           variant="outline"
