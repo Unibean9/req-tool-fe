@@ -301,7 +301,7 @@ function SetupProgressHoverPanel({
                   {groupDoneCount}/{groupSteps.length}
                 </span>
               </div>
-              <ul className="list-none space-y-1" role="list">
+              <ul className="list-none space-y-1">
                 {groupSteps.map((step) => {
                   const Icon = step.icon;
                   const active = pathActive(pathname, step.href);
@@ -608,7 +608,7 @@ function ProjectWorkspaceActorsNav({
             Chưa có actors.
           </p>
         ) : (
-          <ul className="list-none space-y-px py-0" role="list">
+          <ul className="list-none space-y-px py-0">
             {actors.map((actor) => {
               const actorHref = `${actorsBase}/${encodeURIComponent(actor.id)}`;
               const active = pathsEqualIgnoreQuery(pathname, actorHref);

@@ -426,7 +426,7 @@ export function FlowList({ projectId, search, className }: FlowListProps) {
           "grid list-none grid-cols-1 content-start gap-3 sm:grid-cols-2",
           className
         )}
-        role="list"
+       
         aria-label="Danh sách flow"
       >
         {filtered.map((row) => {

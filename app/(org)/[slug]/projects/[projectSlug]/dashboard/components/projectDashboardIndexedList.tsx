@@ -29,7 +29,7 @@ export function ProjectDashboardIndexedList({
   }
 
   return (
-    <ol className={cn("space-y-3", className)} role="list">
+    <ol className={cn("space-y-3", className)}>
       {items.map((item, i) => (
         <li key={`${i}-${item}`} className="flex gap-3 text-sm">
           <IndexBadge index={i + 1} />

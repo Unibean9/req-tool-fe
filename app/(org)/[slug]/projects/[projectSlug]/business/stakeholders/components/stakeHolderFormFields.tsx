@@ -219,7 +219,7 @@ function ImpactAreaTagInput({
         )}
       >
         {tags.length > 0 ? (
-          <ul className="mb-2 flex list-none flex-wrap gap-1.5" role="list">
+          <ul className="mb-2 flex list-none flex-wrap gap-1.5">
             {tags.map((tag, index) => (
               <li key={`${tag}-${index}`}>
                 <span className="inline-flex max-w-full items-center gap-0.5 rounded-md border border-border/80 bg-muted/50 py-0.5 pr-0.5 pl-2 text-xs text-foreground/90">

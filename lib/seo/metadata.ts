@@ -55,6 +55,14 @@ export function buildPageMetadata({
   };
 }
 
+export function segmentForMetadataPath(segment: string): string {
+  try {
+    return encodeURIComponent(decodeURIComponent(segment.trim()));
+  } catch {
+    return encodeURIComponent(segment.trim());
+  }
+}
+
 /** Root layout default metadata (includes title template). */
 export function rootMetadata(): Metadata {
   const base = buildPageMetadata({

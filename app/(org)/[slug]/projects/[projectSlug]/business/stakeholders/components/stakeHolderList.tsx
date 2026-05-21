@@ -434,7 +434,7 @@ export function StakeHolderList({
           "grid list-none grid-cols-1 content-start gap-3 sm:grid-cols-2",
           className
         )}
-        role="list"
+       
         aria-label="Danh sách stakeholders"
       >
         {filtered.map((row) => (

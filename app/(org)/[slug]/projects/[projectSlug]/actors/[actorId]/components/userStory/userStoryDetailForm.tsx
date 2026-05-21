@@ -123,8 +123,19 @@ export function UserStoryDetailForm({
     setDraft((prev) => ({ ...prev, ...patch }));
   }
 
-  const setCriteria = (next: AcceptanceCriterion[]) => {
-    updateDraft({ acceptance_criteria: reindexAcceptanceCriteria(next) });
+  const setCriteria = (
+    next:
+      | AcceptanceCriterion[]
+      | ((prev: AcceptanceCriterion[]) => AcceptanceCriterion[])
+  ) => {
+    setDraft((prev) => {
+      const criteria =
+        typeof next === "function" ? next(prev.acceptance_criteria) : next;
+      return {
+        ...prev,
+        acceptance_criteria: reindexAcceptanceCriteria(criteria),
+      };
+    });
   };
 
   const updateCriterion = (
@@ -152,6 +163,17 @@ export function UserStoryDetailForm({
       acceptance_criteria: draft.acceptance_criteria,
     });
     setBaseDraft(draft);
+  }
+
+  function addCriterion() {
+    setCriteria((prev) => [
+      ...prev,
+      {
+        id: crypto.randomUUID(),
+        label: "",
+        order: prev.length,
+      },
+    ]);
   }
 
   return (
@@ -307,7 +329,7 @@ export function UserStoryDetailForm({
                   className="size-8 shrink-0"
                   title="Xóa tiêu chí"
                   onClick={() =>
-                    setCriteria(criteria.filter((_, j) => j !== i))
+                    setCriteria((prev) => prev.filter((_, j) => j !== i))
                   }
                 >
                   <Trash2 className="size-3.5" />
@@ -321,16 +343,7 @@ export function UserStoryDetailForm({
             size="sm"
             className="h-8 gap-1.5"
             disabled={!canAddCriterion}
-            onClick={() =>
-              setCriteria([
-                ...criteria,
-                {
-                  id: crypto.randomUUID(),
-                  label: "",
-                  order: criteria.length,
-                },
-              ])
-            }
+            onClick={addCriterion}
           >
             <Plus className="size-3.5" />
             Thêm tiêu chí
