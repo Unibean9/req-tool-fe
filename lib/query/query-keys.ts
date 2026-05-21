@@ -98,6 +98,20 @@ export function projectNfrQueryKey(projectId: string, nfrId: string) {
   return [...PROJECTS_ROOT, "nfrs", projectId, nfrId] as const;
 }
 
+/** Key danh sách constraints theo `project_id` (+ filter `type` / `severity`). */
+export function projectConstraintsQueryKey(
+  projectId: string,
+  params?: { type?: string; severity?: string }
+) {
+  return [
+    ...PROJECTS_ROOT,
+    "constraints",
+    projectId,
+    params?.type ?? "",
+    params?.severity ?? "",
+  ] as const;
+}
+
 /** Key danh sách features theo `project_id` (+ filter query). */
 export function projectFeaturesQueryKey(
   projectId: string,
@@ -256,6 +270,7 @@ export const queryKeys = {
     rules: projectRulesQueryKey,
     nfrs: projectNfrsQueryKey,
     nfr: projectNfrQueryKey,
+    constraints: projectConstraintsQueryKey,
     features: projectFeaturesQueryKey,
     featuresInfinite: projectFeaturesInfiniteQueryKey,
     feature: projectFeatureQueryKey,

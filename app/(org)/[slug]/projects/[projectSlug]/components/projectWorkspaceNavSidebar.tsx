@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useMemo, useRef, useState } from "react";
 import {
+  Ban,
   Check,
   LayoutDashboard,
   Link2,
@@ -11,7 +12,6 @@ import {
   Pencil,
   PersonStanding,
   Gauge,
-  Ruler,
   Scale,
   Target,
   Trash2,
@@ -131,7 +131,7 @@ function pathActive(pathname: string, prefix: string): boolean {
 const PROJECT_BUSINESS_NAV = [
   { segment: "stakeholders", label: "Stakeholders", icon: UsersRound },
   { segment: "flow", label: "Flows", icon: Workflow },
-  { segment: "constraints", label: "Constraints", icon: Ruler },
+  { segment: "constraints", label: "Constraints", icon: Ban },
   { segment: "rules", label: "Rules", icon: Scale },
   { segment: "goals", label: "Goals", icon: Target },
 ] as const;

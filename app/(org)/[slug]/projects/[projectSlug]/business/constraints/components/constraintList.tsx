@@ -1,58 +1,100 @@
 "use client";
 
-import { useDeferredValue, useMemo, useState } from "react";
-import { Gauge, History, Link2, Pencil, Trash2 } from "lucide-react";
+import { useMemo, useState } from "react";
+import {
+  Banknote,
+  Ban,
+  CalendarClock,
+  Cpu,
+  History,
+  Pencil,
+  Scale,
+  ServerCog,
+  Trash2,
+  UsersRound,
+  type LucideIcon,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-  useDeleteProjectNfr,
-  useProjectNfrs,
-  type ProjectNfr,
-} from "@/hooks/useNfr";
-import type { ListProjectNfrsParams } from "@/lib/api/services/fetchNfr";
+  useDeleteProjectConstraint,
+  useProjectConstraints,
+  type ConstraintSeverity,
+  type ConstraintType,
+  type ProjectConstraint,
+} from "@/hooks/useConstraint";
 import { cn } from "@/lib/utils";
 
-import { DeleteNfrDialog } from "./deleteNfrDialog";
+import { ConstraintFormDialog } from "./constrainFormDialog";
+import { DeleteConstraintDialog } from "./deleteConstraintDialog";
 import {
-  NFR_CATEGORY_META,
-  NfrPriorityBadge,
-  nfrCategoryLabel,
-} from "./nfrCategoryMeta";
-import { NfrFormDialog } from "./nfrFormDialog";
+  CONSTRAINT_SEVERITY_LABELS,
+  CONSTRAINT_TYPE_LABELS,
+} from "./constraintFormFields";
+import type {
+  ConstraintSeverityFilter,
+  ConstraintTypeFilter,
+} from "./constraintToolbar";
 
-function foldForSearch(s: string): string {
-  return s.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase();
-}
+type ConstraintTypeMeta = {
+  icon: LucideIcon;
+  iconBoxClass: string;
+  iconClass: string;
+  badgeClass: string;
+};
 
-function matchesSearch(row: ProjectNfr, query: string): boolean {
-  const q = foldForSearch(query);
-  if (!q) return true;
-  const haystack = [
-    row.description,
-    nfrCategoryLabel(row.category),
-    row.category,
-    row.priority,
-  ]
-    .map((part) => foldForSearch(part))
-    .join(" ");
-  return haystack.includes(q);
-}
+const CONSTRAINT_TYPE_META: Record<ConstraintType, ConstraintTypeMeta> = {
+  budget: {
+    icon: Banknote,
+    iconBoxClass: "bg-emerald-50 dark:bg-emerald-950/45",
+    iconClass: "text-emerald-700 dark:text-emerald-300",
+    badgeClass:
+      "border-emerald-500/25 bg-emerald-50 text-emerald-800 dark:bg-emerald-950/55 dark:text-emerald-300",
+  },
+  timeline: {
+    icon: CalendarClock,
+    iconBoxClass: "bg-sky-50 dark:bg-sky-950/45",
+    iconClass: "text-sky-700 dark:text-sky-300",
+    badgeClass:
+      "border-sky-500/25 bg-sky-50 text-sky-800 dark:bg-sky-950/55 dark:text-sky-300",
+  },
+  technical: {
+    icon: Cpu,
+    iconBoxClass: "bg-violet-50 dark:bg-violet-950/45",
+    iconClass: "text-violet-700 dark:text-violet-300",
+    badgeClass:
+      "border-violet-500/25 bg-violet-50 text-violet-800 dark:bg-violet-950/55 dark:text-violet-300",
+  },
+  resource: {
+    icon: UsersRound,
+    iconBoxClass: "bg-amber-50 dark:bg-amber-950/45",
+    iconClass: "text-amber-700 dark:text-amber-300",
+    badgeClass:
+      "border-amber-500/25 bg-amber-50 text-amber-800 dark:bg-amber-950/55 dark:text-amber-300",
+  },
+  regulatory: {
+    icon: Scale,
+    iconBoxClass: "bg-rose-50 dark:bg-rose-950/45",
+    iconClass: "text-rose-700 dark:text-rose-300",
+    badgeClass:
+      "border-rose-500/25 bg-rose-50 text-rose-800 dark:bg-rose-950/55 dark:text-rose-300",
+  },
+};
 
-function nfrPreview(description: string, max = 48): string {
-  const t = description.trim();
-  if (t.length <= max) return t || "NFR";
-  return `${t.slice(0, max)}...`;
-}
-
-function sortNfrs(rows: ProjectNfr[]): ProjectNfr[] {
-  return [...rows].sort(
-    (a, b) =>
-      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+function severityBadgeClassName(severity: ConstraintSeverity): string {
+  return cn(
+    "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-semibold leading-none",
+    severity === "high" &&
+      "border-rose-500/35 bg-rose-500/15 text-rose-700 dark:text-rose-200",
+    severity === "medium" &&
+      "border-amber-500/35 bg-amber-500/15 text-amber-700 dark:text-amber-200",
+    severity === "low" &&
+      "border-border/80 bg-muted/35 text-muted-foreground"
   );
 }
 
-function formatNfrDate(value: string): string {
+function formatConstraintDate(value: string): string {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "";
   return new Intl.DateTimeFormat("vi-VN", {
@@ -62,22 +104,54 @@ function formatNfrDate(value: string): string {
   }).format(date);
 }
 
-function NfrListRow({
+function foldForSearch(s: string): string {
+  return s.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase();
+}
+
+function matchesSearch(row: ProjectConstraint, query: string): boolean {
+  const q = foldForSearch(query);
+  if (!q) return true;
+  const haystack = [
+    row.description,
+    row.type,
+    CONSTRAINT_TYPE_LABELS[row.type],
+    row.severity,
+    CONSTRAINT_SEVERITY_LABELS[row.severity],
+  ]
+    .map((part) => foldForSearch(part))
+    .join(" ");
+  return haystack.includes(q);
+}
+
+function constraintPreview(description: string, max = 56): string {
+  const t = description.trim();
+  if (t.length <= max) return t || "Constraint";
+  return `${t.slice(0, max)}...`;
+}
+
+function sortConstraints(rows: ProjectConstraint[]): ProjectConstraint[] {
+  return [...rows].sort(
+    (a, b) =>
+      new Date(b.updatedAt || b.createdAt).getTime() -
+      new Date(a.updatedAt || a.createdAt).getTime()
+  );
+}
+
+function ConstraintListRow({
   row,
   rowBusy,
   onEdit,
   onDelete,
 }: {
-  row: ProjectNfr;
+  row: ProjectConstraint;
   rowBusy: boolean;
   onEdit: () => void;
   onDelete: () => void;
 }) {
-  const meta = NFR_CATEGORY_META[row.category];
+  const meta = CONSTRAINT_TYPE_META[row.type];
   const Icon = meta.icon;
   const description = row.description.trim();
-  const date = formatNfrDate(row.updatedAt || row.createdAt);
-  const featureCount = row.featureIds.length;
+  const date = formatConstraintDate(row.updatedAt || row.createdAt);
 
   return (
     <article className="group flex h-full w-full min-w-0 flex-col rounded-xl border border-border/70 bg-card/60 p-4 shadow-sm transition-[border-color,background-color,box-shadow] duration-200 ease-out hover:border-border hover:bg-card hover:shadow-md">
@@ -101,9 +175,12 @@ function NfrListRow({
               )}
             >
               <Icon className="size-3.5" aria-hidden />
-              {meta.label}
+              {CONSTRAINT_TYPE_LABELS[row.type]}
             </span>
-            <NfrPriorityBadge priority={row.priority} />
+            <span className={severityBadgeClassName(row.severity)}>
+              <ServerCog className="size-3.5" aria-hidden />
+              {CONSTRAINT_SEVERITY_LABELS[row.severity]}
+            </span>
           </div>
 
           <p className="min-h-14 min-w-0 break-words text-base leading-relaxed text-foreground [overflow-wrap:anywhere]">
@@ -115,20 +192,14 @@ function NfrListRow({
       </div>
 
       <div className="mt-3 flex min-w-0 flex-wrap items-center justify-between gap-x-3 gap-y-2 border-t border-border/60 pt-3 text-xs text-muted-foreground">
-        <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
-          <span className="inline-flex items-center gap-1.5">
-            <Link2 className="size-3.5 shrink-0" aria-hidden />
-            {featureCount > 0
-              ? `${featureCount} feature liên kết`
-              : "Chưa liên kết feature"}
+        {date ? (
+          <span className="inline-flex items-center gap-1.5 tabular-nums">
+            <History className="size-3.5 shrink-0" aria-hidden />
+            Cập nhật {date}
           </span>
-          {date ? (
-            <span className="inline-flex items-center gap-1.5 tabular-nums">
-              <History className="size-3.5 shrink-0" aria-hidden />
-              Cập nhật {date}
-            </span>
-          ) : null}
-        </div>
+        ) : (
+          <span />
+        )}
 
         <div className="flex shrink-0 items-center gap-1.5">
           <Button
@@ -136,7 +207,7 @@ function NfrListRow({
             variant="outline"
             size="sm"
             className="h-8 gap-1.5 text-xs"
-            aria-label="Chỉnh sửa NFR"
+            aria-label="Chỉnh sửa constraint"
             disabled={rowBusy}
             onClick={onEdit}
           >
@@ -148,7 +219,7 @@ function NfrListRow({
             variant="outline"
             size="sm"
             className="h-8 gap-1.5 text-xs text-muted-foreground hover:border-destructive/40 hover:bg-destructive/10 hover:text-destructive"
-            aria-label="Xóa NFR"
+            aria-label="Xóa constraint"
             disabled={rowBusy}
             onClick={onDelete}
           >
@@ -161,47 +232,55 @@ function NfrListRow({
   );
 }
 
-type NfrListProps = {
+type ConstraintListProps = {
   projectId: string | null;
   search: string;
-  listParams?: ListProjectNfrsParams;
+  typeFilter: ConstraintTypeFilter;
+  severityFilter: ConstraintSeverityFilter;
   className?: string;
 };
 
-export function NfrList({
+export function ConstraintList({
   projectId,
   search,
-  listParams,
+  typeFilter,
+  severityFilter,
   className,
-}: NfrListProps) {
-  const [editTarget, setEditTarget] = useState<ProjectNfr | null>(null);
+}: ConstraintListProps) {
+  const [editTarget, setEditTarget] = useState<ProjectConstraint | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<{
-    nfrId: string;
+    constraintId: string;
     preview: string;
   } | null>(null);
   const [rowMutationBusy, setRowMutationBusy] = useState(false);
 
+  const apiParams = useMemo(
+    () => ({
+      type: typeFilter === "all" ? undefined : typeFilter,
+      severity: severityFilter === "all" ? undefined : severityFilter,
+    }),
+    [typeFilter, severityFilter]
+  );
+
   const {
-    data: nfrs = [],
+    data: constraints = [],
     isPending,
     isError,
     error,
     refetch,
-  } = useProjectNfrs(projectId, listParams);
+  } = useProjectConstraints(projectId, apiParams);
 
-  const deleteMutation = useDeleteProjectNfr({
+  const deleteMutation = useDeleteProjectConstraint({
     onSuccess: () => setDeleteTarget(null),
   });
 
-  const deferredSearch = useDeferredValue(search);
-
-  const sorted = useMemo(() => sortNfrs(nfrs), [nfrs]);
+  const sorted = useMemo(() => sortConstraints(constraints), [constraints]);
 
   const filtered = useMemo(() => {
-    const q = deferredSearch.trim();
+    const q = search.trim();
     if (!q) return sorted;
     return sorted.filter((row) => matchesSearch(row, q));
-  }, [sorted, deferredSearch]);
+  }, [sorted, search]);
 
   const rowBusy = rowMutationBusy || deleteMutation.isPending;
 
@@ -209,7 +288,7 @@ export function NfrList({
     if (!projectId || !deleteTarget) return;
     await deleteMutation.mutateAsync({
       projectId,
-      nfrId: deleteTarget.nfrId,
+      constraintId: deleteTarget.constraintId,
     });
   }
 
@@ -242,7 +321,7 @@ export function NfrList({
         <p className="text-sm text-destructive">
           {error instanceof Error
             ? error.message
-            : "Không tải được danh sách NFR."}
+            : "Không tải được danh sách constraints."}
         </p>
         <Button
           type="button"
@@ -257,11 +336,7 @@ export function NfrList({
     );
   }
 
-  const hasServerFilters = Boolean(
-    listParams?.category ?? listParams?.priority
-  );
-
-  if (nfrs.length === 0) {
+  if (constraints.length === 0) {
     return (
       <div
         className={cn(
@@ -270,16 +345,14 @@ export function NfrList({
         )}
       >
         <span className="flex size-12 items-center justify-center rounded-xl bg-muted/80 text-muted-foreground">
-          <Gauge className="size-6" aria-hidden />
+          <Ban className="size-6" aria-hidden />
         </span>
         <div className="space-y-1">
           <p className="text-sm font-medium text-foreground">
-            {hasServerFilters ? "Không có NFR phù hợp bộ lọc" : "Chưa có NFR"}
+            Chưa có constraint
           </p>
           <p className="text-sm text-muted-foreground">
-            {hasServerFilters
-              ? "Thử đổi category hoặc priority, hoặc xóa bộ lọc."
-              : 'Dùng nút "Thêm NFR" để bắt đầu.'}
+            Dùng nút &quot;Thêm constraint&quot; để bắt đầu.
           </p>
         </div>
       </div>
@@ -307,18 +380,18 @@ export function NfrList({
           className
         )}
         role="list"
-        aria-label="Danh sách NFR"
+        aria-label="Danh sách constraints"
       >
         {filtered.map((row) => (
           <li key={row.id} className="flex min-w-0">
-            <NfrListRow
+            <ConstraintListRow
               row={row}
               rowBusy={rowBusy}
               onEdit={() => setEditTarget(row)}
               onDelete={() =>
                 setDeleteTarget({
-                  nfrId: row.id,
-                  preview: nfrPreview(row.description),
+                  constraintId: row.id,
+                  preview: constraintPreview(row.description),
                 })
               }
             />
@@ -326,9 +399,10 @@ export function NfrList({
         ))}
       </ul>
 
-      <NfrFormDialog
+      <ConstraintFormDialog
+        key={editTarget?.id ?? "edit-constraint"}
         projectId={projectId}
-        nfr={editTarget}
+        constraint={editTarget}
         open={editTarget != null}
         onOpenChange={(open) => {
           if (!open) setEditTarget(null);
@@ -336,7 +410,7 @@ export function NfrList({
         onRowInteractBusy={setRowMutationBusy}
       />
 
-      <DeleteNfrDialog
+      <DeleteConstraintDialog
         open={deleteTarget != null}
         target={deleteTarget}
         deletePending={deleteMutation.isPending}
