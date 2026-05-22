@@ -572,7 +572,10 @@ function BlockNode({ block }: { block: Block }) {
     case "table":
       {
         const colCount = Math.max(block.headers.length, 1);
-        const colW = `${(100 / colCount).toFixed(4)}%` as `${number}%`;
+        // Use absolute pt widths so react-pdf can measure text height before flex resolves,
+        // which prevents rows from staying 1-line tall while wrapped text overflows into neighbours.
+        // A4 = 595.28pt; page paddingHorizontal = 56pt × 2; table borderWidth = 1pt × 2.
+        const colPx = (595.28 - 56 * 2 - 2) / colCount;
         return (
           <View style={s.table}>
             {/* Header row */}
@@ -582,7 +585,7 @@ function BlockNode({ block }: { block: Block }) {
                   key={ci}
                   style={[
                     ci < colCount - 1 ? s.thView : s.thViewLast,
-                    { width: colW },
+                    { width: colPx, flexShrink: 0 },
                   ]}
                 >
                   <Text style={s.thText}>{h}</Text>
@@ -600,7 +603,7 @@ function BlockNode({ block }: { block: Block }) {
                     key={ci}
                     style={[
                       ci < row.length - 1 ? s.tdView : s.tdViewLast,
-                      { width: colW },
+                      { width: colPx, flexShrink: 0 },
                     ]}
                   >
                     <PriorityText value={cell} cellStyle={s.tdText} />
