@@ -65,7 +65,7 @@ export function GoalToolbar({
             type="search"
             value={search}
             onChange={(e) => onSearchChange(e.target.value)}
-            placeholder="Tìm theo mô tả goal…"
+            placeholder="Tìm theo mô tả hoặc tiêu chí thành công…"
             autoComplete="off"
             aria-label="Tìm goal"
             className="h-10 w-full border-border/80 bg-muted/40 pr-3 pl-10 text-sm shadow-none"

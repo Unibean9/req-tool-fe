@@ -30,12 +30,20 @@ import { GOAL_FORM_DIALOG_WIDTH_CLASS } from "./goalFormLimits";
 const EMPTY_FORM: GoalFormValues = {
   description: "",
   order: 0,
+  priority: "medium",
+  successMetric: "",
+  targetDate: "",
+  objectives: [],
 };
 
 function valuesFromGoal(row: ProjectGoal): GoalFormValues {
   return {
     description: row.description,
     order: row.order,
+    priority: row.priority,
+    successMetric: row.successMetric,
+    targetDate: row.targetDate,
+    objectives: row.objectives.map((o) => o.description),
   };
 }
 

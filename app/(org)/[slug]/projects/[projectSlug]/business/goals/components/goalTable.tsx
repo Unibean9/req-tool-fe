@@ -12,7 +12,15 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -35,7 +43,7 @@ import {
   type ProjectGoal,
 } from "@/hooks/useGoals";
 import { getApiErrorMessage } from "@/lib/api/getApiErrorMessage";
-import { fetchGoal } from "@/lib/api/services/fetchGoal";
+import { fetchGoal, type ProjectGoalPriority } from "@/lib/api/services/fetchGoal";
 import {
   projectGoalsQueryKey,
   projectSetupProgressQueryKey,
@@ -53,6 +61,29 @@ import {
   type GoalOrderPatch,
 } from "./goalReorder";
 
+const PRIORITY_LABEL: Record<ProjectGoalPriority, string> = {
+  high: "Cao",
+  medium: "Trung bình",
+  low: "Thấp",
+};
+
+const PRIORITY_VARIANT: Record<
+  ProjectGoalPriority,
+  "destructive" | "secondary" | "outline"
+> = {
+  high: "destructive",
+  medium: "secondary",
+  low: "outline",
+};
+
+function PriorityBadge({ priority }: { priority: ProjectGoalPriority }) {
+  return (
+    <Badge variant={PRIORITY_VARIANT[priority]} className="text-xs">
+      {PRIORITY_LABEL[priority]}
+    </Badge>
+  );
+}
+
 function foldForSearch(s: string): string {
   return s.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase();
 }
@@ -60,13 +91,68 @@ function foldForSearch(s: string): string {
 function matchesSearch(row: ProjectGoal, query: string): boolean {
   const q = foldForSearch(query);
   if (!q) return true;
-  return foldForSearch(row.description).includes(q);
+  return (
+    foldForSearch(row.description).includes(q) ||
+    foldForSearch(row.successMetric).includes(q)
+  );
 }
 
 function goalPreview(description: string, max = 48): string {
   const t = description.trim();
   if (t.length <= max) return t || "Goal";
   return `${t.slice(0, max)}…`;
+}
+
+function formatDate(dateStr: string): string {
+  if (!dateStr) return "—";
+  try {
+    return new Date(dateStr).toLocaleDateString("vi-VN", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    });
+  } catch {
+    return dateStr;
+  }
+}
+
+type ObjectivesDialogProps = {
+  goal: ProjectGoal | null;
+  onOpenChange: (open: boolean) => void;
+};
+
+function ObjectivesDialog({ goal, onOpenChange }: ObjectivesDialogProps) {
+  return (
+    <Dialog open={goal != null} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md" showCloseButton>
+        <DialogHeader>
+          <DialogTitle>Mục tiêu</DialogTitle>
+          {goal?.description && (
+            <DialogDescription className="line-clamp-2">
+              {goal.description}
+            </DialogDescription>
+          )}
+        </DialogHeader>
+        {goal && (
+          <ul className="mt-1 divide-y divide-border/60">
+            {goal.objectives.map((obj, i) => (
+              <li
+                key={obj.id}
+                className="flex items-start gap-3 py-2.5 text-sm"
+              >
+                <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-muted text-[11px] font-medium tabular-nums text-muted-foreground">
+                  {i + 1}
+                </span>
+                <span className="leading-relaxed text-foreground">
+                  {obj.description}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
 }
 
 type GoalTableProps = {
@@ -82,6 +168,9 @@ export function GoalTable({ projectId, search, className }: GoalTableProps) {
     goalId: string;
     preview: string;
   } | null>(null);
+  const [objectivesTarget, setObjectivesTarget] = useState<ProjectGoal | null>(
+    null
+  );
   const [rowMutationBusy, setRowMutationBusy] = useState(false);
   const [reorderingGoalId, setReorderingGoalId] = useState<string | null>(null);
 
@@ -115,6 +204,10 @@ export function GoalTable({ projectId, search, className }: GoalTableProps) {
       await fetchGoal.update(pid, goal.id, {
         description: goal.description,
         order,
+        priority: goal.priority,
+        successMetric: goal.successMetric,
+        targetDate: goal.targetDate,
+        objectives: goal.objectives.map((o) => o.description),
       });
     }
     void queryClient.invalidateQueries({ queryKey: projectGoalsQueryKey(pid) });
@@ -219,7 +312,7 @@ export function GoalTable({ projectId, search, className }: GoalTableProps) {
         <div className="space-y-1">
           <p className="text-sm font-medium text-foreground">Chưa có goal</p>
           <p className="text-sm text-muted-foreground">
-            Dùng nút &quot;Thêm goal&quot; để bắt đầu.
+            Dùng nút &quot;Thêm mới&quot; để bắt đầu.
           </p>
         </div>
       </div>
@@ -248,85 +341,117 @@ export function GoalTable({ projectId, search, className }: GoalTableProps) {
         )}
       >
         <div className="overflow-auto max-h-[calc(100svh-10rem)]">
-        <Table>
-          <TableHeader>
-            <TableRow className="border-border/70 bg-muted/30 hover:bg-muted/30">
-              <TableHead className="w-12 pl-4 text-center">#</TableHead>
-              <TableHead className="min-w-60">Mô tả</TableHead>
-              <TableHead className="w-12 pr-4 text-right" />
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filtered.map((row) => {
-              const displayIndex =
-                allSorted.findIndex((g) => g.id === row.id) + 1;
+          <Table>
+            <TableHeader>
+              <TableRow className="border-border/70 bg-muted/30 hover:bg-muted/30">
+                <TableHead className="w-12 pl-4 text-center">#</TableHead>
+                <TableHead className="min-w-60">Mô tả</TableHead>
+                <TableHead className="w-28">Ưu tiên</TableHead>
+                <TableHead className="min-w-40">Tiêu chí thành công</TableHead>
+                <TableHead className="w-32">Ngày mục tiêu</TableHead>
+                <TableHead className="w-28">Mục tiêu</TableHead>
+                <TableHead className="w-12 pr-4 text-right" />
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filtered.map((row) => {
+                const displayIndex =
+                  allSorted.findIndex((g) => g.id === row.id) + 1;
 
-              return (
-                <TableRow key={row.id} className="border-border/60 align-top">
-                  <TableCell className="pl-4 text-center text-xs tabular-nums text-muted-foreground">
-                    {displayIndex > 0 ? displayIndex : 1}
-                  </TableCell>
+                return (
+                  <TableRow key={row.id} className="border-border/60 align-top">
+                    <TableCell className="pl-4 text-center text-xs tabular-nums text-muted-foreground">
+                      {displayIndex > 0 ? displayIndex : 1}
+                    </TableCell>
 
-                  <TableCell className="whitespace-normal py-3 wrap-anywhere">
-                    <p className="text-sm leading-relaxed text-foreground">
-                      {row.description.trim() || (
-                        <span className="italic text-muted-foreground">
-                          Chưa có mô tả.
-                        </span>
+                    <TableCell className="whitespace-normal py-3 wrap-anywhere">
+                      <p className="text-sm leading-relaxed text-foreground">
+                        {row.description.trim() || (
+                          <span className="italic text-muted-foreground">
+                            Chưa có mô tả.
+                          </span>
+                        )}
+                      </p>
+                    </TableCell>
+
+                    <TableCell className="py-3">
+                      <PriorityBadge priority={row.priority} />
+                    </TableCell>
+
+                    <TableCell className="whitespace-normal py-3 text-sm text-muted-foreground wrap-anywhere">
+                      {row.successMetric.trim() || (
+                        <span className="italic">—</span>
                       )}
-                    </p>
-                  </TableCell>
+                    </TableCell>
 
-                  <TableCell className="pr-4 text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger
-                        disabled={rowBusy}
-                        className="flex size-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50"
-                        aria-label="Tùy chọn"
-                      >
-                        <MoreVertical className="size-4" aria-hidden />
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="min-w-40">
-                        <DropdownMenuItem
-                          disabled={!canMoveGoalUp(allSorted, row)}
-                          onClick={() => void handleMoveUp(row)}
+                    <TableCell className="py-3 text-sm tabular-nums text-muted-foreground">
+                      {formatDate(row.targetDate)}
+                    </TableCell>
+
+                    <TableCell className="py-3">
+                      {row.objectives.length > 0 ? (
+                        <button
+                          type="button"
+                          onClick={() => setObjectivesTarget(row)}
+                          className="text-sm text-primary underline-offset-2 hover:underline"
                         >
-                          <ArrowUp className="size-4" aria-hidden />
-                          Lên đầu
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          disabled={!canMoveGoalDown(allSorted, row)}
-                          onClick={() => void handleMoveDown(row)}
+                          {row.objectives.length} mục tiêu
+                        </button>
+                      ) : (
+                        <span className="text-sm text-muted-foreground">—</span>
+                      )}
+                    </TableCell>
+
+                    <TableCell className="pr-4 text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger
+                          disabled={rowBusy}
+                          className="flex size-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50"
+                          aria-label="Tùy chọn"
                         >
-                          <ArrowDown className="size-4" aria-hidden />
-                          Xuống
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => setEditTarget(row)}>
-                          <Pencil className="size-4" aria-hidden />
-                          Chỉnh sửa
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          variant="destructive"
-                          onClick={() =>
-                            setDeleteTarget({
-                              goalId: row.id,
-                              preview: goalPreview(row.description),
-                            })
-                          }
-                        >
-                          <Trash2 className="size-4" aria-hidden />
-                          Xóa
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
+                          <MoreVertical className="size-4" aria-hidden />
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="min-w-40">
+                          <DropdownMenuItem
+                            disabled={!canMoveGoalUp(allSorted, row)}
+                            onClick={() => void handleMoveUp(row)}
+                          >
+                            <ArrowUp className="size-4" aria-hidden />
+                            Lên đầu
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            disabled={!canMoveGoalDown(allSorted, row)}
+                            onClick={() => void handleMoveDown(row)}
+                          >
+                            <ArrowDown className="size-4" aria-hidden />
+                            Xuống
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onClick={() => setEditTarget(row)}>
+                            <Pencil className="size-4" aria-hidden />
+                            Chỉnh sửa
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            variant="destructive"
+                            onClick={() =>
+                              setDeleteTarget({
+                                goalId: row.id,
+                                preview: goalPreview(row.description),
+                              })
+                            }
+                          >
+                            <Trash2 className="size-4" aria-hidden />
+                            Xóa
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
         </div>
       </div>
 
@@ -348,6 +473,13 @@ export function GoalTable({ projectId, search, className }: GoalTableProps) {
           if (!open) setDeleteTarget(null);
         }}
         onConfirmDelete={confirmDelete}
+      />
+
+      <ObjectivesDialog
+        goal={objectivesTarget}
+        onOpenChange={(open) => {
+          if (!open) setObjectivesTarget(null);
+        }}
       />
     </>
   );
