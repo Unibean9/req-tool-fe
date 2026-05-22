@@ -94,9 +94,9 @@ export function GoalFormFields({
   }
 
   return (
-    <div className="grid grid-cols-2 gap-x-6 gap-y-4">
+    <div className="grid h-full min-h-0 grid-cols-1 gap-x-6 gap-y-4 md:grid-cols-2">
       {/* ── Left column (top) ── */}
-      <div className="flex flex-col gap-4">
+      <div className="flex min-h-0 flex-col gap-4">
         <div className="grid gap-2">
           <div className="flex items-baseline justify-between gap-2">
             <Label htmlFor="goal-description">Mô tả</Label>
@@ -120,26 +120,39 @@ export function GoalFormFields({
           />
         </div>
 
-        <div className="grid gap-2">
-          <Label htmlFor="goal-priority">Mức ưu tiên</Label>
-          <Select
-            value={values.priority}
-            onValueChange={(v) =>
-              onChange({ priority: v as ProjectGoalPriority })
-            }
-            disabled={disabled}
-          >
-            <SelectTrigger id="goal-priority" className="text-sm">
-              <SelectValue placeholder="Chọn mức ưu tiên" />
-            </SelectTrigger>
-            <SelectContent>
-              {PRIORITY_OPTIONS.map((opt) => (
-                <SelectItem key={opt.value} value={opt.value}>
-                  {opt.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div className="grid gap-2">
+            <Label htmlFor="goal-priority">Mức ưu tiên</Label>
+            <Select
+              value={values.priority}
+              onValueChange={(v) =>
+                onChange({ priority: v as ProjectGoalPriority })
+              }
+              disabled={disabled}
+            >
+              <SelectTrigger id="goal-priority" className="text-sm">
+                <SelectValue placeholder="Chọn mức ưu tiên" />
+              </SelectTrigger>
+              <SelectContent>
+                {PRIORITY_OPTIONS.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="grid gap-2">
+            <Label htmlFor="goal-target-date">Ngày mục tiêu</Label>
+            <IsoDatePicker
+              id="goal-target-date"
+              value={values.targetDate}
+              disabled={disabled}
+              placeholder="Chọn ngày"
+              onChange={(iso) => onChange({ targetDate: iso })}
+            />
+          </div>
         </div>
 
         <div className="grid gap-2">
@@ -167,10 +180,23 @@ export function GoalFormFields({
       </div>
 
       {/* ── Right column (top) — Mục tiêu list ── */}
-      <div className="flex flex-col gap-2">
-        <Label>Mục tiêu</Label>
+      <div className="grid min-h-0 self-stretch grid-rows-[auto_minmax(0,1fr)] gap-2">
+        <div className="flex items-center justify-between gap-3">
+          <Label>Mục tiêu</Label>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={disabled}
+            className="h-7 shrink-0 gap-1.5 px-2.5 text-xs"
+            onClick={addObjective}
+          >
+            <Plus className="size-3.5" aria-hidden />
+            Thêm mục tiêu
+          </Button>
+        </div>
 
-        <div className="flex flex-col gap-2 max-h-80 overflow-y-auto pr-1">
+        <div className="flex min-h-0 max-h-[18rem] flex-col gap-2 overflow-y-auto overscroll-contain pr-1">
           {values.objectives.length === 0 && (
             <p className="rounded-lg border border-dashed border-border/70 px-3 py-4 text-center text-xs text-muted-foreground">
               Chưa có mục tiêu nào.
@@ -199,32 +225,6 @@ export function GoalFormFields({
             </div>
           ))}
         </div>
-      </div>
-
-      {/* ── Bottom row: date picker (left) + add button (right) ── */}
-      <div className="grid gap-2">
-        <Label htmlFor="goal-target-date">Ngày mục tiêu</Label>
-        <IsoDatePicker
-          id="goal-target-date"
-          value={values.targetDate}
-          disabled={disabled}
-          placeholder="Chọn ngày mục tiêu"
-          onChange={(iso) => onChange({ targetDate: iso })}
-        />
-      </div>
-
-      <div className="flex items-end">
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          disabled={disabled}
-          className="w-full gap-1.5 text-xs"
-          onClick={addObjective}
-        >
-          <Plus className="size-3.5" aria-hidden />
-          Thêm mục tiêu
-        </Button>
       </div>
     </div>
   );

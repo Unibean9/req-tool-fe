@@ -110,7 +110,10 @@ function GoalFormDialogBody({
   }
 
   return (
-    <form onSubmit={handleSubmit}>
+    <form
+      onSubmit={handleSubmit}
+      className="flex max-h-[calc(100svh-2rem)] min-h-0 flex-col"
+    >
       <DialogHeader>
         <DialogTitle className="text-lg">
           {isEdit ? "Chỉnh sửa goal" : "Thêm goal"}
@@ -122,7 +125,7 @@ function GoalFormDialogBody({
         </DialogDescription>
       </DialogHeader>
 
-      <div className="w-full min-w-0 py-4">
+      <div className="min-h-0 w-full min-w-0 flex-1 overflow-hidden py-4">
         <GoalFormFields
           values={values}
           disabled={pending}
@@ -170,7 +173,11 @@ export function GoalFormDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className={cn(GOAL_FORM_DIALOG_WIDTH_CLASS)}
+        className={cn(
+          GOAL_FORM_DIALOG_WIDTH_CLASS,
+          "max-h-[calc(100svh-2rem)] overflow-hidden"
+        )}
+        contentClassName="relative flex max-h-[calc(100svh-2rem)] flex-col overflow-hidden p-4"
         showCloseButton
       >
         {canRender && open ? (
