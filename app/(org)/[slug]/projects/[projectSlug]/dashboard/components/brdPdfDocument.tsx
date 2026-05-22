@@ -366,9 +366,10 @@ const s = StyleSheet.create({
   tableLastRow: {
     flexDirection: "row",
   },
-  // View wrappers (flex + padding + border) — Text must be a child, NOT the flex item itself
+  // View wrappers — NO flex: 1, width is set inline per-column as a percentage.
+  // react-pdf does NOT correctly compute row height for wrapped text when flex: 1 is used;
+  // explicit percentage widths fix this.
   thView: {
-    flex: 1,
     paddingHorizontal: 8,
     paddingVertical: 5,
     borderRightWidth: 1,
@@ -376,12 +377,10 @@ const s = StyleSheet.create({
     borderRightStyle: "solid",
   },
   thViewLast: {
-    flex: 1,
     paddingHorizontal: 8,
     paddingVertical: 5,
   },
   tdView: {
-    flex: 1,
     paddingHorizontal: 8,
     paddingVertical: 5,
     borderRightWidth: 1,
@@ -389,7 +388,6 @@ const s = StyleSheet.create({
     borderRightStyle: "solid",
   },
   tdViewLast: {
-    flex: 1,
     paddingHorizontal: 8,
     paddingVertical: 5,
   },
@@ -572,37 +570,47 @@ function BlockNode({ block }: { block: Block }) {
         </View>
       );
     case "table":
-      return (
-        <View style={s.table}>
-          {/* Header row */}
-          <View style={s.tableHeaderRow}>
-            {block.headers.map((h, ci) => (
-              <View
-                key={ci}
-                style={ci < block.headers.length - 1 ? s.thView : s.thViewLast}
-              >
-                <Text style={s.thText}>{h}</Text>
-              </View>
-            ))}
-          </View>
-          {/* Data rows */}
-          {block.rows.map((row, ri) => (
-            <View
-              key={ri}
-              style={ri < block.rows.length - 1 ? s.tableRow : s.tableLastRow}
-            >
-              {row.map((cell, ci) => (
+      {
+        const colCount = Math.max(block.headers.length, 1);
+        const colW = `${(100 / colCount).toFixed(4)}%` as `${number}%`;
+        return (
+          <View style={s.table}>
+            {/* Header row */}
+            <View style={s.tableHeaderRow}>
+              {block.headers.map((h, ci) => (
                 <View
                   key={ci}
-                  style={ci < row.length - 1 ? s.tdView : s.tdViewLast}
+                  style={[
+                    ci < colCount - 1 ? s.thView : s.thViewLast,
+                    { width: colW },
+                  ]}
                 >
-                  <PriorityText value={cell} cellStyle={s.tdText} />
+                  <Text style={s.thText}>{h}</Text>
                 </View>
               ))}
             </View>
-          ))}
-        </View>
-      );
+            {/* Data rows */}
+            {block.rows.map((row, ri) => (
+              <View
+                key={ri}
+                style={ri < block.rows.length - 1 ? s.tableRow : s.tableLastRow}
+              >
+                {row.map((cell, ci) => (
+                  <View
+                    key={ci}
+                    style={[
+                      ci < row.length - 1 ? s.tdView : s.tdViewLast,
+                      { width: colW },
+                    ]}
+                  >
+                    <PriorityText value={cell} cellStyle={s.tdText} />
+                  </View>
+                ))}
+              </View>
+            ))}
+          </View>
+        );
+      }
     case "hr":
       return <View style={s.hr} />;
   }
