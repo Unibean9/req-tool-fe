@@ -673,7 +673,7 @@ export function BrdDocument({ markdown, projectName }: BrdDocumentProps) {
 
         {groupBlocks(blocks).map((group, i) =>
           group.paired ? (
-            <View key={i} wrap={false}>
+            <View key={i} wrap={false} style={{ width: "100%" }}>
               {group.items.map((b, j) => <BlockNode key={j} block={b} />)}
             </View>
           ) : (

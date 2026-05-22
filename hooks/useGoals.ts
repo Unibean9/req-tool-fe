@@ -199,7 +199,9 @@ export function useDeleteProjectGoal(
 export type {
   CreateProjectGoalRequest,
   CreateProjectGoalResponse,
+  Objective,
   ProjectGoal,
+  ProjectGoalPriority,
   ProjectGoalResponse,
   ProjectGoalsListResponse,
   ProjectGoalWriteRequest,

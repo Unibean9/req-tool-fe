@@ -1,10 +1,24 @@
 import apiService from "../core";
 
+export type ProjectGoalPriority = "low" | "medium" | "high";
+
+interface ObjectiveRowApi {
+  id: string;
+  goal_id: string;
+  description: string;
+  created_at: string;
+  updated_at: string;
+}
+
 interface ProjectGoalRowApi {
   id: string;
   project_id: string;
   description: string;
   order: number;
+  priority: ProjectGoalPriority;
+  success_metric: string;
+  target_date: string;
+  objectives: ObjectiveRowApi[];
   created_at: string;
   updated_at: string;
 }
@@ -21,10 +35,22 @@ interface ListProjectGoalsApiResponse {
   message: string | null;
 }
 
+export interface Objective {
+  id: string;
+  goalId: string;
+  description: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 /** POST/PATCH body (camelCase trong app → snake_case trên wire). */
 export interface ProjectGoalWriteRequest {
   description: string;
   order: number;
+  priority: ProjectGoalPriority;
+  successMetric: string;
+  targetDate: string;
+  objectives: string[];
 }
 
 export interface ProjectGoal {
@@ -32,6 +58,10 @@ export interface ProjectGoal {
   projectId: string;
   description: string;
   order: number;
+  priority: ProjectGoalPriority;
+  successMetric: string;
+  targetDate: string;
+  objectives: Objective[];
   createdAt: string;
   updatedAt: string;
 }
@@ -66,12 +96,26 @@ function resolveGoalId(goalId: string): string {
   return id;
 }
 
+function mapObjectiveRow(row: ObjectiveRowApi): Objective {
+  return {
+    id: row.id,
+    goalId: row.goal_id,
+    description: row.description ?? "",
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
 function mapProjectGoalRow(row: ProjectGoalRowApi): ProjectGoal {
   return {
     id: row.id,
     projectId: row.project_id,
     description: row.description ?? "",
     order: Number(row.order) || 0,
+    priority: row.priority ?? "medium",
+    successMetric: row.success_metric ?? "",
+    targetDate: row.target_date ?? "",
+    objectives: (row.objectives ?? []).map(mapObjectiveRow),
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -81,6 +125,10 @@ function toProjectGoalApiBody(body: ProjectGoalWriteRequest) {
   return {
     description: body.description.trim(),
     order: body.order,
+    priority: body.priority,
+    success_metric: body.successMetric,
+    target_date: body.targetDate,
+    objectives: body.objectives,
   };
 }
 
