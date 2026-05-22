@@ -67,19 +67,19 @@ export function EditFlowActionAiLoadingOverlay({
             <div className="relative flex min-h-0 w-full flex-1 flex-col items-center justify-center text-center">
               <div className="flow-action-ai-title-stack max-w-md space-y-2">
                 <p className="flow-action-ai-kicker text-[11px] font-semibold tracking-[0.16em] text-primary uppercase">
-                  AI Flow Engine
+                  AI Activity Diagram Engine
                 </p>
                 <h2
                   id="flow-action-ai-overlay-title"
                   className="flow-action-ai-title-effect text-balance text-2xl font-bold tracking-tight text-foreground"
                 >
-                  Đang dựng Swimlane
+                  Đang dựng Activity Diagram
                 </h2>
                 <p
                   id="flow-action-ai-overlay-desc"
                   className="text-sm leading-relaxed text-muted-foreground"
                 >
-                  AI đang đồng bộ lanes, nodes và rules. Vui lòng chờ vài giây.
+                  AI đang đồng bộ activity diagram. Vui lòng chờ vài giây.
                 </p>
                 <div className="flow-action-ai-title-rail" aria-hidden>
                   <span />

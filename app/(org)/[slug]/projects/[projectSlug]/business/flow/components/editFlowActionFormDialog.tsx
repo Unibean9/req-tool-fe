@@ -211,10 +211,10 @@ function EditFlowActionFormDialogLoaded({
     })();
   }
 
-  const title = isCreate ? "Tạo flow actions" : "Sửa flow actions";
+  const title = isCreate ? "Tạo business flow actions" : "Sửa business flow actions";
   const descriptionLead = isCreate
-    ? "Thêm Actor Business và rule(s) cho các action của "
-    : "Cập nhật Actor Business và rule(s) cho từng action của ";
+    ? "Thêm Actor Business và rule(s) cho các action của business flow "
+    : "Cập nhật Actor Business và rule(s) cho từng action của business flow ";
   const completeCount = rows.filter(isFlowCatalogActionRowComplete).length;
 
   return (
@@ -341,9 +341,9 @@ function EditFlowActionFormDialogBody({
     return (
       <>
         <DialogHeader className="shrink-0 space-y-1">
-          <DialogTitle className="text-lg">Sửa flow actions</DialogTitle>
+          <DialogTitle className="text-lg">Sửa business flow actions</DialogTitle>
           <DialogDescription>
-            Đang tải chi tiết flow{" "}
+            Đang tải chi tiết business flow{" "}
             <span className="font-medium text-foreground">{flow.name}</span>…
           </DialogDescription>
         </DialogHeader>
@@ -369,9 +369,9 @@ function EditFlowActionFormDialogBody({
     return (
       <>
         <DialogHeader className="shrink-0 space-y-1">
-          <DialogTitle className="text-lg">Sửa flow actions</DialogTitle>
+          <DialogTitle className="text-lg">Sửa business flow actions</DialogTitle>
           <DialogDescription>
-            Không tải được chi tiết flow{" "}
+            Không tải được chi tiết business flow{" "}
             <span className="font-medium text-foreground">{flow.name}</span>.
           </DialogDescription>
         </DialogHeader>
@@ -380,7 +380,7 @@ function EditFlowActionFormDialogBody({
             <p className="text-sm text-destructive">
               {flowErrorObj instanceof Error
                 ? flowErrorObj.message
-                : "Không tải được chi tiết flow."}
+                : "Không tải được chi tiết business flow."}
             </p>
             <Button
               type="button"

@@ -154,7 +154,7 @@ export function StakeHolderFormFields({
           }
           placeholder="VD: Xác nhận yêu cầu và ký off từng sprint."
           disabled={disabled}
-          rows={3}
+          rows={6}
           className="resize-none"
         />
       </div>

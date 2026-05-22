@@ -93,7 +93,7 @@ export function RuleToolbar({
             onClick={() => setCreateOpen(true)}
           >
             <Plus className="size-4" aria-hidden />
-            Thêm rule
+            Thêm mới
           </Button>
         </div>
 
@@ -107,7 +107,7 @@ export function RuleToolbar({
               type="search"
               value={search}
               onChange={(e) => onSearchChange(e.target.value)}
-              placeholder="Tìm theo rule definition, type hoặc source…"
+              placeholder="Tìm theo định nghĩa, loại hoặc nguồn…"
               autoComplete="off"
               aria-label="Tìm rule"
               className="h-10 w-full border-border/80 bg-muted/40 pr-3 pl-10 text-sm shadow-none"
@@ -120,9 +120,9 @@ export function RuleToolbar({
           >
             <SelectTrigger
               className="h-10 w-full shrink-0 border-border/80 bg-muted/40 sm:w-45"
-              aria-label="Lọc rule theo type"
+              aria-label="Lọc rule theo loại"
             >
-              <SelectValue placeholder="Type">
+              <SelectValue placeholder="Loại">
                 {ruleTypeFilterLabel(typeFilter)}
               </SelectValue>
             </SelectTrigger>
@@ -146,9 +146,9 @@ export function RuleToolbar({
           >
             <SelectTrigger
               className="h-10 w-full shrink-0 border-border/80 bg-muted/40 sm:w-40"
-              aria-label="Lọc rule theo dynamic"
+              aria-label="Lọc rule theo trạng thái"
             >
-              <SelectValue placeholder="Dynamic">
+              <SelectValue placeholder="Trạng thái">
                 {ruleDynamicFilterLabel(dynamicFilter)}
               </SelectValue>
             </SelectTrigger>
@@ -156,11 +156,11 @@ export function RuleToolbar({
               <SelectItem value="all" label="Tất cả">
                 Tất cả
               </SelectItem>
-              <SelectItem value="dynamic" label="Dynamic">
+              <SelectItem value="dynamic" label="Trạng thái dynamic">
                 Dynamic
               </SelectItem>
-              <SelectItem value="static" label="Static">
-                Static
+              <SelectItem value="static" label="Trạng thái static">
+                 Static
               </SelectItem>
             </SelectContent>
           </Select>

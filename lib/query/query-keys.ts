@@ -98,6 +98,24 @@ export function projectNfrQueryKey(projectId: string, nfrId: string) {
   return [...PROJECTS_ROOT, "nfrs", projectId, nfrId] as const;
 }
 
+/** Key danh sách business requirements theo `project_id`. */
+export function projectBRQueryKey(projectId: string) {
+  return [...PROJECTS_ROOT, "business-requirements", projectId] as const;
+}
+
+/** Key danh sách out-of-scope theo `project_id` (+ filter `category`). */
+export function projectOutOfScopeQueryKey(
+  projectId: string,
+  params?: { category?: string }
+) {
+  return [
+    ...PROJECTS_ROOT,
+    "out-of-scope",
+    projectId,
+    params?.category ?? "",
+  ] as const;
+}
+
 /** Key danh sách constraints theo `project_id` (+ filter `type` / `severity`). */
 export function projectConstraintsQueryKey(
   projectId: string,
@@ -270,6 +288,8 @@ export const queryKeys = {
     rules: projectRulesQueryKey,
     nfrs: projectNfrsQueryKey,
     nfr: projectNfrQueryKey,
+    br: projectBRQueryKey,
+    outOfScope: projectOutOfScopeQueryKey,
     constraints: projectConstraintsQueryKey,
     features: projectFeaturesQueryKey,
     featuresInfinite: projectFeaturesInfiniteQueryKey,

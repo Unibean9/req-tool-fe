@@ -6,18 +6,26 @@ import {
   Calculator,
   ClipboardCheck,
   FileCheck2,
-  History,
   GitBranch,
+  History,
   Pencil,
   Scale,
-  Sparkles,
   ShieldCheck,
+  Sparkles,
   Trash2,
   type LucideIcon,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import {
   useDeleteProjectRule,
   useProjectRules,
@@ -41,57 +49,43 @@ const RULE_TYPE_LABELS: Record<ProjectRuleType, string> = {
 
 type RuleTypeMeta = {
   icon: LucideIcon;
-  iconClass: string;
-  iconBoxClass: string;
   badgeClass: string;
 };
 
 const RULE_TYPE_META: Record<ProjectRuleType, RuleTypeMeta> = {
   constraint: {
     icon: Ban,
-    iconBoxClass: "bg-rose-50 dark:bg-rose-950/45",
-    iconClass: "text-rose-700 dark:text-rose-300",
     badgeClass:
       "border-rose-500/25 bg-rose-50 text-rose-800 dark:bg-rose-950/55 dark:text-rose-300",
   },
   calculation: {
     icon: Calculator,
-    iconBoxClass: "bg-amber-50 dark:bg-amber-950/45",
-    iconClass: "text-amber-700 dark:text-amber-300",
     badgeClass:
       "border-amber-500/25 bg-amber-50 text-amber-800 dark:bg-amber-950/55 dark:text-amber-300",
   },
   validation: {
     icon: ClipboardCheck,
-    iconBoxClass: "bg-emerald-50 dark:bg-emerald-950/45",
-    iconClass: "text-emerald-700 dark:text-emerald-300",
     badgeClass:
       "border-emerald-500/25 bg-emerald-50 text-emerald-800 dark:bg-emerald-950/55 dark:text-emerald-300",
   },
   process: {
     icon: GitBranch,
-    iconBoxClass: "bg-sky-50 dark:bg-sky-950/45",
-    iconClass: "text-sky-700 dark:text-sky-300",
     badgeClass:
       "border-sky-500/25 bg-sky-50 text-sky-800 dark:bg-sky-950/55 dark:text-sky-300",
   },
   policy: {
     icon: ShieldCheck,
-    iconBoxClass: "bg-violet-50 dark:bg-violet-950/45",
-    iconClass: "text-violet-700 dark:text-violet-300",
     badgeClass:
       "border-violet-500/25 bg-violet-50 text-violet-800 dark:bg-violet-950/55 dark:text-violet-300",
   },
   regulation: {
     icon: FileCheck2,
-    iconBoxClass: "bg-slate-100 dark:bg-slate-800/70",
-    iconClass: "text-slate-700 dark:text-slate-300",
     badgeClass:
       "border-slate-500/25 bg-slate-100 text-slate-800 dark:bg-slate-800/70 dark:text-slate-300",
   },
 };
 
-function formatRuleDate(value: string): string {
+function formatDate(value: string): string {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "";
   return new Intl.DateTimeFormat("vi-VN", {
@@ -115,7 +109,7 @@ function matchesSearch(row: ProjectRule, query: string): boolean {
     row.source,
     row.isDynamic ? "dynamic" : "static",
   ]
-    .map((part) => foldForSearch(part))
+    .map(foldForSearch)
     .join(" ");
   return haystack.includes(q);
 }
@@ -128,129 +122,11 @@ function rulePreview(ruleDef: string, max = 48): string {
 
 function sortRules(rows: ProjectRule[]): ProjectRule[] {
   return [...rows].sort(
-    (a, b) =>
-      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
   );
 }
 
-function RuleListRow({
-  row,
-  rowBusy,
-  onEdit,
-  onDelete,
-}: {
-  row: ProjectRule;
-  rowBusy: boolean;
-  onEdit: () => void;
-  onDelete: () => void;
-}) {
-  const meta = RULE_TYPE_META[row.type];
-  const Icon = meta.icon;
-  const source = row.source.trim();
-  const date = formatRuleDate(row.updatedAt || row.createdAt);
-  const ruleDef = row.ruleDef.trim();
-
-  return (
-    <article className="flex h-full w-full min-w-0 flex-col rounded-xl border border-border/70 bg-card/60 p-4 shadow-sm transition-[border-color,background-color,box-shadow] duration-200 ease-out hover:border-border hover:bg-card hover:shadow-md">
-      <div className="flex min-w-0 items-start gap-3">
-        <span
-          className={cn(
-            "flex size-12 shrink-0 items-center justify-center rounded-xl ring-1 ring-border/40",
-            meta.iconBoxClass
-          )}
-          aria-hidden
-        >
-          <Icon className={cn("size-5", meta.iconClass)} />
-        </span>
-
-        <div className="min-w-0 flex-1">
-          <div className="mb-2 flex flex-wrap items-center gap-2">
-            <span
-              className={cn(
-                "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-semibold leading-none",
-                meta.badgeClass
-              )}
-            >
-              <Icon className="size-3.5" aria-hidden />
-              {RULE_TYPE_LABELS[row.type]}
-            </span>
-            <span
-              className={cn(
-                "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-semibold leading-none",
-                row.isDynamic
-                  ? "border-sky-500/30 bg-sky-500/15 text-sky-700 dark:text-sky-300"
-                  : "border-border/80 bg-muted/30 text-muted-foreground"
-              )}
-            >
-              <Sparkles
-                className={cn("size-3.5", !row.isDynamic && "opacity-60")}
-                aria-hidden
-              />
-              {row.isDynamic ? "Dynamic" : "Static"}
-            </span>
-          </div>
-
-          <p className="min-w-0 min-h-13 wrap-anywhere text-base leading-relaxed text-foreground">
-            {ruleDef || (
-              <span className="text-muted-foreground italic">Chưa có mô tả.</span>
-            )}
-          </p>
-        </div>
-      </div>
-
-      <div className="mt-3 flex min-w-0 flex-wrap items-center justify-between gap-x-3 gap-y-2 text-xs text-muted-foreground">
-        <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 border-l border-border/70 pl-3">
-          {source ? (
-            <span className="inline-flex min-w-0 items-center gap-1.5">
-              <Scale className="size-3.5 shrink-0" aria-hidden />
-              <span className="truncate">{source}</span>
-            </span>
-          ) : (
-            <span className="inline-flex items-center gap-1.5 italic">
-              <Scale className="size-3.5 shrink-0" aria-hidden />
-              Chưa có source
-            </span>
-          )}
-          {date ? (
-            <span className="inline-flex items-center gap-1.5 tabular-nums">
-              <History className="size-3.5 shrink-0" aria-hidden />
-              {date}
-            </span>
-          ) : null}
-        </div>
-
-        <div className="flex shrink-0 items-center gap-1">
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            className="h-7 gap-1.5 px-2 text-xs text-muted-foreground hover:text-foreground"
-            aria-label="Chỉnh sửa rule"
-            disabled={rowBusy}
-            onClick={onEdit}
-          >
-            <Pencil className="size-3.5" aria-hidden />
-            Sửa
-          </Button>
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            className="h-7 gap-1.5 px-2 text-xs text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-            aria-label="Xóa rule"
-            disabled={rowBusy}
-            onClick={onDelete}
-          >
-            <Trash2 className="size-3.5" aria-hidden />
-            Xóa
-          </Button>
-        </div>
-      </div>
-    </article>
-  );
-}
-
-type RuleListProps = {
+type RuleTableProps = {
   projectId: string | null;
   search: string;
   typeFilter: RuleTypeFilter;
@@ -258,13 +134,13 @@ type RuleListProps = {
   className?: string;
 };
 
-export function RuleList({
+export function RuleTable({
   projectId,
   search,
   typeFilter,
   dynamicFilter,
   className,
-}: RuleListProps) {
+}: RuleTableProps) {
   const [editTarget, setEditTarget] = useState<ProjectRule | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<{
     ruleId: string;
@@ -317,9 +193,9 @@ export function RuleList({
 
   if (isPending) {
     return (
-      <div className={cn("grid grid-cols-1 gap-3 sm:grid-cols-2", className)}>
-        {Array.from({ length: 4 }).map((_, i) => (
-          <Skeleton key={i} className="h-30 w-full rounded-xl" />
+      <div className={cn("flex flex-col gap-2", className)}>
+        {Array.from({ length: 5 }).map((_, i) => (
+          <Skeleton key={i} className="h-12 w-full rounded-lg" />
         ))}
       </div>
     );
@@ -330,7 +206,7 @@ export function RuleList({
       <div
         className={cn(
           "rounded-xl border border-border/70 bg-card/50 px-5 py-8 text-center",
-          className
+          className,
         )}
       >
         <p className="text-sm text-destructive">
@@ -356,7 +232,7 @@ export function RuleList({
       <div
         className={cn(
           "flex flex-col items-center gap-3 rounded-xl border border-dashed border-border/80 bg-muted/20 px-6 py-12 text-center",
-          className
+          className,
         )}
       >
         <span className="flex size-12 items-center justify-center rounded-xl bg-muted/80 text-muted-foreground">
@@ -377,40 +253,140 @@ export function RuleList({
       <p
         className={cn(
           "rounded-xl border border-border/70 bg-card/40 px-5 py-8 text-center text-sm text-muted-foreground",
-          className
+          className,
         )}
       >
-        Không có kết quả cho &quot;{search.trim()}&quot;.
+        Không có kết quả phù hợp với bộ lọc hiện tại.
       </p>
     );
   }
 
   return (
     <>
-      <ul
+      <div
         className={cn(
-          "grid list-none grid-cols-1 content-start gap-3 sm:grid-cols-2",
-          className
+          "overflow-hidden rounded-xl border border-border/70 bg-card shadow-sm",
+          className,
         )}
-       
-        aria-label="Danh sách rules"
       >
-        {filtered.map((row) => (
-          <li key={row.id} className="flex min-w-0">
-            <RuleListRow
-              row={row}
-              rowBusy={rowBusy}
-              onEdit={() => setEditTarget(row)}
-              onDelete={() =>
-                setDeleteTarget({
-                  ruleId: row.id,
-                  preview: rulePreview(row.ruleDef),
-                })
-              }
-            />
-          </li>
-        ))}
-      </ul>
+        <div className="overflow-auto max-h-[calc(100svh-10rem)]">
+        <Table>
+          <TableHeader>
+            <TableRow className="border-border/70 bg-muted/30 hover:bg-muted/30">
+              <TableHead className="w-12 pl-4 text-center">#</TableHead>
+              <TableHead className="min-w-60">Định nghĩa</TableHead>
+              <TableHead className="w-40">Nguồn</TableHead>
+              <TableHead className="w-40">Loại</TableHead>
+              <TableHead className="w-28">Trạng thái</TableHead>
+              <TableHead className="w-36">Cập nhật</TableHead>
+              <TableHead className="w-24 pr-4 text-right" />
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {filtered.map((row, index) => {
+              const meta = RULE_TYPE_META[row.type];
+              const Icon = meta.icon;
+              const date = formatDate(row.updatedAt || row.createdAt);
+              const source = row.source.trim();
+
+              return (
+                <TableRow key={row.id} className="border-border/60 align-top">
+                  <TableCell className="pl-4 text-center text-xs tabular-nums text-muted-foreground">
+                    {index + 1}
+                  </TableCell>
+
+                  <TableCell className="whitespace-normal py-3 wrap-anywhere">
+                    <p className="text-sm leading-relaxed text-foreground">
+                      {row.ruleDef.trim() || (
+                        <span className="italic text-muted-foreground">
+                          Chưa có mô tả.
+                        </span>
+                      )}
+                    </p>
+                  </TableCell>
+
+                  <TableCell className="text-xs text-muted-foreground wrap-anywhere whitespace-normal">
+                    {source || <span className="italic">Chưa có nguồn</span>}
+                  </TableCell>
+                  <TableCell>
+                    <span
+                      className={cn(
+                        "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-semibold leading-none",
+                        meta.badgeClass,
+                      )}
+                    >
+                      <Icon className="size-3.5" aria-hidden />
+                      {RULE_TYPE_LABELS[row.type]}
+                    </span>
+                  </TableCell>
+
+                  <TableCell>
+                    <span
+                      className={cn(
+                        "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-semibold leading-none",
+                        row.isDynamic
+                          ? "border-sky-500/30 bg-sky-500/15 text-sky-700 dark:text-sky-300"
+                          : "border-border/80 bg-muted/30 text-muted-foreground",
+                      )}
+                    >
+                      <Sparkles
+                        className={cn(
+                          "size-3.5",
+                          !row.isDynamic && "opacity-60",
+                        )}
+                        aria-hidden
+                      />
+                      {row.isDynamic ? "Dynamic" : "Static"}
+                    </span>
+                  </TableCell>
+
+                  <TableCell className="text-xs text-muted-foreground">
+                    {date && (
+                      <span className="inline-flex items-center gap-1.5 tabular-nums">
+                        <History className="size-3.5 shrink-0" aria-hidden />
+                        {date}
+                      </span>
+                    )}
+                  </TableCell>
+
+                  <TableCell className="pr-4 text-right">
+                    <div className="inline-flex items-center gap-1.5">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="size-8 text-muted-foreground hover:text-foreground"
+                        aria-label="Chỉnh sửa"
+                        disabled={rowBusy}
+                        onClick={() => setEditTarget(row)}
+                      >
+                        <Pencil className="size-3.5" aria-hidden />
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="size-8 text-muted-foreground hover:border-destructive/40 hover:bg-destructive/10 hover:text-destructive"
+                        aria-label="Xóa"
+                        disabled={rowBusy}
+                        onClick={() =>
+                          setDeleteTarget({
+                            ruleId: row.id,
+                            preview: rulePreview(row.ruleDef),
+                          })
+                        }
+                      >
+                        <Trash2 className="size-3.5" aria-hidden />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
+        </div>
+      </div>
 
       <RuleFormDialog
         projectId={projectId}

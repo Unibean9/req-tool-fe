@@ -52,7 +52,7 @@ export function GoalToolbar({
             onClick={() => setCreateOpen(true)}
           >
             <Plus className="size-4" aria-hidden />
-            Thêm goal
+            Thêm mới
           </Button>
         </div>
 

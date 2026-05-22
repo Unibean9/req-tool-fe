@@ -7,7 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useOrgProjects } from "@/hooks/useProject";
 
 import { useOrgWorkspace } from "../../../../orgWorkspaceContext";
-import { RuleList } from "./components/ruleList";
+import { RuleTable } from "./components/ruleTable";
 import {
   RuleToolbar,
   type RuleDynamicFilter,
@@ -66,7 +66,7 @@ export default function ProjectBusinessRulesPage() {
   }
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto">
+    <div className="flex min-h-0 flex-1 flex-col gap-6">
       <RuleToolbar
         search={search}
         onSearchChange={setSearch}
@@ -77,7 +77,7 @@ export default function ProjectBusinessRulesPage() {
         projectId={project?.id ?? null}
         canCreate={Boolean(project)}
       />
-      <RuleList
+      <RuleTable
         projectId={project?.id ?? null}
         search={search}
         typeFilter={typeFilter}

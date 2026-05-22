@@ -7,7 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useOrgProjects } from "@/hooks/useProject";
 
 import { useOrgWorkspace } from "../../../../orgWorkspaceContext";
-import { StakeHolderList } from "./components/stakeHolderList";
+import { StakeHolderTable } from "./components/stakeHolderTable";
 import {
   StakeHolderToolbar,
   type StakeholderBusinessActorFilter,
@@ -67,7 +67,7 @@ export default function ProjectBusinessStakeholdersPage() {
   }
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto">
+    <div className="flex min-h-0 flex-1 flex-col gap-6">
       <StakeHolderToolbar
         search={search}
         onSearchChange={setSearch}
@@ -76,7 +76,7 @@ export default function ProjectBusinessStakeholdersPage() {
         projectId={project?.id ?? null}
         canCreate={Boolean(project)}
       />
-      <StakeHolderList
+      <StakeHolderTable
         projectId={project?.id ?? null}
         search={search}
         businessActorFilter={businessActorFilter}

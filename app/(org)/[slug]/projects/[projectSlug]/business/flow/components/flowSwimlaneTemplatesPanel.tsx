@@ -582,7 +582,7 @@ export function FlowSwimlaneTemplatesPanel({
                       className="size-4 shrink-0 text-primary"
                       aria-hidden
                     />
-                    Template flow
+                    Template business flow
                   </CardTitle>
                   <p className="text-xs text-muted-foreground">
                     {templateCountLabel}
@@ -630,7 +630,7 @@ export function FlowSwimlaneTemplatesPanel({
                   </div>
                 ) : templates.length === 0 ? (
                   <p className="py-10 text-center text-xs text-muted-foreground">
-                    Chưa có template cho flow này.
+                    Chưa có template cho business flow này.
                   </p>
                 ) : (
                   <div className="space-y-1">
@@ -668,7 +668,7 @@ export function FlowSwimlaneTemplatesPanel({
             variant="secondary"
             size="icon"
             className="h-11 w-10 rounded-r-none rounded-l-lg border border-border/90 border-r-0 bg-card/95 shadow-lg backdrop-blur-md"
-            aria-label="Mở danh sách template flow"
+            aria-label="Mở danh sách template business flow"
             onClick={() => setPanelOpen(true)}
           >
             <ChevronLeft className="size-5" aria-hidden />

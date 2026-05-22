@@ -71,11 +71,11 @@ function CreateFlowFormDialogBody({
     return (
       <div className="w-full min-w-0 py-2">
         <DialogHeader>
-          <DialogTitle className="text-lg">Thêm flow actions?</DialogTitle>
+          <DialogTitle className="text-lg">Thêm business flow actions?</DialogTitle>
           <DialogDescription>
-            Đã tạo flow{" "}
+            Đã tạo business flow{" "}
             <span className="font-medium text-foreground">{createdFlow.name}</span>
-            . Bạn có muốn khai báo các action (actor + rules) cho luồng này không?
+            . Bạn có muốn khai báo các action (actor + rules) cho business flow này không?
           </DialogDescription>
         </DialogHeader>
         <DialogFooter className="mt-6 flex-col gap-2 sm:flex-row sm:justify-end">
@@ -104,7 +104,7 @@ function CreateFlowFormDialogBody({
       <DialogHeader>
         <DialogTitle className="text-lg">Tạo flow mới</DialogTitle>
         <DialogDescription>
-          Nhập mã, tên và mô tả luồng nghiệp vụ. Sau khi tạo, bạn có thể thêm
+          Nhập mã, tên và mô tả business flow. Sau khi tạo, bạn có thể thêm
           flow actions (tùy chọn).
         </DialogDescription>
       </DialogHeader>

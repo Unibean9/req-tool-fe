@@ -2,21 +2,29 @@
 
 import { useMemo, useState } from "react";
 import {
-  Banknote,
   Ban,
+  Banknote,
   CalendarClock,
   Cpu,
   History,
   Pencil,
   Scale,
-  ServerCog,
   Trash2,
   UsersRound,
+  AlertCircle,
   type LucideIcon,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import {
   useDeleteProjectConstraint,
   useProjectConstraints,
@@ -39,62 +47,54 @@ import type {
 
 type ConstraintTypeMeta = {
   icon: LucideIcon;
-  iconBoxClass: string;
-  iconClass: string;
   badgeClass: string;
 };
 
 const CONSTRAINT_TYPE_META: Record<ConstraintType, ConstraintTypeMeta> = {
   budget: {
     icon: Banknote,
-    iconBoxClass: "bg-emerald-50 dark:bg-emerald-950/45",
-    iconClass: "text-emerald-700 dark:text-emerald-300",
     badgeClass:
       "border-emerald-500/25 bg-emerald-50 text-emerald-800 dark:bg-emerald-950/55 dark:text-emerald-300",
   },
   timeline: {
     icon: CalendarClock,
-    iconBoxClass: "bg-sky-50 dark:bg-sky-950/45",
-    iconClass: "text-sky-700 dark:text-sky-300",
     badgeClass:
       "border-sky-500/25 bg-sky-50 text-sky-800 dark:bg-sky-950/55 dark:text-sky-300",
   },
   technical: {
     icon: Cpu,
-    iconBoxClass: "bg-violet-50 dark:bg-violet-950/45",
-    iconClass: "text-violet-700 dark:text-violet-300",
     badgeClass:
       "border-violet-500/25 bg-violet-50 text-violet-800 dark:bg-violet-950/55 dark:text-violet-300",
   },
   resource: {
     icon: UsersRound,
-    iconBoxClass: "bg-amber-50 dark:bg-amber-950/45",
-    iconClass: "text-amber-700 dark:text-amber-300",
     badgeClass:
       "border-amber-500/25 bg-amber-50 text-amber-800 dark:bg-amber-950/55 dark:text-amber-300",
   },
   regulatory: {
     icon: Scale,
-    iconBoxClass: "bg-rose-50 dark:bg-rose-950/45",
-    iconClass: "text-rose-700 dark:text-rose-300",
     badgeClass:
       "border-rose-500/25 bg-rose-50 text-rose-800 dark:bg-rose-950/55 dark:text-rose-300",
+  },
+  risk: {
+    icon: AlertCircle,
+    badgeClass:
+      "border-slate-500/25 bg-slate-100 text-slate-800 dark:bg-slate-800/70 dark:text-slate-300",
   },
 };
 
 function severityBadgeClassName(severity: ConstraintSeverity): string {
   return cn(
-    "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-semibold leading-none",
+    "inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-semibold leading-none",
     severity === "high" &&
       "border-rose-500/35 bg-rose-500/15 text-rose-700 dark:text-rose-200",
     severity === "medium" &&
       "border-amber-500/35 bg-amber-500/15 text-amber-700 dark:text-amber-200",
-    severity === "low" &&
-      "border-border/80 bg-muted/35 text-muted-foreground"
+    severity === "low" && "border-border/80 bg-muted/35 text-muted-foreground"
   );
 }
 
-function formatConstraintDate(value: string): string {
+function formatDate(value: string): string {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "";
   return new Intl.DateTimeFormat("vi-VN", {
@@ -118,7 +118,7 @@ function matchesSearch(row: ProjectConstraint, query: string): boolean {
     row.severity,
     CONSTRAINT_SEVERITY_LABELS[row.severity],
   ]
-    .map((part) => foldForSearch(part))
+    .map(foldForSearch)
     .join(" ");
   return haystack.includes(q);
 }
@@ -137,102 +137,7 @@ function sortConstraints(rows: ProjectConstraint[]): ProjectConstraint[] {
   );
 }
 
-function ConstraintListRow({
-  row,
-  rowBusy,
-  onEdit,
-  onDelete,
-}: {
-  row: ProjectConstraint;
-  rowBusy: boolean;
-  onEdit: () => void;
-  onDelete: () => void;
-}) {
-  const meta = CONSTRAINT_TYPE_META[row.type];
-  const Icon = meta.icon;
-  const description = row.description.trim();
-  const date = formatConstraintDate(row.updatedAt || row.createdAt);
-
-  return (
-    <article className="group flex h-full w-full min-w-0 flex-col rounded-xl border border-border/70 bg-card/60 p-4 shadow-sm transition-[border-color,background-color,box-shadow] duration-200 ease-out hover:border-border hover:bg-card hover:shadow-md">
-      <div className="flex min-w-0 items-start gap-3">
-        <span
-          className={cn(
-            "flex size-12 shrink-0 items-center justify-center rounded-xl ring-1 ring-border/40",
-            meta.iconBoxClass
-          )}
-          aria-hidden
-        >
-          <Icon className={cn("size-5", meta.iconClass)} />
-        </span>
-
-        <div className="min-w-0 flex-1">
-          <div className="mb-2 flex flex-wrap items-center gap-2">
-            <span
-              className={cn(
-                "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-semibold leading-none",
-                meta.badgeClass
-              )}
-            >
-              <Icon className="size-3.5" aria-hidden />
-              {CONSTRAINT_TYPE_LABELS[row.type]}
-            </span>
-            <span className={severityBadgeClassName(row.severity)}>
-              <ServerCog className="size-3.5" aria-hidden />
-              {CONSTRAINT_SEVERITY_LABELS[row.severity]}
-            </span>
-          </div>
-
-          <p className="min-h-14 min-w-0 break-words text-base leading-relaxed text-foreground [overflow-wrap:anywhere]">
-            {description || (
-              <span className="text-muted-foreground italic">Chưa có mô tả.</span>
-            )}
-          </p>
-        </div>
-      </div>
-
-      <div className="mt-3 flex min-w-0 flex-wrap items-center justify-between gap-x-3 gap-y-2 border-t border-border/60 pt-3 text-xs text-muted-foreground">
-        {date ? (
-          <span className="inline-flex items-center gap-1.5 tabular-nums">
-            <History className="size-3.5 shrink-0" aria-hidden />
-            Cập nhật {date}
-          </span>
-        ) : (
-          <span />
-        )}
-
-        <div className="flex shrink-0 items-center gap-1.5">
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="h-8 gap-1.5 text-xs"
-            aria-label="Chỉnh sửa constraint"
-            disabled={rowBusy}
-            onClick={onEdit}
-          >
-            <Pencil className="size-3.5" aria-hidden />
-            Sửa
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="h-8 gap-1.5 text-xs text-muted-foreground hover:border-destructive/40 hover:bg-destructive/10 hover:text-destructive"
-            aria-label="Xóa constraint"
-            disabled={rowBusy}
-            onClick={onDelete}
-          >
-            <Trash2 className="size-3.5" aria-hidden />
-            Xóa
-          </Button>
-        </div>
-      </div>
-    </article>
-  );
-}
-
-type ConstraintListProps = {
+type ConstraintTableProps = {
   projectId: string | null;
   search: string;
   typeFilter: ConstraintTypeFilter;
@@ -240,13 +145,13 @@ type ConstraintListProps = {
   className?: string;
 };
 
-export function ConstraintList({
+export function ConstraintTable({
   projectId,
   search,
   typeFilter,
   severityFilter,
   className,
-}: ConstraintListProps) {
+}: ConstraintTableProps) {
   const [editTarget, setEditTarget] = useState<ProjectConstraint | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<{
     constraintId: string;
@@ -302,9 +207,9 @@ export function ConstraintList({
 
   if (isPending) {
     return (
-      <div className={cn("grid grid-cols-1 gap-3 sm:grid-cols-2", className)}>
-        {Array.from({ length: 4 }).map((_, i) => (
-          <Skeleton key={i} className="h-40 w-full rounded-xl" />
+      <div className={cn("flex flex-col gap-2", className)}>
+        {Array.from({ length: 5 }).map((_, i) => (
+          <Skeleton key={i} className="h-12 w-full rounded-lg" />
         ))}
       </div>
     );
@@ -367,37 +272,118 @@ export function ConstraintList({
           className
         )}
       >
-        Không có kết quả cho &quot;{search.trim()}&quot;.
+        Không có kết quả phù hợp với bộ lọc hiện tại.
       </p>
     );
   }
 
   return (
     <>
-      <ul
+      <div
         className={cn(
-          "grid list-none grid-cols-1 content-start gap-3 sm:grid-cols-2",
+          "overflow-hidden rounded-xl border border-border/70 bg-card shadow-sm",
           className
         )}
-       
-        aria-label="Danh sách constraints"
       >
-        {filtered.map((row) => (
-          <li key={row.id} className="flex min-w-0">
-            <ConstraintListRow
-              row={row}
-              rowBusy={rowBusy}
-              onEdit={() => setEditTarget(row)}
-              onDelete={() =>
-                setDeleteTarget({
-                  constraintId: row.id,
-                  preview: constraintPreview(row.description),
-                })
-              }
-            />
-          </li>
-        ))}
-      </ul>
+        <div className="overflow-auto max-h-[calc(100svh-10rem)]">
+        <Table>
+          <TableHeader>
+            <TableRow className="border-border/70 bg-muted/30 hover:bg-muted/30">
+              <TableHead className="w-12 pl-4 text-center">#</TableHead>
+              <TableHead className="min-w-60">Đặc điểm</TableHead>
+              <TableHead className="w-32">Loại</TableHead>
+              <TableHead className="w-32">Mức độ</TableHead>
+              <TableHead className="w-36">Cập nhật</TableHead>
+              <TableHead className="w-24 pr-4 text-right" />
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {filtered.map((row, index) => {
+              const meta = CONSTRAINT_TYPE_META[row.type];
+              const Icon = meta.icon;
+              const date = formatDate(row.updatedAt || row.createdAt);
+
+              return (
+                <TableRow key={row.id} className="border-border/60 align-top">
+                  <TableCell className="pl-4 text-center text-xs tabular-nums text-muted-foreground">
+                    {index + 1}
+                  </TableCell>
+
+                  <TableCell className="whitespace-normal py-3 wrap-anywhere">
+                    <p className="text-sm leading-relaxed text-foreground">
+                      {row.description.trim() || (
+                        <span className="italic text-muted-foreground">
+                          Chưa có mô tả.
+                        </span>
+                      )}
+                    </p>
+                  </TableCell>
+
+                  <TableCell>
+                    <span
+                      className={cn(
+                        "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-semibold leading-none",
+                        meta.badgeClass
+                      )}
+                    >
+                      <Icon className="size-3.5" aria-hidden />
+                      {CONSTRAINT_TYPE_LABELS[row.type]}
+                    </span>
+                  </TableCell>
+
+                  <TableCell>
+                    <span className={severityBadgeClassName(row.severity)}>
+                      {CONSTRAINT_SEVERITY_LABELS[row.severity]}
+                    </span>
+                  </TableCell>
+
+                  <TableCell className="text-xs text-muted-foreground">
+                    {date && (
+                      <span className="inline-flex items-center gap-1.5 tabular-nums">
+                        <History className="size-3.5 shrink-0" aria-hidden />
+                        {date}
+                      </span>
+                    )}
+                  </TableCell>
+
+                  <TableCell className="pr-4 text-right">
+                    <div className="inline-flex items-center gap-1.5">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="size-8 text-muted-foreground hover:text-foreground"
+                        aria-label="Chỉnh sửa"
+                        disabled={rowBusy}
+                        onClick={() => setEditTarget(row)}
+                      >
+                        <Pencil className="size-3.5" aria-hidden />
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="size-8 text-muted-foreground hover:border-destructive/40 hover:bg-destructive/10 hover:text-destructive"
+                        aria-label="Xóa"
+                        disabled={rowBusy}
+                        onClick={() =>
+                          setDeleteTarget({
+                            constraintId: row.id,
+                            preview: constraintPreview(row.description),
+                          })
+                        }
+                      >
+                        <Trash2 className="size-3.5" aria-hidden />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
+        </div>
+      </div>
 
       <ConstraintFormDialog
         key={editTarget?.id ?? "edit-constraint"}

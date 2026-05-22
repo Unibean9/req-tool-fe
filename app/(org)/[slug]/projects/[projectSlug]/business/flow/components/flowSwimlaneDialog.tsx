@@ -359,7 +359,7 @@ function FlowSwimlaneDialogBody({
     return (
       <div className="grid gap-3 py-2">
         <DialogHeader>
-          <DialogTitle className="text-lg">Swimlane — {flowName}</DialogTitle>
+          <DialogTitle className="text-lg">Activity Diagram — {flowName}</DialogTitle>
           <DialogDescription>Đang tải sơ đồ…</DialogDescription>
         </DialogHeader>
         <Skeleton className="h-12 w-full rounded-xl" />
@@ -372,7 +372,7 @@ function FlowSwimlaneDialogBody({
     return (
       <div className="grid gap-3 py-2">
         <DialogHeader>
-          <DialogTitle className="text-lg">Swimlane — {flowName}</DialogTitle>
+          <DialogTitle className="text-lg">Activity Diagram — {flowName}</DialogTitle>
           <DialogDescription>Không tải được flow.</DialogDescription>
         </DialogHeader>
         <p className="text-sm text-destructive">
@@ -393,9 +393,9 @@ function FlowSwimlaneDialogBody({
   return (
     <div className="flex h-[calc(100dvh-5.75rem)] min-h-[min(480px,90dvh)] w-full max-w-full flex-col gap-2 overflow-hidden">
       <DialogHeader className="shrink-0 space-y-1 pb-0">
-        <DialogTitle className="text-lg">Swimlane — {flow.name}</DialogTitle>
+        <DialogTitle className="text-lg">Activity Diagram — {flow.name}</DialogTitle>
         <DialogDescription>
-          Chỉnh layout swimlane — chú thích góc trái; template flow ở panel phải.
+          Chỉnh layout activity diagram — chú thích góc trái; template business flow ở panel phải.
         </DialogDescription>
       </DialogHeader>
 

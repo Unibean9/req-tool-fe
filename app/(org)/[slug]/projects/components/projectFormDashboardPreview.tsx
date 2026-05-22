@@ -54,7 +54,7 @@ export function ProjectFormDashboardPreview({
             </p>
           ) : (
             <p className="text-sm italic text-muted-foreground">
-              Chưa có mô tả ngắn.
+              Chưa có tóm tắt.
             </p>
           )}
         </div>

@@ -6,6 +6,8 @@ import { useMemo, useRef, useState } from "react";
 import {
   Ban,
   Check,
+  CircleSlash,
+  ClipboardList,
   LayoutDashboard,
   Link2,
   LogOut,
@@ -129,11 +131,13 @@ function pathActive(pathname: string, prefix: string): boolean {
 }
 
 const PROJECT_BUSINESS_NAV = [
-  { segment: "stakeholders", label: "Stakeholders", icon: UsersRound },
-  { segment: "flow", label: "Flows", icon: Workflow },
-  { segment: "constraints", label: "Constraints", icon: Ban },
-  { segment: "rules", label: "Rules", icon: Scale },
   { segment: "goals", label: "Goals", icon: Target },
+  { segment: "requirements", label: "Business Requirements", icon: ClipboardList },
+  { segment: "stakeholders", label: "Stakeholders", icon: UsersRound },
+  { segment: "rules", label: "Rules", icon: Scale },
+  { segment: "flow", label: "Business Flows", icon: Workflow },
+  { segment: "constraints", label: "Constraints", icon: Ban },
+  { segment: "out-of-scope", label: "Out Of Scope", icon: CircleSlash },
 ] as const;
 
 const SETUP_PROGRESS_STEP_COUNT = 7;
@@ -842,7 +846,7 @@ export function ProjectWorkspaceNavSidebar({
 
           <div className="shrink-0 space-y-1">
             <SidebarSectionTitle withDivider>
-              Phân tích business
+              BRD
             </SidebarSectionTitle>
             <div className="space-y-1 px-0.5">
               {PROJECT_BUSINESS_NAV.map(({ segment, label, icon }) => {
@@ -861,7 +865,7 @@ export function ProjectWorkspaceNavSidebar({
           </div>
 
           <div className="flex min-h-0 flex-1 flex-col">
-            <SidebarSectionTitle withDivider>Requirements</SidebarSectionTitle>
+            <SidebarSectionTitle withDivider>User Requirements</SidebarSectionTitle>
             <div className="shrink-0 space-y-1 px-0.5 pb-2">
               <SidebarNavLink
                 href={nav.nfr}
