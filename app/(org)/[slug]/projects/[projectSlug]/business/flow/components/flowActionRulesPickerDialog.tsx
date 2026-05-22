@@ -266,9 +266,9 @@ export function FlowActionRulesPickerDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className={cn("z-230 gap-0", RULES_PICKER_DIALOG_SIZE_CLASS)}
+        className={cn("z-230 gap-0 overflow-hidden", RULES_PICKER_DIALOG_SIZE_CLASS)}
         overlayClassName="z-220"
-        contentClassName="flex min-h-0 flex-col gap-0 p-0"
+        contentClassName="flex h-full min-h-0 flex-col gap-0 p-0"
         showCloseButton
       >
         {open ? (

@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
-import { Check, Download, Pencil, Trash2 } from "lucide-react";
+import { useState } from "react";
+import { Download, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { buildProjectEditPath } from "@/app/(org)/components/orgWorkspacePaths";
@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils";
 
 import { useOrgWorkspace } from "../../../../orgWorkspaceContext";
 import { useProjectWorkspaceNav } from "../../components/projectWorkspaceNavContext";
+import { BrdExportDialog } from "./brdExportDialog";
 import { DeleteOrgProjectDialog } from "./deleteOrgProjectDialog";
 import { ProjectDashboardMeta } from "./projectDashboardMeta";
 
@@ -23,27 +24,6 @@ export type ProjectDashboardHeaderProps = {
   orgId: string;
 };
 
-function sanitizeMarkdownFileName(value: string): string {
-  const safe = value
-    .trim()
-    .replace(/[^a-zA-Z0-9._-]+/g, "-")
-    .replace(/^-+|-+$/g, "");
-  return safe || "project-brd";
-}
-
-function downloadMarkdownFile(content: string, fileName: string) {
-  const blob = new Blob([content], { type: "text/markdown;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const anchor = document.createElement("a");
-
-  anchor.href = url;
-  anchor.download = fileName;
-  document.body.appendChild(anchor);
-  anchor.click();
-  anchor.remove();
-  URL.revokeObjectURL(url);
-}
-
 export function ProjectDashboardHeader({
   project,
   orgId,
@@ -51,17 +31,12 @@ export function ProjectDashboardHeader({
   const { slug } = useOrgWorkspace();
   const pathname = usePathname() ?? "";
   const { navigateAfterProjectDelete } = useProjectWorkspaceNav();
-  const [deleteOpen, setDeleteOpen] = useState(false);
-  const [downloadStatus, setDownloadStatus] = useState<"idle" | "success">(
-    "idle"
-  );
-  const downloadResetTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
-    null
-  );
 
-  const brdExportQuery = useProjectBrdExport(project.id, { enabled: false });
-  const downloadPending = brdExportQuery.isFetching;
-  const downloadSuccessful = downloadStatus === "success";
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [brdDialogOpen, setBrdDialogOpen] = useState(false);
+
+  const brdQuery = useProjectBrdExport(project.id, { enabled: false });
+  const brdMarkdown = brdQuery.data?.data?.markdown ?? null;
 
   const deleteMutation = useDeleteOrgProject({
     onSuccess: (_data, variables, context) => {
@@ -71,37 +46,15 @@ export function ProjectDashboardHeader({
   });
 
   const executiveSummary = project.executiveSummary.trim();
-  const editHref = buildProjectEditPath(slug, project.slug, {
-    returnTo: pathname,
-  });
-  const brdFileName = `${sanitizeMarkdownFileName(project.slug || project.name)}-brd.md`;
+  const editHref = buildProjectEditPath(slug, project.slug, { returnTo: pathname });
 
-  useEffect(() => {
-    return () => {
-      if (downloadResetTimeoutRef.current) {
-        clearTimeout(downloadResetTimeoutRef.current);
+  async function handleOpenBrdDialog() {
+    setBrdDialogOpen(true);
+    if (!brdMarkdown) {
+      const result = await brdQuery.refetch();
+      if (result.isError) {
+        toast.error(getApiErrorMessage(result.error, "Không tải được nội dung BRD"));
       }
-    };
-  }, []);
-
-  async function handleDownloadBrd() {
-    if (downloadPending) return;
-    setDownloadStatus("idle");
-    if (downloadResetTimeoutRef.current) {
-      clearTimeout(downloadResetTimeoutRef.current);
-    }
-
-    const result = await brdExportQuery.refetch();
-    if (result.isError) {
-      toast.error(getApiErrorMessage(result.error, "Không tải được file BRD"));
-      return;
-    }
-    if (typeof result.data === "string") {
-      downloadMarkdownFile(result.data, brdFileName);
-      setDownloadStatus("success");
-      downloadResetTimeoutRef.current = setTimeout(() => {
-        setDownloadStatus("idle");
-      }, 1400);
     }
   }
 
@@ -114,73 +67,39 @@ export function ProjectDashboardHeader({
               {project.name}
             </h1>
             {executiveSummary ? (
-              <p
-                className={cn(
-                  "max-w-3xl text-sm leading-relaxed text-muted-foreground sm:text-base"
-                )}
-              >
+              <p className={cn("max-w-3xl text-sm leading-relaxed text-muted-foreground sm:text-base")}>
                 {executiveSummary}
               </p>
             ) : (
-              <p className="text-sm italic text-muted-foreground">
-                Chưa có tóm tắt.
-              </p>
+              <p className="text-sm italic text-muted-foreground">Chưa có tóm tắt.</p>
             )}
           </div>
+
           <div className="flex shrink-0 flex-wrap items-center gap-2">
             <Button
               type="button"
               variant="outline"
               size="sm"
-              className={cn(
-                "gap-1.5 border-border/80 transition-[color,background-color,border-color,box-shadow] duration-200 ease-out",
-                downloadSuccessful &&
-                  "border-emerald-500/40 bg-emerald-500/10 text-emerald-700 shadow-sm shadow-emerald-500/10 hover:bg-emerald-500/10 dark:text-emerald-300"
-              )}
-              onClick={() => void handleDownloadBrd()}
-              disabled={downloadPending}
+              className="gap-1.5 border-border/80"
+              onClick={() => void handleOpenBrdDialog()}
+              disabled={brdQuery.isFetching}
               aria-live="polite"
             >
-              <span className="relative size-3.5 shrink-0" aria-hidden>
-                <Download
-                  className={cn(
-                    "absolute inset-0 size-3.5 transition-[opacity,transform,filter] duration-200 ease-out motion-reduce:transition-none",
-                    downloadSuccessful
-                      ? "scale-75 translate-y-1 opacity-0 blur-[1px]"
-                      : downloadPending
-                        ? "animate-pulse opacity-80"
-                        : "scale-100 translate-y-0 opacity-100"
-                  )}
-                />
-                <Check
-                  className={cn(
-                    "absolute inset-0 size-3.5 transition-[opacity,transform,filter] duration-200 ease-out motion-reduce:transition-none",
-                    downloadSuccessful
-                      ? "scale-100 rotate-0 opacity-100 blur-0"
-                      : "scale-50 rotate-[-20deg] opacity-0 blur-[1px]"
-                  )}
-                  strokeWidth={2.5}
-                />
-              </span>
-              <span className="min-w-14 text-left transition-opacity duration-200 motion-reduce:transition-none">
-                {downloadPending
-                  ? "Đang tải..."
-                  : downloadSuccessful
-                    ? "Đã tải"
-                    : "Tải BRD Template"}
-              </span>
+              <Download
+                className={cn("size-3.5", brdQuery.isFetching && "animate-pulse opacity-70")}
+                aria-hidden
+              />
+              {brdQuery.isFetching ? "Đang tải…" : "Tải BRD Template"}
             </Button>
+
             <Link
               href={editHref}
-              className={buttonVariants({
-                variant: "outline",
-                size: "sm",
-                className: "gap-1.5 border-border/80",
-              })}
+              className={buttonVariants({ variant: "outline", size: "sm", className: "gap-1.5 border-border/80" })}
             >
               <Pencil className="size-3.5" aria-hidden />
               Chỉnh sửa
             </Link>
+
             <Button
               type="button"
               variant="destructive"
@@ -202,14 +121,20 @@ export function ProjectDashboardHeader({
         />
       </header>
 
+      <BrdExportDialog
+        open={brdDialogOpen}
+        onOpenChange={setBrdDialogOpen}
+        markdown={brdMarkdown}
+        loading={brdQuery.isFetching}
+        projectName={project.name}
+      />
+
       <DeleteOrgProjectDialog
         open={deleteOpen}
         projectName={project.name}
         deletePending={deleteMutation.isPending}
         onOpenChange={setDeleteOpen}
-        onConfirmDelete={() =>
-          deleteMutation.mutate({ orgId, projectId: project.id })
-        }
+        onConfirmDelete={() => deleteMutation.mutate({ orgId, projectId: project.id })}
       />
     </>
   );
