@@ -37,6 +37,10 @@ const MINT_BORDER = "#c5e8d8"; // dividers
 const ABYSS = "#091413";  // body text
 const MUTED = "#547666";  // secondary text
 const WHITE = "#ffffff";
+const A4_WIDTH = 595.28;
+const PAGE_HORIZONTAL_PADDING = 56;
+const TABLE_BORDER_WIDTH = 1;
+const TABLE_WIDTH = A4_WIDTH - PAGE_HORIZONTAL_PADDING * 2 - TABLE_BORDER_WIDTH * 2;
 
 // ── Inline parse ──────────────────────────────────────────────────────────────
 
@@ -445,6 +449,46 @@ const s = StyleSheet.create({
 
 type PdfStyle = (typeof s)[keyof typeof s];
 
+// ── Table layout helpers ─────────────────────────────────────────────────────
+
+function normalizeHeader(header: string): string {
+  return header.trim().toLowerCase();
+}
+
+function resolveColumnWeights(headers: string[]): number[] {
+  const normalized = headers.map(normalizeHeader);
+
+  return normalized.map((header) => {
+    if (header === "#" || header === "step") return 0.55;
+    if (header === "critical" || header === "severity" || header === "priority") return 0.9;
+    if (header === "actor" || header === "type" || header === "owner" || header === "status") {
+      return 1.05;
+    }
+    if (
+      header === "description" ||
+      header === "action" ||
+      header === "objective" ||
+      header === "success metric"
+    ) {
+      return 2.6;
+    }
+    if (header === "business rules" || header === "acceptance criteria") return 1.35;
+
+    return 1.4;
+  });
+}
+
+function resolveColumnWidths(headers: string[]): number[] {
+  const weights = resolveColumnWeights(headers);
+  const totalWeight = weights.reduce((sum, weight) => sum + weight, 0);
+
+  return weights.map((weight) => (TABLE_WIDTH * weight) / totalWeight);
+}
+
+function normalizeRowCells(row: string[], colCount: number): string[] {
+  return Array.from({ length: colCount }, (_unused, index) => row[index] ?? "");
+}
+
 // ── Priority cell renderer ───────────────────────────────────────────────────
 
 const PRIORITY_RE = /\b(high|critical|medium|normal|low|minor)\b/i;
@@ -538,13 +582,13 @@ function InlineText({ segs, style }: { segs: Seg[]; style?: PdfStyle }) {
 function BlockNode({ block }: { block: Block }) {
   switch (block.k) {
     case "h1":
-      return <Text style={s.h1}>{block.text}</Text>;
+      return <Text minPresenceAhead={48} style={s.h1}>{block.text}</Text>;
     case "h2":
-      return <Text style={s.h2}>{block.text}</Text>;
+      return <Text minPresenceAhead={42} style={s.h2}>{block.text}</Text>;
     case "h3":
-      return <Text style={s.h3}>{block.text}</Text>;
+      return <Text minPresenceAhead={32} style={s.h3}>{block.text}</Text>;
     case "h4":
-      return <Text style={s.h4}>{block.text}</Text>;
+      return <Text minPresenceAhead={28} style={s.h4}>{block.text}</Text>;
     case "p":
       return <InlineText segs={block.segs} style={s.p} />;
     case "bullet":
@@ -572,20 +616,19 @@ function BlockNode({ block }: { block: Block }) {
     case "table":
       {
         const colCount = Math.max(block.headers.length, 1);
-        // Use absolute pt widths so react-pdf can measure text height before flex resolves,
-        // which prevents rows from staying 1-line tall while wrapped text overflows into neighbours.
-        // A4 = 595.28pt; page paddingHorizontal = 56pt × 2; table borderWidth = 1pt × 2.
-        const colPx = (595.28 - 56 * 2 - 2) / colCount;
+        // Use absolute pt widths so react-pdf can measure text height before flex resolves.
+        // Wider text-heavy columns prevent long BRD descriptions from becoming thin towers.
+        const colWidths = resolveColumnWidths(block.headers);
         return (
           <View style={s.table}>
             {/* Header row */}
-            <View style={s.tableHeaderRow}>
+            <View wrap={false} style={s.tableHeaderRow}>
               {block.headers.map((h, ci) => (
                 <View
                   key={ci}
                   style={[
                     ci < colCount - 1 ? s.thView : s.thViewLast,
-                    { width: colPx, flexShrink: 0 },
+                    { width: colWidths[ci], flexShrink: 0 },
                   ]}
                 >
                   <Text style={s.thText}>{h}</Text>
@@ -593,24 +636,28 @@ function BlockNode({ block }: { block: Block }) {
               ))}
             </View>
             {/* Data rows */}
-            {block.rows.map((row, ri) => (
-              <View
-                key={ri}
-                style={ri < block.rows.length - 1 ? s.tableRow : s.tableLastRow}
-              >
-                {row.map((cell, ci) => (
-                  <View
-                    key={ci}
-                    style={[
-                      ci < row.length - 1 ? s.tdView : s.tdViewLast,
-                      { width: colPx, flexShrink: 0 },
-                    ]}
-                  >
-                    <PriorityText value={cell} cellStyle={s.tdText} />
-                  </View>
-                ))}
-              </View>
-            ))}
+            {block.rows.map((rawRow, ri) => {
+              const row = normalizeRowCells(rawRow, colCount);
+              return (
+                <View
+                  key={ri}
+                  wrap={false}
+                  style={ri < block.rows.length - 1 ? s.tableRow : s.tableLastRow}
+                >
+                  {row.map((cell, ci) => (
+                    <View
+                      key={ci}
+                      style={[
+                        ci < colCount - 1 ? s.tdView : s.tdViewLast,
+                        { width: colWidths[ci], flexShrink: 0 },
+                      ]}
+                    >
+                      <PriorityText value={cell} cellStyle={s.tdText} />
+                    </View>
+                  ))}
+                </View>
+              );
+            })}
           </View>
         );
       }
@@ -682,12 +729,14 @@ export function BrdDocument({ markdown, projectName }: BrdDocumentProps) {
         </View>
 
         {groupBlocks(blocks).map((group, i) =>
-          group.paired ? (
+          group.paired && !group.items.some((item) => item.k === "table") ? (
             <View key={i} wrap={false} style={{ width: "100%" }}>
               {group.items.map((b, j) => <BlockNode key={j} block={b} />)}
             </View>
           ) : (
-            <BlockNode key={i} block={group.items[0]} />
+            <View key={i} style={{ width: "100%" }}>
+              {group.items.map((b, j) => <BlockNode key={j} block={b} />)}
+            </View>
           )
         )}
 
