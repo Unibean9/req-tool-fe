@@ -366,46 +366,44 @@ const s = StyleSheet.create({
   tableLastRow: {
     flexDirection: "row",
   },
-  tableHeader: {
+  // View wrappers (flex + padding + border) — Text must be a child, NOT the flex item itself
+  thView: {
     flex: 1,
-    fontSize: 9,
-    fontFamily: "NotoSans",
-    fontWeight: 700,
-    color: CANOPY,
     paddingHorizontal: 8,
     paddingVertical: 5,
     borderRightWidth: 1,
     borderRightColor: MINT_BORDER,
     borderRightStyle: "solid",
   },
-  tableHeaderLast: {
+  thViewLast: {
     flex: 1,
-    fontSize: 9,
-    fontFamily: "NotoSans",
-    fontWeight: 700,
-    color: CANOPY,
     paddingHorizontal: 8,
     paddingVertical: 5,
   },
-  tableCell: {
+  tdView: {
     flex: 1,
-    fontSize: 9,
-    fontFamily: "NotoSans",
-    color: ABYSS,
     paddingHorizontal: 8,
     paddingVertical: 5,
-    lineHeight: 1.5,
     borderRightWidth: 1,
     borderRightColor: MINT_BORDER,
     borderRightStyle: "solid",
   },
-  tableCellLast: {
+  tdViewLast: {
     flex: 1,
+    paddingHorizontal: 8,
+    paddingVertical: 5,
+  },
+  // Text-only styles (no flex/padding/border)
+  thText: {
+    fontSize: 9,
+    fontFamily: "NotoSans",
+    fontWeight: 700,
+    color: CANOPY,
+  },
+  tdText: {
     fontSize: 9,
     fontFamily: "NotoSans",
     color: ABYSS,
-    paddingHorizontal: 8,
-    paddingVertical: 5,
     lineHeight: 1.5,
   },
 
@@ -579,12 +577,12 @@ function BlockNode({ block }: { block: Block }) {
           {/* Header row */}
           <View style={s.tableHeaderRow}>
             {block.headers.map((h, ci) => (
-              <Text
+              <View
                 key={ci}
-                style={ci < block.headers.length - 1 ? s.tableHeader : s.tableHeaderLast}
+                style={ci < block.headers.length - 1 ? s.thView : s.thViewLast}
               >
-                {h}
-              </Text>
+                <Text style={s.thText}>{h}</Text>
+              </View>
             ))}
           </View>
           {/* Data rows */}
@@ -594,11 +592,12 @@ function BlockNode({ block }: { block: Block }) {
               style={ri < block.rows.length - 1 ? s.tableRow : s.tableLastRow}
             >
               {row.map((cell, ci) => (
-                <PriorityText
+                <View
                   key={ci}
-                  value={cell}
-                  cellStyle={ci < row.length - 1 ? s.tableCell : s.tableCellLast}
-                />
+                  style={ci < row.length - 1 ? s.tdView : s.tdViewLast}
+                >
+                  <PriorityText value={cell} cellStyle={s.tdText} />
+                </View>
               ))}
             </View>
           ))}

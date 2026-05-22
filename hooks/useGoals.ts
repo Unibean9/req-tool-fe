@@ -20,6 +20,7 @@ import {
   type UpdateProjectGoalResponse,
 } from "@/lib/api/services/fetchGoal";
 import {
+  projectBrdExportQueryKey,
   projectGoalsQueryKey,
   projectSetupProgressQueryKey,
 } from "@/lib/query/query-keys";
@@ -49,6 +50,9 @@ function invalidateGoalMutationCaches(
   });
   void queryClient.invalidateQueries({
     queryKey: projectSetupProgressQueryKey(projectId),
+  });
+  void queryClient.invalidateQueries({
+    queryKey: projectBrdExportQueryKey(projectId),
   });
 }
 
