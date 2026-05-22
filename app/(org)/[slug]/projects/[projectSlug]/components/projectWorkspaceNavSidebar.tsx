@@ -590,10 +590,10 @@ function ProjectWorkspaceActorsNav({
   }
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col">
+    <div className="flex shrink-0 flex-col">
       <div
         className={cn(
-          "min-h-0 flex-1 overflow-y-auto overscroll-contain scrollbar-none",
+          "max-h-60 overflow-y-auto overscroll-contain scrollbar-none",
           "[&::-webkit-scrollbar]:hidden"
         )}
       >
@@ -720,7 +720,7 @@ function ProjectWorkspaceActorsSection({
     projectId.length > 0;
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col">
+    <div className="flex shrink-0 flex-col">
       <div className="shrink-0 px-0.5 pb-2">
         <div className="flex items-center justify-between gap-2 px-0.5">
           <p className="m-0 flex min-w-0 flex-1 items-center gap-2 text-xs font-semibold tracking-wide text-muted-foreground">
@@ -743,7 +743,7 @@ function ProjectWorkspaceActorsSection({
           </div>
         </div>
       </div>
-      <div className="flex min-h-0 flex-1 flex-col px-0.5">
+      <div className="flex shrink-0 flex-col px-0.5">
         <ProjectWorkspaceActorsNav
           projectId={projectId}
           projectsLoaded={projectsLoaded}
@@ -819,7 +819,7 @@ export function ProjectWorkspaceNavSidebar({
         aria-label="Điều hướng dự án"
       >
 
-        <nav className="flex min-h-0 flex-1 flex-col gap-4 px-2 py-4">
+        <nav className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto overscroll-contain px-2 py-4 scrollbar-none [&::-webkit-scrollbar]:hidden">
           <div className="shrink-0 space-y-1">
             <SidebarSectionTitle>Tổng quan</SidebarSectionTitle>
             <div className="space-y-1 px-0.5">
@@ -864,7 +864,7 @@ export function ProjectWorkspaceNavSidebar({
             </div>
           </div>
 
-          <div className="flex min-h-0 flex-1 flex-col">
+          <div className="flex shrink-0 flex-col">
             <SidebarSectionTitle withDivider>User Requirements</SidebarSectionTitle>
             <div className="shrink-0 space-y-1 px-0.5 pb-2">
               <SidebarNavLink
