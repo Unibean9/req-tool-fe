@@ -95,7 +95,7 @@ export function GoalFormFields({
 
   return (
     <div className="grid grid-cols-2 gap-x-6 gap-y-4">
-      {/* ── Left column ── */}
+      {/* ── Left column (top) ── */}
       <div className="flex flex-col gap-4">
         <div className="grid gap-2">
           <div className="flex items-baseline justify-between gap-2">
@@ -164,24 +164,13 @@ export function GoalFormFields({
             }
           />
         </div>
-
-        <div className="grid gap-2">
-          <Label htmlFor="goal-target-date">Ngày mục tiêu</Label>
-          <IsoDatePicker
-            id="goal-target-date"
-            value={values.targetDate}
-            disabled={disabled}
-            placeholder="Chọn ngày mục tiêu"
-            onChange={(iso) => onChange({ targetDate: iso })}
-          />
-        </div>
       </div>
 
-      {/* ── Right column — Mục tiêu ── */}
+      {/* ── Right column (top) — Mục tiêu list ── */}
       <div className="flex flex-col gap-2">
         <Label>Mục tiêu</Label>
 
-        <div className="flex flex-1 flex-col gap-2 overflow-y-auto">
+        <div className="flex flex-col gap-2 max-h-80 overflow-y-auto pr-1">
           {values.objectives.length === 0 && (
             <p className="rounded-lg border border-dashed border-border/70 px-3 py-4 text-center text-xs text-muted-foreground">
               Chưa có mục tiêu nào.
@@ -195,7 +184,7 @@ export function GoalFormFields({
                 maxLength={OBJECTIVE_MAX_CHARS}
                 disabled={disabled}
                 placeholder={`Mục tiêu ${i + 1}…`}
-                className="h-8 text-sm"
+                className="h-10 text-sm"
                 onChange={(e) => updateObjective(i, e.target.value)}
               />
               <button
@@ -210,13 +199,27 @@ export function GoalFormFields({
             </div>
           ))}
         </div>
+      </div>
 
+      {/* ── Bottom row: date picker (left) + add button (right) ── */}
+      <div className="grid gap-2">
+        <Label htmlFor="goal-target-date">Ngày mục tiêu</Label>
+        <IsoDatePicker
+          id="goal-target-date"
+          value={values.targetDate}
+          disabled={disabled}
+          placeholder="Chọn ngày mục tiêu"
+          onChange={(iso) => onChange({ targetDate: iso })}
+        />
+      </div>
+
+      <div className="flex items-end">
         <Button
           type="button"
           variant="outline"
           size="sm"
           disabled={disabled}
-          className="mt-1 w-full gap-1.5 text-xs"
+          className="w-full gap-1.5 text-xs"
           onClick={addObjective}
         >
           <Plus className="size-3.5" aria-hidden />

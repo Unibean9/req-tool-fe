@@ -122,7 +122,7 @@ function GoalFormDialogBody({
         </DialogDescription>
       </DialogHeader>
 
-      <div className="grid w-full min-w-0 gap-5 py-4">
+      <div className="w-full min-w-0 py-4">
         <GoalFormFields
           values={values}
           disabled={pending}
