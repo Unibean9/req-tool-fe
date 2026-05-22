@@ -12,7 +12,6 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -67,20 +66,22 @@ const PRIORITY_LABEL: Record<ProjectGoalPriority, string> = {
   low: "Thấp",
 };
 
-const PRIORITY_VARIANT: Record<
-  ProjectGoalPriority,
-  "destructive" | "secondary" | "outline"
-> = {
-  high: "destructive",
-  medium: "secondary",
-  low: "outline",
-};
+function priorityBadgeClassName(priority: ProjectGoalPriority): string {
+  return cn(
+    "inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-semibold leading-none",
+    priority === "high" &&
+      "border-rose-500/35 bg-rose-500/15 text-rose-700 dark:text-rose-200",
+    priority === "medium" &&
+      "border-amber-500/35 bg-amber-500/15 text-amber-700 dark:text-amber-200",
+    priority === "low" && "border-border/80 bg-muted/35 text-muted-foreground"
+  );
+}
 
 function PriorityBadge({ priority }: { priority: ProjectGoalPriority }) {
   return (
-    <Badge variant={PRIORITY_VARIANT[priority]} className="text-xs">
+    <span className={priorityBadgeClassName(priority)}>
       {PRIORITY_LABEL[priority]}
-    </Badge>
+    </span>
   );
 }
 
