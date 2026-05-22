@@ -5,6 +5,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import {
   ArrowDown,
   ArrowUp,
+  MoreVertical,
   Pencil,
   Target,
   Trash2,
@@ -12,7 +13,22 @@ import {
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import {
   useDeleteProjectGoal,
   useProjectGoals,
@@ -44,10 +60,7 @@ function foldForSearch(s: string): string {
 function matchesSearch(row: ProjectGoal, query: string): boolean {
   const q = foldForSearch(query);
   if (!q) return true;
-  const haystack = [row.description, String(row.order)]
-    .map((part) => foldForSearch(part))
-    .join(" ");
-  return haystack.includes(q);
+  return foldForSearch(row.description).includes(q);
 }
 
 function goalPreview(description: string, max = 48): string {
@@ -56,124 +69,13 @@ function goalPreview(description: string, max = 48): string {
   return `${t.slice(0, max)}…`;
 }
 
-function GoalIndexBadge({ index }: { index: number }) {
-  return (
-    <span
-      className="flex size-11 shrink-0 items-center justify-center rounded-xl border border-primary/20 bg-primary/10 text-sm font-bold tabular-nums text-primary shadow-sm shadow-primary/5"
-      aria-hidden
-    >
-      {String(index).padStart(2, "0")}
-    </span>
-  );
-}
-
-function GoalListRow({
-  row,
-  displayIndex,
-  rowBusy,
-  canMoveUp,
-  canMoveDown,
-  onMoveUp,
-  onMoveDown,
-  onEdit,
-  onDelete,
-}: {
-  row: ProjectGoal;
-  displayIndex: number;
-  rowBusy: boolean;
-  canMoveUp: boolean;
-  canMoveDown: boolean;
-  onMoveUp: () => void;
-  onMoveDown: () => void;
-  onEdit: () => void;
-  onDelete: () => void;
-}) {
-  const description = row.description.trim();
-
-  return (
-    <article className="flex h-full w-full min-w-0 flex-col rounded-xl border border-border/70 bg-card/60 p-4 shadow-sm transition-[border-color,background-color,box-shadow] duration-200 ease-out hover:border-border hover:bg-card hover:shadow-md">
-      <div className="flex min-w-0 items-start gap-3 pb-4">
-        <GoalIndexBadge index={displayIndex} />
-
-        <div className="min-w-0 flex-1">
-          <div className="mb-1.5 flex flex-wrap items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-muted/35 px-2.5 py-1 text-[11px] font-semibold text-muted-foreground">
-              <Target className="size-3.5" aria-hidden />
-              Goal #{displayIndex}
-            </span>
-          </div>
-
-          <p className="min-w-0 break-words text-base leading-relaxed text-foreground [overflow-wrap:anywhere]">
-            {description || (
-              <span className="text-muted-foreground italic">Chưa có mô tả.</span>
-            )}
-          </p>
-        </div>
-      </div>
-
-      <div className="mt-auto flex flex-wrap items-center justify-end gap-2 border-t border-border/60 pt-3">
-        <div className="flex flex-wrap items-center justify-end gap-1.5">
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="h-8 gap-1.5 text-xs"
-            aria-label="Đưa goal lên đầu"
-            disabled={rowBusy || !canMoveUp}
-            onClick={onMoveUp}
-          >
-            <ArrowUp className="size-3.5" aria-hidden />
-            Lên đầu
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="h-8 gap-1.5 text-xs"
-            aria-label="Đưa goal xuống một bậc"
-            disabled={rowBusy || !canMoveDown}
-            onClick={onMoveDown}
-          >
-            <ArrowDown className="size-3.5" aria-hidden />
-            Xuống
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="h-8 gap-1.5 text-xs"
-            aria-label="Chỉnh sửa goal"
-            disabled={rowBusy}
-            onClick={onEdit}
-          >
-            <Pencil className="size-3.5" aria-hidden />
-            Sửa
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="h-8 gap-1.5 text-xs text-muted-foreground hover:border-destructive/40 hover:bg-destructive/10 hover:text-destructive"
-            aria-label="Xóa goal"
-            disabled={rowBusy}
-            onClick={onDelete}
-          >
-            <Trash2 className="size-3.5" aria-hidden />
-            Xóa
-          </Button>
-        </div>
-      </div>
-    </article>
-  );
-}
-
-type GoalListProps = {
+type GoalTableProps = {
   projectId: string | null;
   search: string;
   className?: string;
 };
 
-export function GoalList({ projectId, search, className }: GoalListProps) {
+export function GoalTable({ projectId, search, className }: GoalTableProps) {
   const queryClient = useQueryClient();
   const [editTarget, setEditTarget] = useState<ProjectGoal | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<{
@@ -204,9 +106,7 @@ export function GoalList({ projectId, search, className }: GoalListProps) {
   }, [allSorted, search]);
 
   const rowBusy =
-    rowMutationBusy ||
-    deleteMutation.isPending ||
-    reorderingGoalId != null;
+    rowMutationBusy || deleteMutation.isPending || reorderingGoalId != null;
 
   async function applyOrderPatches(patches: GoalOrderPatch[]) {
     if (!projectId) return;
@@ -227,7 +127,6 @@ export function GoalList({ projectId, search, className }: GoalListProps) {
     if (!projectId || rowBusy) return;
     const patches = planMoveGoalToTop(allSorted, row);
     if (!patches?.length) return;
-
     setReorderingGoalId(row.id);
     try {
       await applyOrderPatches(patches);
@@ -243,7 +142,6 @@ export function GoalList({ projectId, search, className }: GoalListProps) {
     if (!projectId || rowBusy) return;
     const patches = planMoveGoalDown(allSorted, row);
     if (!patches?.length) return;
-
     setReorderingGoalId(row.id);
     try {
       await applyOrderPatches(patches);
@@ -273,9 +171,9 @@ export function GoalList({ projectId, search, className }: GoalListProps) {
 
   if (isPending) {
     return (
-      <div className={cn("grid grid-cols-1 gap-3 sm:grid-cols-2", className)}>
-        {Array.from({ length: 4 }).map((_, i) => (
-          <Skeleton key={i} className="h-[7.5rem] w-full rounded-xl" />
+      <div className={cn("flex flex-col gap-2", className)}>
+        {Array.from({ length: 5 }).map((_, i) => (
+          <Skeleton key={i} className="h-12 w-full rounded-lg" />
         ))}
       </div>
     );
@@ -343,38 +241,94 @@ export function GoalList({ projectId, search, className }: GoalListProps) {
 
   return (
     <>
-      <ul
+      <div
         className={cn(
-          "grid list-none grid-cols-1 content-start gap-3 sm:grid-cols-2",
+          "overflow-hidden rounded-xl border border-border/70 bg-card shadow-sm",
           className
         )}
-       
-        aria-label="Danh sách goals"
       >
-        {filtered.map((row) => {
-          const displayIndex = allSorted.findIndex((g) => g.id === row.id) + 1;
-          return (
-            <li key={row.id} className="flex min-w-0">
-              <GoalListRow
-                row={row}
-                displayIndex={displayIndex > 0 ? displayIndex : 1}
-                rowBusy={rowBusy}
-                canMoveUp={canMoveGoalUp(allSorted, row)}
-                canMoveDown={canMoveGoalDown(allSorted, row)}
-                onMoveUp={() => void handleMoveUp(row)}
-                onMoveDown={() => void handleMoveDown(row)}
-                onEdit={() => setEditTarget(row)}
-                onDelete={() =>
-                  setDeleteTarget({
-                    goalId: row.id,
-                    preview: goalPreview(row.description),
-                  })
-                }
-              />
-            </li>
-          );
-        })}
-      </ul>
+        <div className="overflow-auto max-h-[calc(100svh-10rem)]">
+        <Table>
+          <TableHeader>
+            <TableRow className="border-border/70 bg-muted/30 hover:bg-muted/30">
+              <TableHead className="w-12 pl-4 text-center">#</TableHead>
+              <TableHead className="min-w-60">Mô tả</TableHead>
+              <TableHead className="w-12 pr-4 text-right" />
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {filtered.map((row) => {
+              const displayIndex =
+                allSorted.findIndex((g) => g.id === row.id) + 1;
+
+              return (
+                <TableRow key={row.id} className="border-border/60 align-top">
+                  <TableCell className="pl-4 text-center text-xs tabular-nums text-muted-foreground">
+                    {displayIndex > 0 ? displayIndex : 1}
+                  </TableCell>
+
+                  <TableCell className="whitespace-normal py-3 wrap-anywhere">
+                    <p className="text-sm leading-relaxed text-foreground">
+                      {row.description.trim() || (
+                        <span className="italic text-muted-foreground">
+                          Chưa có mô tả.
+                        </span>
+                      )}
+                    </p>
+                  </TableCell>
+
+                  <TableCell className="pr-4 text-right">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger
+                        disabled={rowBusy}
+                        className="flex size-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50"
+                        aria-label="Tùy chọn"
+                      >
+                        <MoreVertical className="size-4" aria-hidden />
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="min-w-40">
+                        <DropdownMenuItem
+                          disabled={!canMoveGoalUp(allSorted, row)}
+                          onClick={() => void handleMoveUp(row)}
+                        >
+                          <ArrowUp className="size-4" aria-hidden />
+                          Lên đầu
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          disabled={!canMoveGoalDown(allSorted, row)}
+                          onClick={() => void handleMoveDown(row)}
+                        >
+                          <ArrowDown className="size-4" aria-hidden />
+                          Xuống
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={() => setEditTarget(row)}>
+                          <Pencil className="size-4" aria-hidden />
+                          Chỉnh sửa
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          variant="destructive"
+                          onClick={() =>
+                            setDeleteTarget({
+                              goalId: row.id,
+                              preview: goalPreview(row.description),
+                            })
+                          }
+                        >
+                          <Trash2 className="size-4" aria-hidden />
+                          Xóa
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
+        </div>
+      </div>
 
       <GoalFormDialog
         projectId={projectId}

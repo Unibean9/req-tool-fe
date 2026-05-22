@@ -6,6 +6,7 @@ export const CONSTRAINT_TYPES = [
   "technical",
   "resource",
   "regulatory",
+  "risk",
 ] as const;
 
 export const CONSTRAINT_SEVERITIES = ["high", "medium", "low"] as const;

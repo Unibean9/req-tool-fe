@@ -172,7 +172,7 @@ export function StakeHolderFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="gap-0 sm:max-w-2xl" showCloseButton>
+      <DialogContent className="gap-0 sm:max-w-3xl" showCloseButton>
         {open && pid && !disabled ? (
           <StakeHolderFormDialogBody
             key={formKey}

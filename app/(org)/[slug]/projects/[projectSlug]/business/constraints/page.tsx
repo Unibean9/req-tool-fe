@@ -7,7 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useOrgProjects } from "@/hooks/useProject";
 
 import { useOrgWorkspace } from "../../../../orgWorkspaceContext";
-import { ConstraintList } from "./components/constraintList";
+import { ConstraintTable } from "./components/constraintTable";
 import {
   ConstraintToolbar,
   type ConstraintSeverityFilter,
@@ -66,7 +66,7 @@ export default function ProjectBusinessConstraintsPage() {
   }
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto">
+    <div className="flex min-h-0 flex-1 flex-col gap-6">
       <ConstraintToolbar
         search={search}
         onSearchChange={setSearch}
@@ -77,7 +77,7 @@ export default function ProjectBusinessConstraintsPage() {
         projectId={project?.id ?? null}
         canCreate={Boolean(project)}
       />
-      <ConstraintList
+      <ConstraintTable
         projectId={project?.id ?? null}
         search={search}
         typeFilter={typeFilter}

@@ -102,7 +102,7 @@ export function ProjectNewStepBasics({
         <div className="grid gap-2">
           <div className="flex items-center justify-between gap-2">
             <Label htmlFor="pn-executive" className="text-sm font-semibold">
-              Mô tả ngắn <span className="text-destructive">*</span>
+              Tóm tắt <span className="text-destructive">*</span>
             </Label>
             <span
               className="text-xs tabular-nums text-muted-foreground"

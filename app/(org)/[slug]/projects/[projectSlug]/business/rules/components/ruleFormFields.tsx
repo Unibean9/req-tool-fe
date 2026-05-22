@@ -65,7 +65,7 @@ export function RuleFormFields({
     <div className="grid gap-4">
       <div className="grid gap-2">
         <div className="flex items-baseline justify-between gap-2">
-          <Label htmlFor="rule-def">Rule definition</Label>
+          <Label htmlFor="rule-def">Định nghĩa</Label>
           <span className="text-[11px] tabular-nums text-muted-foreground">
             {values.ruleDef.length} / {RULE_DEF_MAX_CHARS}
           </span>
@@ -75,7 +75,7 @@ export function RuleFormFields({
           value={values.ruleDef}
           maxLength={RULE_DEF_MAX_CHARS}
           disabled={disabled}
-          placeholder="VD: Không cho phép tạo yêu cầu nếu thiếu actor chính…"
+          placeholder="VD: Không cho phép tạo yêu cầu nếu thiếu actor chính"
           rows={4}
           className="min-h-24 text-sm"
           onChange={(e) =>
@@ -88,7 +88,7 @@ export function RuleFormFields({
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="grid gap-2">
-          <Label htmlFor="rule-type">Type</Label>
+          <Label htmlFor="rule-type">Loại</Label>
           <Select
             value={values.type}
             disabled={disabled}
@@ -108,7 +108,7 @@ export function RuleFormFields({
         </div>
 
         <div className="grid gap-2">
-          <Label htmlFor="rule-dynamic">Dynamic</Label>
+          <Label htmlFor="rule-dynamic">Trạng thái</Label>
           <Select
             value={values.isDynamic ? "true" : "false"}
             disabled={disabled}
@@ -133,7 +133,7 @@ export function RuleFormFields({
 
       <div className="grid gap-2">
         <div className="flex items-baseline justify-between gap-2">
-          <Label htmlFor="rule-source">Source</Label>
+          <Label htmlFor="rule-source">Nguồn</Label>
           <span className="text-[11px] tabular-nums text-muted-foreground">
             {values.source.length} / {RULE_SOURCE_MAX_CHARS}
           </span>

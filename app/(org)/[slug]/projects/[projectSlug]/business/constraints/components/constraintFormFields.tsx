@@ -24,6 +24,7 @@ export const CONSTRAINT_TYPE_LABELS: Record<ConstraintType, string> = {
   technical: "Technical",
   resource: "Resource",
   regulatory: "Regulatory",
+  risk: "Risk",
 };
 
 export const CONSTRAINT_SEVERITY_LABELS: Record<ConstraintSeverity, string> = {
@@ -79,7 +80,7 @@ export function ConstraintFormFields({
     <>
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="grid gap-2">
-          <Label htmlFor={typeId}>Type</Label>
+          <Label htmlFor={typeId}>Loại</Label>
           <Select
             value={values.type}
             onValueChange={(type) => onChange({ type: type as ConstraintType })}
@@ -132,7 +133,7 @@ export function ConstraintFormFields({
       </div>
 
       <div className="grid gap-2">
-        <Label htmlFor={descriptionId}>Description</Label>
+        <Label htmlFor={descriptionId}>Đặc điểm</Label>
         <Textarea
           id={descriptionId}
           value={values.description}

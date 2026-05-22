@@ -75,9 +75,9 @@ function EditFlowFormDialogBody({
   return (
     <form className="w-full min-w-0" onSubmit={handleSubmit}>
       <DialogHeader>
-        <DialogTitle className="text-lg">Sửa flow</DialogTitle>
+        <DialogTitle className="text-lg">Sửa business flow</DialogTitle>
         <DialogDescription>
-          Cập nhật mã, tên và mô tả cho flow{" "}
+          Cập nhật mã, tên và mô tả cho business flow{" "}
           <span className="font-medium text-foreground">{flow.name}</span>.
         </DialogDescription>
       </DialogHeader>

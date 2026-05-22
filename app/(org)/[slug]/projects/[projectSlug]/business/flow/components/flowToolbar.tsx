@@ -37,10 +37,10 @@ export function FlowToolbar({
             </span>
             <div className="min-w-0">
               <h1 className="font-heading text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
-                Flows
+                Business Flows
               </h1>
               <p className="text-sm text-muted-foreground text-pretty">
-                Khai báo các bước trong quy trình business
+                Định nghĩa các bước trong quy trình business
               </p>
             </div>
           </div>
@@ -52,7 +52,7 @@ export function FlowToolbar({
             onClick={() => setCreateOpen(true)}
           >
             <Plus className="size-4" aria-hidden />
-            Thêm flow
+            Thêm mới
           </Button>
         </div>
 
@@ -65,9 +65,9 @@ export function FlowToolbar({
             type="search"
             value={search}
             onChange={(e) => onSearchChange(e.target.value)}
-            placeholder="Tìm theo tên flow hoặc bước…"
+            placeholder="Tìm theo tên business flow hoặc bước…"
             autoComplete="off"
-            aria-label="Search flows"
+            aria-label="Search business flows"
             className="h-10 w-full border-border/80 bg-muted/40 pr-3 pl-10 text-sm shadow-none"
           />
         </div>

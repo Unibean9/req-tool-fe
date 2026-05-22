@@ -73,7 +73,7 @@ export function StakeHolderToolbar({
             onClick={() => setCreateOpen(true)}
           >
             <Plus className="size-4" aria-hidden />
-            Thêm stakeholder
+            Thêm mới
           </Button>
         </div>
 

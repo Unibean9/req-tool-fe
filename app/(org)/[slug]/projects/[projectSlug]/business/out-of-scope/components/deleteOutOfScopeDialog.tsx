@@ -11,37 +11,37 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-export type DeleteFlowDialogTarget = {
-  flowId: string;
-  flowName: string;
+export type DeleteOutOfScopeDialogTarget = {
+  itemId: string;
+  preview: string;
 };
 
-type DeleteFlowDialogProps = {
+type DeleteOutOfScopeDialogProps = {
   open: boolean;
-  target: DeleteFlowDialogTarget | null;
+  target: DeleteOutOfScopeDialogTarget | null;
   deletePending: boolean;
   onOpenChange: (open: boolean) => void;
   onConfirmDelete: () => void | Promise<void>;
 };
 
-export function DeleteFlowDialog({
+export function DeleteOutOfScopeDialog({
   open,
   target,
   deletePending,
   onOpenChange,
   onConfirmDelete,
-}: DeleteFlowDialogProps) {
+}: DeleteOutOfScopeDialogProps) {
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent className="sm:max-w-sm">
         <AlertDialogHeader>
-          <AlertDialogTitle>Xóa business flow?</AlertDialogTitle>
+          <AlertDialogTitle>Xóa mục out-of-scope?</AlertDialogTitle>
           <AlertDialogDescription>
             {target ? (
               <>
-                Business flow{" "}
+                Mục{" "}
                 <span className="font-medium text-foreground">
-                  «{target.flowName}»
+                  «{target.preview}»
                 </span>{" "}
                 sẽ bị xóa khỏi dự án. Bạn không thể hoàn tác thao tác này.
               </>
@@ -55,7 +55,7 @@ export function DeleteFlowDialog({
             disabled={deletePending || !target}
             onClick={() => void onConfirmDelete()}
           >
-            {deletePending ? "Đang xóa…" : "Xóa"}
+            {deletePending ? "Đang xóa..." : "Xóa"}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

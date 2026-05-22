@@ -64,7 +64,7 @@ export function FlowBasicsFormFields({
             htmlFor={`${idPrefix}-code`}
             className="text-sm font-semibold"
           >
-            Mã flow (code)
+            Code
           </Label>
           <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
             {values.code.length} / {FLOW_CODE_MAX_CHARS}
@@ -92,7 +92,7 @@ export function FlowBasicsFormFields({
             htmlFor={`${idPrefix}-name`}
             className="text-sm font-semibold"
           >
-            Tên flow (name)
+            Tên business flow
           </Label>
           <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
             {values.name.length} / {FLOW_TITLE_MAX_CHARS}
@@ -119,7 +119,7 @@ export function FlowBasicsFormFields({
             htmlFor={`${idPrefix}-description`}
             className="text-sm font-semibold"
           >
-            Mô tả (description)
+            Mô tả business flow
           </Label>
           <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
             {values.description.length} / {FLOW_DESCRIPTION_MAX_CHARS}
@@ -134,7 +134,7 @@ export function FlowBasicsFormFields({
             })
           }
           disabled={disabled}
-          placeholder="Mô tả ngắn gọn luồng nghiệp vụ…"
+          placeholder="Mô tả ngắn gọn business flow…"
           rows={5}
           className="min-h-30 min-w-0 border-border/80 bg-muted/30 text-sm"
         />

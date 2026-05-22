@@ -123,7 +123,7 @@ export function ProjectDashboardHeader({
               </p>
             ) : (
               <p className="text-sm italic text-muted-foreground">
-                Chưa có mô tả ngắn.
+                Chưa có tóm tắt.
               </p>
             )}
           </div>
@@ -167,7 +167,7 @@ export function ProjectDashboardHeader({
                   ? "Đang tải..."
                   : downloadSuccessful
                     ? "Đã tải"
-                    : "Tải MD"}
+                    : "Tải BRD Template"}
               </span>
             </Button>
             <Link

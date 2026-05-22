@@ -7,7 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useOrgProjects } from "@/hooks/useProject";
 
 import { useOrgWorkspace } from "../../../../orgWorkspaceContext";
-import { FlowList } from "./components/flowList";
+import { FlowTable } from "./components/flowTable";
 import { FlowToolbar } from "./components/flowToolbar";
 
 function FlowPageSkeleton() {
@@ -59,14 +59,14 @@ export default function ProjectBusinessFlowPage() {
   }
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto">
+    <div className="flex min-h-0 flex-1 flex-col gap-6">
       <FlowToolbar
         search={search}
         onSearchChange={setSearch}
         projectId={project?.id ?? null}
         canCreate={Boolean(project)}
       />
-      <FlowList projectId={project?.id ?? null} search={search} />
+      <FlowTable projectId={project?.id ?? null} search={search} />
     </div>
   );
 }
