@@ -13,15 +13,15 @@ export async function generateMetadata({
   const decodedSlug = decodeURIComponent(slug);
   const decodedProjectSlug = decodeURIComponent(projectSlug);
   const projectName = await fetchProjectNameForMeta(decodedSlug, decodedProjectSlug);
-  const title = projectName ? `${projectName} | Non-Functional Requirements` : "Non-Functional Requirements";
+  const title = projectName ? `${projectName} | Constraints` : "Constraints";
   return buildPageMetadata({
     title,
-    description: "Yêu cầu phi chức năng của dự án.",
-    path: `/${segmentForMetadataPath(slug)}/projects/${segmentForMetadataPath(projectSlug)}/nfr`,
+    description: "Ràng buộc của dự án.",
+    path: `/${segmentForMetadataPath(slug)}/projects/${segmentForMetadataPath(projectSlug)}/business/constraints`,
     noindex: true,
   });
 }
 
-export default function ProjectNfrLayout({ children }: { children: ReactNode }) {
+export default function ProjectConstraintsLayout({ children }: { children: ReactNode }) {
   return children;
 }

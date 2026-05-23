@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { GitBranch, GitPullRequest, Link2, Sparkles, Zap } from "lucide-react";
 
 import { buildPageMetadata, segmentForMetadataPath } from "@/lib/seo/metadata";
+import { fetchProjectNameForMeta } from "@/lib/seo/fetchProjectNameForMeta";
 
 export async function generateMetadata({
   params,
@@ -9,8 +10,13 @@ export async function generateMetadata({
   params: Promise<{ slug: string; projectSlug: string }>;
 }): Promise<Metadata> {
   const { slug, projectSlug } = await params;
+  const projectName = await fetchProjectNameForMeta(
+    decodeURIComponent(slug),
+    decodeURIComponent(projectSlug)
+  );
+  const title = projectName ? `${projectName} | GitHub` : "GitHub";
   return buildPageMetadata({
-    title: "GitHub",
+    title,
     description: "Liên kết repository GitHub với dự án.",
     path: `/${segmentForMetadataPath(slug)}/projects/${segmentForMetadataPath(projectSlug)}/github`,
     noindex: true,

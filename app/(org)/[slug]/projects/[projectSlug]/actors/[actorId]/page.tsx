@@ -1,17 +1,9 @@
 import type { Metadata } from "next";
 
-import { buildPageMetadata } from "@/lib/seo/metadata";
+import { buildPageMetadata, segmentForMetadataPath } from "@/lib/seo/metadata";
+import { fetchActorTitleForMeta } from "@/lib/seo/fetchProjectNameForMeta";
 
-import { defaultActorMetaForId } from "./components/model/requirementsModelDefaults";
 import { RequirementsModelPageClient } from "./components/model/requirementsModelPageClient";
-
-function segmentForPath(segment: string): string {
-  try {
-    return encodeURIComponent(decodeURIComponent(segment.trim()));
-  } catch {
-    return encodeURIComponent(segment.trim());
-  }
-}
 
 function normalizeActorIdParam(raw: string): string {
   const trimmed = raw.trim();
@@ -29,12 +21,19 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug, projectSlug, actorId: rawActorId } = await params;
   const actorId = normalizeActorIdParam(rawActorId);
-  const actor = defaultActorMetaForId(actorId);
-  const path = `/${segmentForPath(slug)}/projects/${segmentForPath(projectSlug)}/actors/${encodeURIComponent(actorId)}`;
+  const { projectName, actorName } = await fetchActorTitleForMeta(
+    decodeURIComponent(slug),
+    decodeURIComponent(projectSlug),
+    actorId
+  );
+  const title = projectName && actorName
+    ? `${projectName} | ${actorName}`
+    : actorName ?? projectName ?? "Actor";
+  const path = `/${segmentForMetadataPath(slug)}/projects/${segmentForMetadataPath(projectSlug)}/actors/${encodeURIComponent(actorId)}`;
 
   return buildPageMetadata({
-    title: `Mô hình yêu cầu · ${actor.name}`,
-    description: `Sơ đồ Actor, Epic, Feature và User Story cho ${actor.name}.`,
+    title,
+    description: actorName ? `Sơ đồ Actor, Epic, Feature và User Story cho ${actorName}.` : "Sơ đồ yêu cầu cho actor.",
     path,
     noindex: true,
   });
