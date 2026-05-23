@@ -18,9 +18,8 @@ import {
 } from "@/lib/api/services/fetchNfr";
 
 import {
-  NfrCategoryFilterDisplay,
-  NfrCategoryOptionContent,
   NFR_PRIORITY_LABELS_VI,
+  nfrCategoryLabel,
   nfrPriorityLabel,
 } from "./nfrCategoryMeta";
 import { NFR_DESCRIPTION_MAX_CHARS } from "./nfrFormLimits";
@@ -71,13 +70,13 @@ export function NfrFormFields({
           >
             <SelectTrigger id="nfr-category" className="w-full">
               <SelectValue>
-                <NfrCategoryFilterDisplay value={values.category} />
+                {nfrCategoryLabel(values.category)}
               </SelectValue>
             </SelectTrigger>
             <SelectContent>
               {NFR_CATEGORIES.map((c) => (
                 <SelectItem key={c} value={c}>
-                  <NfrCategoryOptionContent category={c} />
+                  {nfrCategoryLabel(c)}
                 </SelectItem>
               ))}
             </SelectContent>

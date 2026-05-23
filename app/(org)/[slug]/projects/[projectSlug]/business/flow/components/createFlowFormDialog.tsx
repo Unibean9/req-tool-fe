@@ -102,10 +102,10 @@ function CreateFlowFormDialogBody({
   return (
     <form className="w-full min-w-0" onSubmit={handleSubmitFields}>
       <DialogHeader>
-        <DialogTitle className="text-lg">Tạo flow mới</DialogTitle>
+        <DialogTitle className="text-lg">Tạo business flow mới</DialogTitle>
         <DialogDescription>
           Nhập mã, tên và mô tả business flow. Sau khi tạo, bạn có thể thêm
-          flow actions (tùy chọn).
+          business flow actions (tùy chọn).
         </DialogDescription>
       </DialogHeader>
       <FlowBasicsFormFields
@@ -124,7 +124,7 @@ function CreateFlowFormDialogBody({
           Hủy
         </Button>
         <Button type="submit" disabled={!canSubmitFields}>
-          {pendingFields ? "Đang tạo…" : "Tạo flow"}
+          {pendingFields ? "Đang tạo…" : "Tạo business flow"}
         </Button>
       </DialogFooter>
     </form>

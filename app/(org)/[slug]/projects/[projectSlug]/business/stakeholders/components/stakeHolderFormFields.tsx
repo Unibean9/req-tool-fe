@@ -31,9 +31,9 @@ const IMPACT_AREA_TAG_SEPARATOR = " · ";
 const IMPACT_AREA_SPLIT = /\s*(?:·|,|;)\s*/;
 
 const INFLUENCE_LEVEL_LABELS: Record<StakeholderInfluenceLevel, string> = {
-  high: "Cao (High)",
-  medium: "Trung bình (Medium)",
-  low: "Thấp (Low)",
+  high: "Cao",
+  medium: "Trung bình",
+  low: "Thấp",
 };
 
 export function parseImpactAreaTags(raw: string): string[] {
@@ -290,7 +290,9 @@ function InfluenceLevelField({
         disabled={disabled}
       >
         <SelectTrigger id={id} className="h-10 w-full text-sm">
-          <SelectValue placeholder="Chọn mức ảnh hưởng (Influence level)" />
+          <SelectValue placeholder="Chọn mức ảnh hưởng (Influence level)">
+            {INFLUENCE_LEVEL_LABELS[value]}
+          </SelectValue>
         </SelectTrigger>
         <SelectContent alignItemWithTrigger={false}>
           {STAKEHOLDER_INFLUENCE_LEVELS.map((level) => (

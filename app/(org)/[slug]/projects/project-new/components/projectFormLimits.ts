@@ -1,10 +1,10 @@
 export const PROJECT_NAME_MAX_CHARS = 80;
 export const PROJECT_DESCRIPTION_MAX_CHARS = 2000;
-export const PROJECT_CONTEXT_MAX_CHARS = 300;
+export const PROJECT_CONTEXT_MAX_CHARS = 1000;
 export const PROJECT_SHORT_SUMMARY_MAX_CHARS = 500;
 export const PROJECT_EXECUTIVE_SUMMARY_MAX_CHARS = 2000;
 export const PROJECT_BUSINESS_VALUE_LABEL =
-  "Mục đích kinh doanh (Business Value)" as const;
+  "Mục đích kinh doanh" as const;
 
 export const PROJECT_ROI_NOTES_MAX_CHARS = 2000;
 

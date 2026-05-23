@@ -35,6 +35,7 @@ export function ProjectNewStepPlan({
   showSubmitErrors?: boolean;
   errors?: ProjectNewFormErrors;
 }) {
+  const roiLen = (form.roiNotes ?? "").length;
   const roiError = showSubmitErrors ? errors?.roiNotes : undefined;
 
   const handleStartChange = (startDate: string) => {
@@ -87,9 +88,17 @@ export function ProjectNewStepPlan({
       </div>
 
       <div className="grid gap-2">
-        <Label htmlFor="pn-business-value" className="text-sm font-semibold">
-          {PROJECT_BUSINESS_VALUE_LABEL}
-        </Label>
+        <div className="flex items-center justify-between gap-2">
+          <Label htmlFor="pn-business-value" className="text-sm font-semibold">
+            {PROJECT_BUSINESS_VALUE_LABEL}
+          </Label>
+          <span
+            className="text-xs tabular-nums text-muted-foreground"
+            aria-live="polite"
+          >
+            {roiLen} / {PROJECT_ROI_NOTES_MAX_CHARS}
+          </span>
+        </div>
         <div className="relative">
           <TrendingUp
             className="pointer-events-none absolute top-3 left-3 size-4 text-muted-foreground"
@@ -108,7 +117,7 @@ export function ProjectNewStepPlan({
             disabled={disabled}
             maxLength={PROJECT_ROI_NOTES_MAX_CHARS}
             className={cn(
-              "min-h-28 border-2 border-border/90 pl-10 dark:border-zinc-600",
+              "min-h-[calc(100dvh-26rem)] border-2 border-border/90 pl-10 dark:border-zinc-600",
               roiError && "border-destructive"
             )}
           />

@@ -131,7 +131,9 @@ export function GoalFormFields({
               disabled={disabled}
             >
               <SelectTrigger id="goal-priority" className="text-sm">
-                <SelectValue placeholder="Chọn mức ưu tiên" />
+                <SelectValue placeholder="Chọn mức ưu tiên">
+                  {PRIORITY_OPTIONS.find((o) => o.value === values.priority)?.label}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {PRIORITY_OPTIONS.map((opt) => (

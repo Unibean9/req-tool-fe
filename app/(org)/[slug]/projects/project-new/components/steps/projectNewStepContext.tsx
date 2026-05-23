@@ -45,9 +45,17 @@ export function ProjectNewStepContext({
 
       <div className="grid gap-6">
         <div className="grid gap-2">
-          <Label htmlFor="pn-context" className="text-sm font-semibold">
-            Ngữ cảnh <span className="text-destructive">*</span>
-          </Label>
+          <div className="flex items-center justify-between gap-2">
+            <Label htmlFor="pn-context" className="text-sm font-semibold">
+              Ngữ cảnh <span className="text-destructive">*</span>
+            </Label>
+            <span
+              className="text-xs tabular-nums text-muted-foreground"
+              aria-live="polite"
+            >
+              {contextLen} / {PROJECT_CONTEXT_MAX_CHARS}
+            </span>
+          </div>
           <div className="relative">
             <Textarea
               id="pn-context"
@@ -62,16 +70,10 @@ export function ProjectNewStepContext({
               disabled={disabled}
               maxLength={PROJECT_CONTEXT_MAX_CHARS}
               className={cn(
-                "min-h-36 border-2 border-border/90 pb-8 sm:min-h-40 dark:border-zinc-600",
+                "min-h-36 border-2 border-border/90 sm:min-h-40 dark:border-zinc-600",
                 contextError && "border-destructive"
               )}
             />
-            <span
-              className="pointer-events-none absolute right-3 bottom-2 text-xs tabular-nums text-muted-foreground"
-              aria-live="polite"
-            >
-              {contextLen} / {PROJECT_CONTEXT_MAX_CHARS}
-            </span>
           </div>
           <ProjectNewFieldError message={contextError} />
         </div>

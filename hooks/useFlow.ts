@@ -417,11 +417,11 @@ export function useUpdateProjectFlowSwimlane(
       void queryClient.invalidateQueries({
         queryKey: projectSetupProgressQueryKey(variables.projectId),
       });
-      toast.success("Đã lưu swimlane");
+      toast.success("Đã lưu layout");
       userOnSuccess?.(data, variables, onMutateResult, context);
     },
     onError: (error, variables, onMutateResult, context) => {
-      toast.error(getApiErrorMessage(error, "Lưu swimlane thất bại"));
+      toast.error(getApiErrorMessage(error, "Lưu layout thất bại"));
       userOnError?.(error, variables, onMutateResult, context);
     },
   });

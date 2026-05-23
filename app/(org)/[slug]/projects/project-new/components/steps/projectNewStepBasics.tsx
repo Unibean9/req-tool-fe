@@ -141,9 +141,17 @@ export function ProjectNewStepBasics({
         </div>
 
         <div className="grid gap-2">
-          <Label htmlFor="pn-desc" className="text-sm font-semibold">
-            Mô tả chi tiết <span className="text-destructive">*</span>
-          </Label>
+          <div className="flex items-center justify-between gap-2">
+            <Label htmlFor="pn-desc" className="text-sm font-semibold">
+              Mô tả chi tiết <span className="text-destructive">*</span>
+            </Label>
+            <span
+              className="text-xs tabular-nums text-muted-foreground"
+              aria-live="polite"
+            >
+              {descriptionLen} / {PROJECT_DESCRIPTION_MAX_CHARS}
+            </span>
+          </div>
           <div className="relative">
             <Textarea
               id="pn-desc"
@@ -161,16 +169,10 @@ export function ProjectNewStepBasics({
               disabled={disabled}
               maxLength={PROJECT_DESCRIPTION_MAX_CHARS}
               className={cn(
-                "min-h-48 border-2 border-border/90 pb-8 sm:min-h-52 dark:border-zinc-600",
+                "min-h-48 border-2 border-border/90 sm:min-h-52 dark:border-zinc-600",
                 descriptionError && "border-destructive"
               )}
             />
-            <span
-              className="pointer-events-none absolute right-3 bottom-2 text-xs tabular-nums text-muted-foreground"
-              aria-live="polite"
-            >
-              {descriptionLen} / {PROJECT_DESCRIPTION_MAX_CHARS}
-            </span>
           </div>
           <ProjectNewFieldError message={descriptionError} />
         </div>

@@ -92,7 +92,7 @@ export function FlowBasicsFormFields({
             htmlFor={`${idPrefix}-name`}
             className="text-sm font-semibold"
           >
-            Tên business flow
+            Tên
           </Label>
           <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
             {values.name.length} / {FLOW_TITLE_MAX_CHARS}
@@ -119,7 +119,7 @@ export function FlowBasicsFormFields({
             htmlFor={`${idPrefix}-description`}
             className="text-sm font-semibold"
           >
-            Mô tả business flow
+            Mô tả
           </Label>
           <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
             {values.description.length} / {FLOW_DESCRIPTION_MAX_CHARS}

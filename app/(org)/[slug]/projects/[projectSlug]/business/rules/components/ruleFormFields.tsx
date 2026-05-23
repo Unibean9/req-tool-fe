@@ -95,7 +95,9 @@ export function RuleFormFields({
             onValueChange={(type) => onChange({ type: type as ProjectRuleType })}
           >
             <SelectTrigger id="rule-type" className="w-full">
-              <SelectValue placeholder="Chọn loại rule" />
+              <SelectValue placeholder="Chọn loại rule">
+                {RULE_TYPE_LABELS[values.type]}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
               {PROJECT_RULE_TYPES.map((type) => (
