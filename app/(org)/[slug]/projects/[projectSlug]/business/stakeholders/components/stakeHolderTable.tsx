@@ -7,7 +7,6 @@ import {
   Pencil,
   Tags,
   Trash2,
-  UserRoundCheck,
   UsersRound,
 } from "lucide-react";
 
@@ -31,30 +30,52 @@ import {
 import {
   useDeleteProjectStakeholder,
   useProjectStakeholders,
-  useUpdateProjectStakeholder,
   type ProjectStakeholder,
 } from "@/hooks/useStakeHolder";
-import type { StakeholderInfluenceLevel } from "@/lib/api/services/fetchStakeHolder";
+import type {
+  StakeholderActorType,
+  StakeholderInfluenceLevel,
+} from "@/lib/api/services/fetchStakeHolder";
 import { cn } from "@/lib/utils";
 
 import { DeleteStakeHolderDialog } from "./deleteStakeHolderDialog";
 import { StakeHolderFormDialog } from "./stakeHolderFormDialog";
 import { parseImpactAreaTags } from "./stakeHolderFormFields";
-import type { StakeholderBusinessActorFilter } from "./stakeHolderToolbar";
-
-function listIsBusinessActorQueryParam(
-  filter: StakeholderBusinessActorFilter,
-): boolean | undefined {
-  if (filter === "all") return undefined;
-  if (filter === "business") return true;
-  return false;
-}
+import type { StakeholderActorTypeFilter } from "./stakeHolderToolbar";
 
 const INFLUENCE_LEVEL_LABELS: Record<StakeholderInfluenceLevel, string> = {
   high: "Cao",
   medium: "Trung bình",
   low: "Thấp",
 };
+
+const ACTOR_TYPE_LABELS: Record<StakeholderActorType, string> = {
+  none: "None",
+  business_actor: "Business actor",
+  other_actor: "Other actor",
+};
+
+function actorTypeBadgeClassName(type: StakeholderActorType): string {
+  return cn(
+    "inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-semibold leading-none",
+    type === "business_actor" &&
+      "border-brand-mint/35 bg-brand-mint/20 text-foreground",
+    type === "other_actor" &&
+      "border-amber-500/35 bg-amber-500/15 text-amber-700 dark:text-amber-200",
+    type === "none" && "border-border/60 bg-muted/30 text-muted-foreground"
+  );
+}
+
+function avatarClassName(type: StakeholderActorType): string {
+  return cn(
+    "flex size-8 shrink-0 items-center justify-center rounded-lg text-xs font-bold ring-1",
+    type === "business_actor" &&
+      "bg-brand-mint/25 text-foreground ring-brand-mint/35",
+    type === "other_actor" &&
+      "bg-amber-500/15 text-amber-700 ring-amber-500/30 dark:text-amber-200",
+    type === "none" && "bg-muted/65 text-muted-foreground ring-border/70"
+  );
+}
 
 function stakeholderInitials(name: string): string {
   const trimmed = name.trim();
@@ -73,7 +94,7 @@ function influenceBadgeClassName(level: StakeholderInfluenceLevel): string {
       "border-rose-500/35 bg-rose-500/15 text-rose-700 dark:text-rose-200",
     level === "medium" &&
       "border-amber-500/35 bg-amber-500/15 text-amber-700 dark:text-amber-200",
-    level === "low" && "border-border/80 bg-muted/50 text-muted-foreground",
+    level === "low" && "border-border/80 bg-muted/50 text-muted-foreground"
   );
 }
 
@@ -108,30 +129,22 @@ function matchesSearch(row: ProjectStakeholder, query: string): boolean {
     row.role,
     ...parseImpactAreaTags(row.impactArea),
     row.notes,
+    row.systemDescription,
     row.influenceLevel,
     INFLUENCE_LEVEL_LABELS[row.influenceLevel],
-    ...(row.isBusinessActor ? ["business actor", "tác nhân nghiệp vụ"] : []),
+    row.actorType,
+    ACTOR_TYPE_LABELS[row.actorType],
   ]
     .map((part) => foldForSearch(part))
     .join(" ");
   return haystack.includes(q);
 }
 
-function stakeholderToWriteBody(row: ProjectStakeholder) {
-  return {
-    name: row.name,
-    role: row.role,
-    impactArea: row.impactArea,
-    influenceLevel: row.influenceLevel,
-    notes: row.notes,
-    isBusinessActor: row.isBusinessActor,
-  };
-}
 
 type StakeHolderTableProps = {
   projectId: string | null;
   search: string;
-  businessActorFilter: StakeholderBusinessActorFilter;
+  businessActorFilter: StakeholderActorTypeFilter;
   className?: string;
 };
 
@@ -147,12 +160,9 @@ export function StakeHolderTable({
     name: string;
   } | null>(null);
   const [rowMutationBusy, setRowMutationBusy] = useState(false);
-  const [businessActorToggleId, setBusinessActorToggleId] = useState<
-    string | null
-  >(null);
 
-  const isBusinessActorParam =
-    listIsBusinessActorQueryParam(businessActorFilter);
+  const actorTypeParam =
+    businessActorFilter === "all" ? undefined : businessActorFilter;
 
   const {
     data: stakeholders = [],
@@ -161,36 +171,14 @@ export function StakeHolderTable({
     error,
     refetch,
   } = useProjectStakeholders(projectId, {
-    ...(isBusinessActorParam === undefined
-      ? {}
-      : { isBusinessActor: isBusinessActorParam }),
+    ...(actorTypeParam === undefined ? {} : { actorType: actorTypeParam }),
   });
 
   const deleteMutation = useDeleteProjectStakeholder({
     onSuccess: () => setDeleteTarget(null),
   });
 
-  const updateMutation = useUpdateProjectStakeholder();
-
   const rowBusy = rowMutationBusy || deleteMutation.isPending;
-
-  function handleToggleBusinessActor(row: ProjectStakeholder) {
-    if (!projectId || businessActorToggleId) return;
-    setBusinessActorToggleId(row.id);
-    void updateMutation.mutate(
-      {
-        projectId,
-        stakeholderId: row.id,
-        body: {
-          ...stakeholderToWriteBody(row),
-          isBusinessActor: !row.isBusinessActor,
-        },
-      },
-      {
-        onSettled: () => setBusinessActorToggleId(null),
-      },
-    );
-  }
 
   const filtered = useMemo(() => {
     const q = search.trim();
@@ -229,7 +217,7 @@ export function StakeHolderTable({
       <div
         className={cn(
           "rounded-xl border border-border/70 bg-card/50 px-5 py-8 text-center",
-          className,
+          className
         )}
       >
         <p className="text-sm text-destructive">
@@ -252,17 +240,19 @@ export function StakeHolderTable({
 
   if (stakeholders.length === 0) {
     const filterHint =
-      businessActorFilter === "business"
-        ? "Không có stakeholder nào được đánh dấu business actor."
-        : businessActorFilter === "non_business"
-          ? "Không có stakeholder nào ngoài business actor với bộ lọc hiện tại."
-          : null;
+      businessActorFilter === "business_actor"
+        ? "Không có stakeholder nào có vai trò Business actor."
+        : businessActorFilter === "other_actor"
+          ? "Không có stakeholder nào có vai trò Other actor."
+          : businessActorFilter === "none"
+            ? "Không có stakeholder nào có vai trò None."
+            : null;
 
     return (
       <div
         className={cn(
           "flex flex-col items-center gap-3 rounded-xl border border-dashed border-border/80 bg-muted/20 px-6 py-12 text-center",
-          className,
+          className
         )}
       >
         <span className="flex size-12 items-center justify-center rounded-xl bg-muted/80 text-muted-foreground">
@@ -287,7 +277,7 @@ export function StakeHolderTable({
       <p
         className={cn(
           "rounded-xl border border-border/70 bg-card/40 px-5 py-8 text-center text-sm text-muted-foreground",
-          className,
+          className
         )}
       >
         Không có kết quả cho &quot;{search.trim()}&quot;.
@@ -300,153 +290,130 @@ export function StakeHolderTable({
       <div
         className={cn(
           "overflow-hidden rounded-xl border border-border/70 bg-card shadow-sm",
-          className,
+          className
         )}
       >
         <div className="overflow-auto max-h-[calc(100svh-10rem)]">
-        <Table>
-          <TableHeader>
-            <TableRow className="border-border/70 bg-muted/30 hover:bg-muted/30">
-              <TableHead className="w-12 pl-4 text-center">#</TableHead>
-              <TableHead className="min-w-48">Tên / Vai trò</TableHead>
-              <TableHead className="w-36">Business Actor</TableHead>
-              <TableHead className="min-w-48">
-                <span className="inline-flex items-center gap-1.5">
-                  <Tags className="size-3.5" aria-hidden />
-                  Khu vực tác động
-                </span>
-              </TableHead>
-              <TableHead className="w-36">Mức ảnh hưởng</TableHead>
-              <TableHead className="min-w-48">
-                <span className="inline-flex items-center gap-1.5">
-                  <MessageSquareText className="size-3.5" aria-hidden />
-                  Ghi chú
-                </span>
-              </TableHead>
-              <TableHead className="w-12 pr-4 text-right" />
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filtered.map((row, index) => {
-              const initials = stakeholderInitials(row.name);
+          <Table>
+            <TableHeader>
+              <TableRow className="border-border/70 bg-muted/30 hover:bg-muted/30">
+                <TableHead className="w-12 pl-4 text-center">#</TableHead>
+                <TableHead className="min-w-48">Tên / Vai trò</TableHead>
+                <TableHead className="w-40">Vai trò mô hình</TableHead>
+                <TableHead className="min-w-48">
+                  <span className="inline-flex items-center gap-1.5">
+                    <Tags className="size-3.5" aria-hidden />
+                    Khu vực tác động
+                  </span>
+                </TableHead>
+                <TableHead className="w-36">Mức ảnh hưởng</TableHead>
+                <TableHead className="min-w-48">
+                  <span className="inline-flex items-center gap-1.5">
+                    <MessageSquareText className="size-3.5" aria-hidden />
+                    Ghi chú
+                  </span>
+                </TableHead>
+                <TableHead className="w-12 pr-4 text-right" />
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filtered.map((row, index) => {
+                const initials = stakeholderInitials(row.name);
 
-              return (
-                <TableRow key={row.id} className="border-border/60 align-top">
-                  <TableCell className="pl-4 text-center text-xs tabular-nums text-muted-foreground">
-                    {index + 1}
-                  </TableCell>
+                return (
+                  <TableRow key={row.id} className="border-border/60 align-top">
+                    <TableCell className="pl-4 text-center text-xs tabular-nums text-muted-foreground">
+                      {index + 1}
+                    </TableCell>
 
-                  <TableCell className="py-3">
-                    <div className="flex items-center gap-2.5">
-                      <span
-                        className={cn(
-                          "flex size-8 shrink-0 items-center justify-center rounded-lg text-xs font-bold ring-1",
-                          row.isBusinessActor
-                            ? "bg-brand-mint/25 text-foreground ring-brand-mint/35"
-                            : "bg-muted/65 text-muted-foreground ring-border/70",
-                        )}
-                        aria-hidden
-                      >
-                        {initials}
-                      </span>
-                      <div className="min-w-0">
-                        <p className="truncate text-sm font-medium text-foreground">
-                          {row.name}
-                        </p>
-                        {row.role.trim() ? (
-                          <p className="truncate text-xs text-muted-foreground">
-                            {row.role}
+                    <TableCell className="py-3">
+                      <div className="flex items-center gap-2.5">
+                        <span
+                          className={avatarClassName(row.actorType)}
+                          aria-hidden
+                        >
+                          {initials}
+                        </span>
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-medium text-foreground">
+                            {row.name}
                           </p>
-                        ) : (
-                          <p className="text-xs italic text-muted-foreground">
-                            Chưa có vai trò
-                          </p>
-                        )}
+                          {row.role.trim() ? (
+                            <p className="truncate text-xs text-muted-foreground">
+                              {row.role}
+                            </p>
+                          ) : (
+                            <p className="text-xs italic text-muted-foreground">
+                              Chưa có vai trò
+                            </p>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  </TableCell>
+                    </TableCell>
 
-                  <TableCell>
-                    <span
-                      className={cn(
-                        "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-semibold leading-none",
-                        row.isBusinessActor
-                          ? "border-brand-mint/35 bg-brand-mint/20 text-foreground"
-                          : "border-border/60 bg-muted/30 text-muted-foreground",
-                      )}
-                    >
-                      <UserRoundCheck className="size-3" aria-hidden />
-                      {row.isBusinessActor ? "Business Actor" : "Không"}
-                    </span>
-                  </TableCell>
-
-                  <TableCell className="py-3">
-                    <ImpactAreaTags impactArea={row.impactArea} />
-                  </TableCell>
-                  <TableCell>
-                    <span
-                      className={influenceBadgeClassName(row.influenceLevel)}
-                    >
-                      {INFLUENCE_LEVEL_LABELS[row.influenceLevel]}
-                    </span>
-                  </TableCell>
-
-                  <TableCell className="whitespace-normal py-3 wrap-anywhere">
-                    {row.notes.trim() ? (
-                      <p className="text-sm leading-relaxed text-foreground/85 text-justify hyphens-auto">
-                        {row.notes}
-                      </p>
-                    ) : (
-                      <span className="text-xs italic text-muted-foreground">
-                        —
+                    <TableCell>
+                      <span className={actorTypeBadgeClassName(row.actorType)}>
+                        {ACTOR_TYPE_LABELS[row.actorType]}
                       </span>
-                    )}
-                  </TableCell>
+                    </TableCell>
 
-                  <TableCell className="pr-4 text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger
-                        disabled={rowBusy}
-                        className="flex size-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50"
-                        aria-label={`Tùy chọn ${row.name}`}
-                      >
-                        <MoreVertical className="size-4" aria-hidden />
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="min-w-48">
-                        <DropdownMenuItem
-                          onClick={() => handleToggleBusinessActor(row)}
+                    <TableCell className="py-3">
+                      <ImpactAreaTags impactArea={row.impactArea} />
+                    </TableCell>
+
+                    <TableCell>
+                      <span className={influenceBadgeClassName(row.influenceLevel)}>
+                        {INFLUENCE_LEVEL_LABELS[row.influenceLevel]}
+                      </span>
+                    </TableCell>
+
+                    <TableCell className="whitespace-normal py-3 wrap-anywhere">
+                      {row.notes.trim() ? (
+                        <p className="text-sm leading-relaxed text-foreground/85 text-justify hyphens-auto">
+                          {row.notes}
+                        </p>
+                      ) : (
+                        <span className="text-xs italic text-muted-foreground">
+                          —
+                        </span>
+                      )}
+                    </TableCell>
+
+                    <TableCell className="pr-4 text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger
+                          disabled={rowBusy}
+                          className="flex size-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50"
+                          aria-label={`Tùy chọn ${row.name}`}
                         >
-                          <UserRoundCheck className="size-4" aria-hidden />
-                          {row.isBusinessActor
-                            ? "Bỏ Business Actor"
-                            : "Đánh dấu Business Actor"}
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => setEditTarget(row)}>
-                          <Pencil className="size-4" aria-hidden />
-                          Chỉnh sửa
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          variant="destructive"
-                          onClick={() =>
-                            setDeleteTarget({
-                              stakeholderId: row.id,
-                              name: row.name,
-                            })
-                          }
-                        >
-                          <Trash2 className="size-4" aria-hidden />
-                          Xóa
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
+                          <MoreVertical className="size-4" aria-hidden />
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="min-w-48">
+                          <DropdownMenuItem onClick={() => setEditTarget(row)}>
+                            <Pencil className="size-4" aria-hidden />
+                            Chỉnh sửa
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            variant="destructive"
+                            onClick={() =>
+                              setDeleteTarget({
+                                stakeholderId: row.id,
+                                name: row.name,
+                              })
+                            }
+                          >
+                            <Trash2 className="size-4" aria-hidden />
+                            Xóa
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
         </div>
       </div>
 

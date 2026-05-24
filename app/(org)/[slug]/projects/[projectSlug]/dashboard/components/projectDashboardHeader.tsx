@@ -19,14 +19,25 @@ import { BrdExportDialog } from "./brdExportDialog";
 import { DeleteOrgProjectDialog } from "./deleteOrgProjectDialog";
 import { ProjectDashboardMeta } from "./projectDashboardMeta";
 
+export type DashboardTab = "overview" | "context-diagram";
+
 export type ProjectDashboardHeaderProps = {
   project: OrgProject;
   orgId: string;
+  activeTab: DashboardTab;
+  onTabChange: (tab: DashboardTab) => void;
 };
+
+const TABS: { value: DashboardTab; label: string }[] = [
+  { value: "overview", label: "Tổng quan dự án" },
+  { value: "context-diagram", label: "Context Diagram" },
+];
 
 export function ProjectDashboardHeader({
   project,
   orgId,
+  activeTab,
+  onTabChange,
 }: ProjectDashboardHeaderProps) {
   const { slug } = useOrgWorkspace();
   const pathname = usePathname() ?? "";
@@ -60,7 +71,7 @@ export function ProjectDashboardHeader({
 
   return (
     <>
-      <header className="space-y-4 border-b border-border/50 pb-6">
+      <header className="space-y-4 border-b border-border/50">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="min-w-0 flex-1 space-y-2">
             <h1 className="font-heading text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
@@ -119,6 +130,26 @@ export function ProjectDashboardHeader({
           endDate={project.endDate}
           budget={project.budget}
         />
+
+        <div className="flex gap-1" role="tablist">
+          {TABS.map((tab) => (
+            <button
+              key={tab.value}
+              type="button"
+              role="tab"
+              aria-selected={activeTab === tab.value}
+              onClick={() => onTabChange(tab.value)}
+              className={cn(
+                "relative px-3 pb-2 pt-1 text-sm font-medium transition-colors after:absolute after:inset-x-0 after:-bottom-px after:h-0.5 after:transition-opacity",
+                activeTab === tab.value
+                  ? "text-foreground after:bg-foreground after:opacity-100"
+                  : "text-muted-foreground after:opacity-0 hover:text-foreground"
+              )}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
       </header>
 
       <BrdExportDialog

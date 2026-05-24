@@ -23,19 +23,18 @@ export function projectActorsQueryKey(projectId: string) {
 
 /**
  * Key danh sách stakeholders theo `project_id`.
- * `isBusinessActor`: `undefined` = không gửi query (toàn bộ); `true` / `false` = filter API `is_business_actor`.
+ * `actorType`: `undefined` = không gửi query (toàn bộ); `"none"` | `"business_actor"` | `"other_actor"` = filter API `actor_type`.
  */
 export function projectStakeholdersQueryKey(
   projectId: string,
-  params?: { isBusinessActor?: boolean }
+  params?: { actorType?: "none" | "business_actor" | "other_actor" }
 ) {
-  const filterKey =
-    params?.isBusinessActor === undefined
-      ? "all"
-      : params.isBusinessActor
-        ? "business_actor"
-        : "not_business_actor";
-  return [...PROJECTS_ROOT, "stakeholders", projectId, filterKey] as const;
+  return [
+    ...PROJECTS_ROOT,
+    "stakeholders",
+    projectId,
+    params?.actorType ?? "all",
+  ] as const;
 }
 
 /** Key chi tiết một stakeholder. */
@@ -208,6 +207,11 @@ export function projectBrdExportQueryKey(projectId: string) {
   return [...PROJECTS_ROOT, projectId, "brd", "export"] as const;
 }
 
+/** Key context diagram theo `project_id`. */
+export function projectContextDiagramQueryKey(projectId: string) {
+  return [...PROJECTS_ROOT, projectId, "context-diagram"] as const;
+}
+
 /** Key mô hình yêu cầu (epic / feature / story) theo actor. */
 export function actorRequirementModelQueryKey(projectId: string, actorId: string) {
   return [
@@ -298,6 +302,7 @@ export const queryKeys = {
     story: projectStoryQueryKey,
     setupProgress: projectSetupProgressQueryKey,
     brdExport: projectBrdExportQueryKey,
+    contextDiagram: projectContextDiagramQueryKey,
   },
   users: {
     all: ["users"] as const,

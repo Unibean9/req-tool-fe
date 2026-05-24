@@ -8,12 +8,12 @@ import {
   type SwimlaneActivityNodeNotation,
   type SwimlaneControlFlow,
   type SwimlaneLane,
-} from "@/components/ui/swimlane-react-flow";
+} from "@/components/ui/activity-react-flow";
 import {
   swimlaneRfHandleIdToWireHandle,
   swimlaneWireHandleToRfId,
   type SwimlaneWaypoint,
-} from "@/lib/swimlane/swimlaneEdgeWire";
+} from "@/lib/activity/activityEdgeWire";
 import {
   type ProjectFlowSwimlane,
   type ProjectFlowSwimlaneFlow,

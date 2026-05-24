@@ -19,7 +19,7 @@ import {
 import {
   parseFlowSteps,
   serializeFlowSteps,
-} from "./flowSteps";
+} from "../utils/flowSteps";
 
 export type FlowFormValues = {
   code: string;

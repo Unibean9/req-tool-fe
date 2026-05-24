@@ -15,7 +15,7 @@ import {
   buildSwimlaneEdgePolyline,
   findClosestPolylineSegmentIndex,
   straightenSwimlaneEdgeSegmentAt,
-} from "@/lib/swimlane/swimlaneEdgeStraighten";
+} from "@/lib/activity/activityEdgeStraighten";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -26,9 +26,9 @@ import {
   useSwimlaneFlowEditor,
   type SwimlaneEdgeContextMenuRequest,
   type SwimlaneEdgeDragSnapshot,
-} from "./swimlaneFlowEditorContext";
+} from "./activityFlowEditorContext";
 import type { Edge } from "./react-flow";
-import type { SwimlaneWaypoint } from "./swimlane-react-flow";
+import type { SwimlaneWaypoint } from "./activity-react-flow";
 
 const HANDLE_SIZE_PX = 14;
 /** Vùng bấm (flow portal) lớn hơn chấm hiển thị để dễ chuột phải / kéo. */

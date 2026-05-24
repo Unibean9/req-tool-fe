@@ -3,7 +3,7 @@ import {
   parseSwimlaneWaypointsFromWire,
   swimlaneRfHandleIdToWireHandle,
   swimlaneWaypointsToWire,
-} from "@/lib/swimlane/swimlaneEdgeWire";
+} from "@/lib/activity/activityEdgeWire";
 
 // --- Swimlane (wire snake_case từ BE) ---
 
@@ -148,8 +148,8 @@ function parseLaneGeometryFromWire(l: ProjectFlowSwimlaneLaneWire): Pick<
   };
 }
 
-/** @deprecated Dùng `swimlaneRfHandleIdToWireHandle` từ `@/lib/swimlane/swimlaneEdgeWire`. */
-export { swimlaneRfHandleIdToWireEnum } from "@/lib/swimlane/swimlaneEdgeWire";
+/** @deprecated Dùng `swimlaneRfHandleIdToWireHandle` từ `@/lib/activity/activityEdgeWire`. */
+export { swimlaneRfHandleIdToWireEnum } from "@/lib/activity/activityEdgeWire";
 
 export function mapSwimlaneFromWire(
   raw: ProjectFlowSwimlaneWire | null | undefined
@@ -438,7 +438,7 @@ interface ProjectFlowRowApi {
   title: string;
   created_at: string;
   updated_at: string;
-  swimlane?: ProjectFlowSwimlaneWire | null;
+  activity?: ProjectFlowSwimlaneWire | null;
 }
 
 interface ProjectFlowApiResponse {
@@ -637,7 +637,7 @@ function mapProjectFlowRow(row: ProjectFlowRowApi): ProjectFlow {
     actions: Array.isArray(row.actions) ? row.actions : [],
     order: Number(row.order) || 0,
     title: row.title ?? "",
-    swimlane: mapSwimlaneFromWire(row.swimlane),
+    swimlane: mapSwimlaneFromWire(row.activity),
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -917,7 +917,7 @@ export const fetchFlow = {
     const fid = resolveFlowId(flowId);
     const normalized = normalizeProjectFlowSwimlaneForPut(diagram, fid);
     const response = await apiService.put<ProjectFlowApiResponse>(
-      `/api/v1/projects/${encodeURIComponent(pid)}/flows/${encodeURIComponent(fid)}/swimlane`,
+      `/api/v1/projects/${encodeURIComponent(pid)}/flows/${encodeURIComponent(fid)}/canvas-layout`,
       toProjectFlowSwimlanePutWire(normalized)
     );
     const flowResponse = parseSwimlanePutFlowResponse(response.data);

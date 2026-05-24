@@ -16,20 +16,28 @@ import { cn } from "@/lib/utils";
 
 import { StakeHolderFormDialog } from "./stakeHolderFormDialog";
 
-/** Lọc API `is_business_actor`: tất cả | chỉ business actor | không phải business actor. */
-export type StakeholderBusinessActorFilter = "all" | "business" | "non_business";
+/** Lọc theo `actor_type`: tất cả | none | business_actor | other_actor. */
+export type StakeholderActorTypeFilter =
+  | "all"
+  | "none"
+  | "business_actor"
+  | "other_actor";
 
-function businessActorFilterLabel(value: StakeholderBusinessActorFilter): string {
-  if (value === "all") return "Tất cả stakeholders";
-  if (value === "business") return "Chỉ business actor";
-  return "Không phải business actor";
-}
+/** @deprecated Use StakeholderActorTypeFilter */
+export type StakeholderBusinessActorFilter = StakeholderActorTypeFilter;
+
+const FILTER_LABELS: Record<StakeholderActorTypeFilter, string> = {
+  all: "Tất cả stakeholders",
+  none: "None",
+  business_actor: "Business actor",
+  other_actor: "Other actor",
+};
 
 type StakeHolderToolbarProps = {
   search: string;
   onSearchChange: (value: string) => void;
-  businessActorFilter: StakeholderBusinessActorFilter;
-  onBusinessActorFilterChange: (value: StakeholderBusinessActorFilter) => void;
+  businessActorFilter: StakeholderActorTypeFilter;
+  onBusinessActorFilterChange: (value: StakeholderActorTypeFilter) => void;
   projectId: string | null;
   canCreate?: boolean;
   className?: string;
@@ -101,30 +109,32 @@ export function StakeHolderToolbar({
             />
             <Select
               value={businessActorFilter}
-              onValueChange={(value) =>
-                onBusinessActorFilterChange(value as StakeholderBusinessActorFilter)
-              }
+              onValueChange={(value) => {
+                if (value != null) {
+                  onBusinessActorFilterChange(value as StakeholderActorTypeFilter);
+                }
+              }}
             >
               <SelectTrigger
                 className="h-10 w-full border-border/80 bg-muted/40 pl-10"
-                aria-label="Lọc theo business actor"
+                aria-label="Lọc theo vai trò mô hình"
               >
                 <SelectValue>
-                  {businessActorFilterLabel(businessActorFilter)}
+                  {FILTER_LABELS[businessActorFilter]}
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all" label={businessActorFilterLabel("all")}>
-                  {businessActorFilterLabel("all")}
+                <SelectItem value="all" label={FILTER_LABELS.all}>
+                  {FILTER_LABELS.all}
                 </SelectItem>
-                <SelectItem value="business" label={businessActorFilterLabel("business")}>
-                  {businessActorFilterLabel("business")}
+                <SelectItem value="none" label={FILTER_LABELS.none}>
+                  {FILTER_LABELS.none}
                 </SelectItem>
-                <SelectItem
-                  value="non_business"
-                  label={businessActorFilterLabel("non_business")}
-                >
-                  {businessActorFilterLabel("non_business")}
+                <SelectItem value="business_actor" label={FILTER_LABELS.business_actor}>
+                  {FILTER_LABELS.business_actor}
+                </SelectItem>
+                <SelectItem value="other_actor" label={FILTER_LABELS.other_actor}>
+                  {FILTER_LABELS.other_actor}
                 </SelectItem>
               </SelectContent>
             </Select>

@@ -1,14 +1,15 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useOrgProject, useOrgProjects } from "@/hooks/useProject";
 
 import { PROJECT_BUSINESS_VALUE_LABEL } from "../../project-new/components/projectFormLimits";
 import { useOrgWorkspace } from "../../../orgWorkspaceContext";
-import { ProjectDashboardHeader } from "./components/projectDashboardHeader";
+import { DashboardContextDiagram } from "./components/dashboardContextDiagram";
+import { ProjectDashboardHeader, type DashboardTab } from "./components/projectDashboardHeader";
 import { ProjectDashboardIndexedList } from "./components/projectDashboardIndexedList";
 import { ProjectDashboardProse } from "./components/projectDashboardProse";
 import { ProjectDashboardSection } from "./components/projectDashboardSection";
@@ -91,6 +92,7 @@ export default function ProjectDashboardPage() {
   });
 
   const project = detailProject ?? listProject;
+  const [activeTab, setActiveTab] = useState<DashboardTab>("overview");
 
   if (isPending || (listProject && isDetailPending && !detailProject)) {
     return <DashboardSkeleton />;
@@ -131,52 +133,63 @@ export default function ProjectDashboardPage() {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-8 overflow-y-auto pb-2">
-      <ProjectDashboardHeader project={project} orgId={orgId} />
+      <ProjectDashboardHeader
+        project={project}
+        orgId={orgId}
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+      />
 
-      <div className={DASHBOARD_PAIR_ROW_CLASS}>
-        <ProjectDashboardSection title="Mô tả" accent="violet">
-          {project.description.trim() ? (
-            <ProjectDashboardProse>{project.description}</ProjectDashboardProse>
-          ) : (
-            <EmptyHint>Chưa có mô tả chi tiết.</EmptyHint>
-          )}
-        </ProjectDashboardSection>
+      {activeTab === "overview" ? (
+        <>
+          <div className={DASHBOARD_PAIR_ROW_CLASS}>
+            <ProjectDashboardSection title="Mô tả" accent="violet">
+              {project.description.trim() ? (
+                <ProjectDashboardProse>{project.description}</ProjectDashboardProse>
+              ) : (
+                <EmptyHint>Chưa có mô tả chi tiết.</EmptyHint>
+              )}
+            </ProjectDashboardSection>
 
-        <ProjectDashboardSection title="Ngữ cảnh" accent="sky">
-          {project.context.trim() ? (
-            <ProjectDashboardProse>{project.context}</ProjectDashboardProse>
-          ) : (
-            <EmptyHint>Chưa có ngữ cảnh.</EmptyHint>
-          )}
-        </ProjectDashboardSection>
-      </div>
+            <ProjectDashboardSection title="Ngữ cảnh" accent="sky">
+              {project.context.trim() ? (
+                <ProjectDashboardProse>{project.context}</ProjectDashboardProse>
+              ) : (
+                <EmptyHint>Chưa có ngữ cảnh.</EmptyHint>
+              )}
+            </ProjectDashboardSection>
+          </div>
 
-      <div className={DASHBOARD_PAIR_ROW_CLASS}>
-        <ProjectDashboardSection title="Vấn đề" accent="orange">
-          <ProjectDashboardIndexedList
-            items={project.problems}
-            emptyLabel="Chưa có vấn đề nào."
-          />
-        </ProjectDashboardSection>
+          <div className={DASHBOARD_PAIR_ROW_CLASS}>
+            <ProjectDashboardSection title="Vấn đề" accent="orange">
+              <ProjectDashboardIndexedList
+                items={project.problems}
+                emptyLabel="Chưa có vấn đề nào."
+              />
+            </ProjectDashboardSection>
 
-        <ProjectDashboardSection title="Giải pháp đề xuất" accent="fuchsia">
-          <ProjectDashboardIndexedList
-            items={project.proposedSolutions}
-            emptyLabel="Chưa có đề xuất giải pháp."
-          />
-        </ProjectDashboardSection>
-      </div>
+            <ProjectDashboardSection title="Giải pháp đề xuất" accent="fuchsia">
+              <ProjectDashboardIndexedList
+                items={project.proposedSolutions}
+                emptyLabel="Chưa có đề xuất giải pháp."
+              />
+            </ProjectDashboardSection>
+          </div>
 
-      <ProjectDashboardSection
-        title={PROJECT_BUSINESS_VALUE_LABEL}
-        accent="teal"
-      >
-        {project.roiNotes.trim() ? (
-          <ProjectDashboardProse>{project.roiNotes}</ProjectDashboardProse>
-        ) : (
-          <EmptyHint>Chưa có mục đích kinh doanh.</EmptyHint>
-        )}
-      </ProjectDashboardSection>
+          <ProjectDashboardSection
+            title={PROJECT_BUSINESS_VALUE_LABEL}
+            accent="teal"
+          >
+            {project.roiNotes.trim() ? (
+              <ProjectDashboardProse>{project.roiNotes}</ProjectDashboardProse>
+            ) : (
+              <EmptyHint>Chưa có mục đích kinh doanh.</EmptyHint>
+            )}
+          </ProjectDashboardSection>
+        </>
+      ) : (
+        <DashboardContextDiagram projectId={project.id} projectName={project.name} />
+      )}
     </div>
   );
 }

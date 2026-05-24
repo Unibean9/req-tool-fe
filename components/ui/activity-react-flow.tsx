@@ -16,7 +16,7 @@ import { cn } from "@/lib/utils";
 import {
   requestSwimlaneEdgeContextMenu,
   useSwimlaneFlowEditor,
-} from "./swimlaneFlowEditorContext";
+} from "./activityFlowEditorContext";
 
 import {
   Handle,
@@ -75,12 +75,12 @@ export {
   SwimlaneFlowEditorProvider,
   requestSwimlaneEdgeContextMenu,
   useSwimlaneFlowEditor,
-} from "./swimlaneFlowEditorContext";
+} from "./activityFlowEditorContext";
 export type {
   SwimlaneEdgeDragSnapshot,
   SwimlaneFlowEditorContextValue,
-} from "./swimlaneFlowEditorContext";
-export { SwimlaneEdgeHandlesLayer } from "./swimlaneEdgeHandlesLayer";
+} from "./activityFlowEditorContext";
+export { SwimlaneEdgeHandlesLayer } from "./activityEdgeHandlesLayer";
 
 export const swimlaneReactFlowClassName = cn(
   reactFlowCanvasClassName,

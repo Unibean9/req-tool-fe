@@ -30,7 +30,8 @@ const EMPTY_FORM: StakeHolderFormValues = {
   impactArea: "",
   influenceLevel: "medium",
   notes: "",
-  isBusinessActor: false,
+  actorType: "none",
+  systemDescription: "",
 };
 
 function valuesFromStakeholder(row: ProjectStakeholder): StakeHolderFormValues {
@@ -40,7 +41,8 @@ function valuesFromStakeholder(row: ProjectStakeholder): StakeHolderFormValues {
     impactArea: row.impactArea,
     influenceLevel: row.influenceLevel,
     notes: row.notes,
-    isBusinessActor: row.isBusinessActor,
+    actorType: row.actorType,
+    systemDescription: row.systemDescription,
   };
 }
 
@@ -74,10 +76,9 @@ function StakeHolderFormDialogBody({
 
   const pending = isEdit ? updateMutation.isPending : createMutation.isPending;
 
-  const canSubmit =
-    isStakeHolderFormValid(values) && !pending;
+  const canSubmit = isStakeHolderFormValid(values) && !pending;
 
-  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+  function handleSubmit(e: React.SyntheticEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!canSubmit) return;
     const body = trimStakeHolderFormValues(values);

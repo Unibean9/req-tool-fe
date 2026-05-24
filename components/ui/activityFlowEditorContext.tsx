@@ -14,7 +14,7 @@ import {
 import type { Edge } from "./react-flow";
 import type { Position } from "@xyflow/react";
 
-import type { SwimlaneWaypoint } from "./swimlane-react-flow";
+import type { SwimlaneWaypoint } from "./activity-react-flow";
 
 export type SwimlaneEdgeGeometrySnapshot = {
   sourceX: number;

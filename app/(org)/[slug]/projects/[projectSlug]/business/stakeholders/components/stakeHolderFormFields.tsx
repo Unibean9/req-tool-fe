@@ -15,6 +15,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import {
   STAKEHOLDER_INFLUENCE_LEVELS,
+  type StakeholderActorType,
   type StakeholderInfluenceLevel,
 } from "@/lib/api/services/fetchStakeHolder";
 import { cn } from "@/lib/utils";
@@ -24,8 +25,9 @@ import {
   STAKEHOLDER_NAME_MAX_CHARS,
   STAKEHOLDER_NOTES_MAX_CHARS,
   STAKEHOLDER_ROLE_MAX_CHARS,
+  STAKEHOLDER_SYSTEM_DESCRIPTION_MAX_CHARS,
 } from "./stakeHolderFormLimits";
-import { StakeHolderBusinessActorField } from "./stakeHolderBusinessActorField";
+import { StakeHolderActorTypeField } from "./stakeHolderBusinessActorField";
 
 const IMPACT_AREA_TAG_SEPARATOR = " · ";
 const IMPACT_AREA_SPLIT = /\s*(?:·|,|;)\s*/;
@@ -87,7 +89,8 @@ export type StakeHolderFormValues = {
   impactArea: string;
   influenceLevel: StakeholderInfluenceLevel;
   notes: string;
-  isBusinessActor: boolean;
+  actorType: StakeholderActorType;
+  systemDescription: string;
 };
 
 type StakeHolderFormFieldsProps = {
@@ -129,15 +132,61 @@ export function StakeHolderFormFields({
         onChange={(impactArea) => onChange({ impactArea })}
         disabled={disabled}
       />
-      <InfluenceLevelField
-        id={`${idPrefix}-influence`}
-        value={values.influenceLevel}
-        onChange={(influenceLevel) => onChange({ influenceLevel })}
-        disabled={disabled}
-      />
+
+      {/* Mức ảnh hưởng + Vai trò mô hình — cùng hàng */}
+      <div className="grid grid-cols-2 gap-3">
+        <InfluenceLevelField
+          id={`${idPrefix}-influence`}
+          value={values.influenceLevel}
+          onChange={(influenceLevel) => onChange({ influenceLevel })}
+          disabled={disabled}
+        />
+        <StakeHolderActorTypeField
+          id={`${idPrefix}-actor-type`}
+          value={values.actorType}
+          onChange={(actorType) => onChange({ actorType })}
+          disabled={disabled}
+        />
+      </div>
+
+      {/* Mô tả hệ thống */}
       <div className="grid gap-1.5">
         <div className="flex items-center justify-between gap-2">
-          <Label htmlFor={`${idPrefix}-notes`} className="text-sm font-semibold">
+          <Label
+            htmlFor={`${idPrefix}-system-desc`}
+            className="text-sm font-semibold"
+          >
+            Mô tả hệ thống
+          </Label>
+          <span className="text-[10px] tabular-nums text-muted-foreground">
+            {values.systemDescription.length}/{STAKEHOLDER_SYSTEM_DESCRIPTION_MAX_CHARS}
+          </span>
+        </div>
+        <Textarea
+          id={`${idPrefix}-system-desc`}
+          value={values.systemDescription}
+          onChange={(e) =>
+            onChange({
+              systemDescription: e.target.value.slice(
+                0,
+                STAKEHOLDER_SYSTEM_DESCRIPTION_MAX_CHARS
+              ),
+            })
+          }
+          placeholder="VD: Hệ thống CRM nội bộ quản lý khách hàng."
+          disabled={disabled}
+          rows={3}
+          className="resize-none"
+        />
+      </div>
+
+      {/* Ghi chú */}
+      <div className="grid gap-1.5">
+        <div className="flex items-center justify-between gap-2">
+          <Label
+            htmlFor={`${idPrefix}-notes`}
+            className="text-sm font-semibold"
+          >
             Ghi chú
           </Label>
           <span className="text-[10px] tabular-nums text-muted-foreground">
@@ -154,16 +203,10 @@ export function StakeHolderFormFields({
           }
           placeholder="VD: Xác nhận yêu cầu và ký off từng sprint."
           disabled={disabled}
-          rows={6}
+          rows={4}
           className="resize-none"
         />
       </div>
-      <StakeHolderBusinessActorField
-        id={`${idPrefix}-business-actor`}
-        checked={values.isBusinessActor}
-        onChange={(isBusinessActor) => onChange({ isBusinessActor })}
-        disabled={disabled}
-      />
     </div>
   );
 }
@@ -275,7 +318,7 @@ function InfluenceLevelField({
   return (
     <div className="grid gap-1.5">
       <Label htmlFor={id} className="text-sm font-semibold">
-        Mức ảnh hưởng (Influence level)
+        Mức ảnh hưởng
       </Label>
       <Select
         value={value}
@@ -290,7 +333,7 @@ function InfluenceLevelField({
         disabled={disabled}
       >
         <SelectTrigger id={id} className="h-10 w-full text-sm">
-          <SelectValue placeholder="Chọn mức ảnh hưởng (Influence level)">
+          <SelectValue placeholder="Chọn mức ảnh hưởng">
             {INFLUENCE_LEVEL_LABELS[value]}
           </SelectValue>
         </SelectTrigger>
@@ -354,7 +397,10 @@ export function trimStakeHolderFormValues(values: StakeHolderFormValues) {
     impactArea: values.impactArea.trim().slice(0, STAKEHOLDER_IMPACT_AREA_MAX_CHARS),
     influenceLevel: values.influenceLevel,
     notes: values.notes.trim().slice(0, STAKEHOLDER_NOTES_MAX_CHARS),
-    isBusinessActor: values.isBusinessActor,
+    actorType: values.actorType,
+    systemDescription: values.systemDescription
+      .trim()
+      .slice(0, STAKEHOLDER_SYSTEM_DESCRIPTION_MAX_CHARS),
   };
 }
 

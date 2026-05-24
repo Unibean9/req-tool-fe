@@ -35,19 +35,19 @@ import {
 } from "@/hooks/useFlow";
 import { cn } from "@/lib/utils";
 
-import { DeleteFlowDialog } from "./deleteFlowDialog";
+import { DeleteFlowDialog } from "./form/deleteFlowDialog";
 import {
   EditFlowActionFormDialog,
   type FlowActionsDialogVariant,
-} from "./editFlowActionFormDialog";
-import { EditFlowFormDialog } from "./editFlowFormDialog";
-import { FlowSwimlaneDetailDialog } from "./flowSwimlaneDialog";
+} from "./actions/editFlowActionFormDialog";
+import { EditFlowFormDialog } from "./form/editFlowFormDialog";
+import { FlowSwimlaneDetailDialog } from "./activity/flowActivityDialog";
 import {
   hasFlowCatalogActions,
   parseFlowCatalogActions,
-} from "./flowCatalogActions";
-import { sortFlows } from "./flowReorder";
-import { parseFlowSteps } from "./flowSteps";
+} from "./actions/flowCatalogActions";
+import { sortFlows } from "./utils/flowReorder";
+import { parseFlowSteps } from "./utils/flowSteps";
 
 function foldForSearch(s: string): string {
   return s.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase();

@@ -1,6 +1,6 @@
 import type { Edge } from "@/components/ui/react-flow";
 import type { Position } from "@xyflow/react";
-import type { SwimlaneWaypoint } from "@/components/ui/swimlane-react-flow";
+import type { SwimlaneWaypoint } from "@/components/ui/activity-react-flow";
 
 const DEFAULT_EPSILON_PX = 8;
 

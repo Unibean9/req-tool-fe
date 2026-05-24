@@ -30,7 +30,7 @@ import { FlowActionRulesPickerDialog } from "./flowActionRulesPickerDialog";
 import {
   FLOW_ACTION_DESCRIPTION_MAX_CHARS,
   FLOW_MAX_CATALOG_ACTIONS,
-} from "./flowFormLimits";
+} from "../form/flowFormLimits";
 
 const ACTOR_NONE_VALUE = "__none__";
 

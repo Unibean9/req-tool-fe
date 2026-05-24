@@ -22,6 +22,7 @@ import {
   type UpdateProjectStakeholderResponse,
 } from "@/lib/api/services/fetchStakeHolder";
 import {
+  projectContextDiagramQueryKey,
   projectStakeholderQueryKey,
   projectStakeholdersQueryKey,
 } from "@/lib/query/query-keys";
@@ -54,23 +55,23 @@ function invalidateProjectStakeholdersLists(
 }
 
 /**
- * GET /api/v1/projects/:project_id/stakeholders — optional query `is_business_actor`.
+ * GET /api/v1/projects/:project_id/stakeholders — optional query `actor_type`.
  * Thiếu `projectId` thì `enabled: false`.
  */
 export function useProjectStakeholders(
   projectId: string | null | undefined,
   options?: {
     enabled?: boolean;
-    /** Khi set, gọi API với `?is_business_actor=...`. Bỏ qua = không gửi query (toàn bộ). */
-    isBusinessActor?: boolean;
+    /** Khi set, gọi API với `?actor_type=...`. Bỏ qua = không gửi query (toàn bộ). */
+    actorType?: ListProjectStakeholdersParams["actorType"];
   }
 ) {
   const pid = projectId?.trim() ?? "";
   const enabled = Boolean(pid) && (options?.enabled ?? true);
   const listParams: ListProjectStakeholdersParams | undefined =
-    options?.isBusinessActor === undefined
+    options?.actorType === undefined
       ? undefined
-      : { isBusinessActor: options.isBusinessActor };
+      : { actorType: options.actorType };
 
   return useCachedGet<
     ProjectStakeholdersListResponse,
@@ -88,15 +89,15 @@ export function useProjectStakeholdersFull(
   projectId: string | null | undefined,
   options?: {
     enabled?: boolean;
-    isBusinessActor?: boolean;
+    actorType?: ListProjectStakeholdersParams["actorType"];
   }
 ) {
   const pid = projectId?.trim() ?? "";
   const enabled = Boolean(pid) && (options?.enabled ?? true);
   const listParams: ListProjectStakeholdersParams | undefined =
-    options?.isBusinessActor === undefined
+    options?.actorType === undefined
       ? undefined
-      : { isBusinessActor: options.isBusinessActor };
+      : { actorType: options.actorType };
 
   return useCachedGet({
     queryKey: projectStakeholdersQueryKey(pid, listParams),
@@ -178,6 +179,7 @@ export function useCreateProjectStakeholder(
     },
     onSuccess: (data, variables, onMutateResult, context) => {
       invalidateProjectStakeholdersLists(queryClient, variables.projectId);
+      void queryClient.invalidateQueries({ queryKey: projectContextDiagramQueryKey(variables.projectId) });
       toast.success("Đã tạo stakeholder");
       userOnSuccess?.(data, variables, onMutateResult, context);
     },
@@ -225,11 +227,9 @@ export function useUpdateProjectStakeholder(
     onSuccess: (data, variables, onMutateResult, context) => {
       invalidateProjectStakeholdersLists(queryClient, variables.projectId);
       void queryClient.invalidateQueries({
-        queryKey: projectStakeholderQueryKey(
-          variables.projectId,
-          variables.stakeholderId
-        ),
+        queryKey: projectStakeholderQueryKey(variables.projectId, variables.stakeholderId),
       });
+      void queryClient.invalidateQueries({ queryKey: projectContextDiagramQueryKey(variables.projectId) });
       toast.success("Đã cập nhật stakeholder");
       userOnSuccess?.(data, variables, onMutateResult, context);
     },
@@ -264,11 +264,9 @@ export function useDeleteProjectStakeholder(
     onSuccess: (data, variables, onMutateResult, context) => {
       invalidateProjectStakeholdersLists(queryClient, variables.projectId);
       void queryClient.removeQueries({
-        queryKey: projectStakeholderQueryKey(
-          variables.projectId,
-          variables.stakeholderId
-        ),
+        queryKey: projectStakeholderQueryKey(variables.projectId, variables.stakeholderId),
       });
+      void queryClient.invalidateQueries({ queryKey: projectContextDiagramQueryKey(variables.projectId) });
       toast.success("Đã xóa stakeholder");
       userOnSuccess?.(data, variables, onMutateResult, context);
     },
@@ -287,9 +285,13 @@ export type {
   ProjectStakeholderResponse,
   ProjectStakeholdersListResponse,
   ProjectStakeholderWriteRequest,
+  StakeholderActorType,
   StakeholderInfluenceLevel,
   UpdateProjectStakeholderRequest,
   UpdateProjectStakeholderResponse,
 } from "@/lib/api/services/fetchStakeHolder";
 
-export { STAKEHOLDER_INFLUENCE_LEVELS } from "@/lib/api/services/fetchStakeHolder";
+export {
+  STAKEHOLDER_ACTOR_TYPES,
+  STAKEHOLDER_INFLUENCE_LEVELS,
+} from "@/lib/api/services/fetchStakeHolder";

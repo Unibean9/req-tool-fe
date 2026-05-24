@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
-import { CreateFlowFormDialog } from "./createFlowFormDialog";
+import { CreateFlowFormDialog } from "./form/createFlowFormDialog";
 
 type FlowToolbarProps = {
   search: string;

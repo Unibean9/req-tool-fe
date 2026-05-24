@@ -9,6 +9,14 @@ export const STAKEHOLDER_INFLUENCE_LEVELS = [
 export type StakeholderInfluenceLevel =
   (typeof STAKEHOLDER_INFLUENCE_LEVELS)[number];
 
+/** Actor type — wire values `none` | `business_actor` | `other_actor`. */
+export const STAKEHOLDER_ACTOR_TYPES = [
+  "none",
+  "business_actor",
+  "other_actor",
+] as const;
+export type StakeholderActorType = (typeof STAKEHOLDER_ACTOR_TYPES)[number];
+
 interface ProjectStakeholderRowApi {
   id: string;
   project_id: string;
@@ -17,7 +25,8 @@ interface ProjectStakeholderRowApi {
   impact_area: string;
   influence_level: string;
   notes: string;
-  is_business_actor: boolean;
+  actor_type: string;
+  system_description: string;
   created_at: string;
   updated_at: string;
 }
@@ -47,7 +56,8 @@ export interface ProjectStakeholderWriteRequest {
   impactArea: string;
   influenceLevel: StakeholderInfluenceLevel;
   notes: string;
-  isBusinessActor: boolean;
+  actorType: StakeholderActorType;
+  systemDescription: string;
 }
 
 export interface ProjectStakeholder {
@@ -58,7 +68,8 @@ export interface ProjectStakeholder {
   impactArea: string;
   influenceLevel: StakeholderInfluenceLevel;
   notes: string;
-  isBusinessActor: boolean;
+  actorType: StakeholderActorType;
+  systemDescription: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -82,14 +93,20 @@ export interface ProjectStakeholdersListResponse {
 }
 
 export interface ListProjectStakeholdersParams {
-  /** Khi set, gửi `?is_business_actor=true|false`. Khi bỏ qua, không gửi query (danh sách đầy đủ). */
-  isBusinessActor?: boolean;
+  /** Khi set, gửi `?actor_type=...`. Khi bỏ qua, không gửi query (danh sách đầy đủ). */
+  actorType?: StakeholderActorType;
 }
 
 function parseInfluenceLevel(level: string): StakeholderInfluenceLevel {
   return (STAKEHOLDER_INFLUENCE_LEVELS as readonly string[]).includes(level)
     ? (level as StakeholderInfluenceLevel)
     : "medium";
+}
+
+function parseActorType(type: string): StakeholderActorType {
+  return (STAKEHOLDER_ACTOR_TYPES as readonly string[]).includes(type)
+    ? (type as StakeholderActorType)
+    : "none";
 }
 
 function mapProjectStakeholderRow(
@@ -103,7 +120,8 @@ function mapProjectStakeholderRow(
     impactArea: row.impact_area,
     influenceLevel: parseInfluenceLevel(row.influence_level),
     notes: row.notes,
-    isBusinessActor: Boolean(row.is_business_actor),
+    actorType: parseActorType(row.actor_type),
+    systemDescription: row.system_description ?? "",
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -116,7 +134,8 @@ function toProjectStakeholderApiBody(body: ProjectStakeholderWriteRequest) {
     impact_area: body.impactArea.trim(),
     influence_level: body.influenceLevel,
     notes: body.notes.trim(),
-    is_business_actor: body.isBusinessActor,
+    actor_type: body.actorType,
+    system_description: body.systemDescription.trim(),
   };
 }
 
@@ -141,12 +160,12 @@ function mapProjectStakeholdersListResponse(
 }
 
 function listStakeholdersQueryString(params?: ListProjectStakeholdersParams) {
-  if (params?.isBusinessActor === undefined) return "";
-  return `?is_business_actor=${params.isBusinessActor ? "true" : "false"}`;
+  if (params?.actorType === undefined) return "";
+  return `?actor_type=${encodeURIComponent(params.actorType)}`;
 }
 
 export const fetchStakeHolder = {
-  /** GET /api/v1/projects/:project_id/stakeholders — optional `is_business_actor` query. */
+  /** GET /api/v1/projects/:project_id/stakeholders — optional `actor_type` query. */
   list: async (
     projectId: string,
     params?: ListProjectStakeholdersParams
@@ -194,7 +213,7 @@ export const fetchStakeHolder = {
     return mapProjectStakeholderResponse(response.data);
   },
 
-  /** DELETE /api/v1/projects/:project_id/stakeholders/:stakeholder_id — body `{ success, message? }`. */
+  /** DELETE /api/v1/projects/:project_id/stakeholders/:stakeholder_id */
   delete: async (
     projectId: string,
     stakeholderId: string

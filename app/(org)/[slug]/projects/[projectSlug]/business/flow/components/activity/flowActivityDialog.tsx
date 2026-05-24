@@ -29,8 +29,8 @@ import {
   swimlaneReactFlowCanvasProps,
   swimlaneReactFlowClassName,
   swimlaneReactFlowControlsClassName,
-} from "@/components/ui/swimlane-react-flow";
-import type { SwimlaneWaypoint } from "@/components/ui/swimlane-react-flow";
+} from "@/components/ui/activity-react-flow";
+import type { SwimlaneWaypoint } from "@/components/ui/activity-react-flow";
 import {
   Background,
   Controls,
@@ -61,9 +61,9 @@ import {
   applyReactFlowLayoutToProjectFlowSwimlane,
   defaultSwimlaneForFlow,
   projectFlowSwimlaneToDiagramConfig,
-} from "./flowSwimlaneBridge";
-import { FlowSwimlaneLegend } from "./flowSwimlaneLegend";
-import { FlowSwimlaneTemplatesPanel } from "./flowSwimlaneTemplatesPanel";
+} from "./flowActivityBridge";
+import { FlowSwimlaneLegend } from "./flowActivityLegend";
+import { FlowSwimlaneTemplatesPanel } from "./flowActivityTemplatesPanel";
 
 /** Con trực tiếp của `<ReactFlow>` — dùng `getNodes` + `setQueryData` khi kéo (không refetch). */
 function SwimlaneDragCacheBridge({

@@ -15,6 +15,7 @@ import {
   projectBrdExportQueryKey,
   orgProjectQueryKey,
   orgProjectsQueryKey,
+  projectContextDiagramQueryKey,
   projectSetupProgressQueryKey,
 } from "@/lib/query/query-keys";
 
@@ -326,6 +327,9 @@ export function useUpdateOrgProject(
       });
       void queryClient.invalidateQueries({
         queryKey: orgProjectQueryKey(variables.orgId, variables.projectId),
+      });
+      void queryClient.invalidateQueries({
+        queryKey: projectContextDiagramQueryKey(variables.projectId),
       });
       toast.success("Đã cập nhật dự án");
       userOnSuccess?.(data, variables, onMutateResult, context);

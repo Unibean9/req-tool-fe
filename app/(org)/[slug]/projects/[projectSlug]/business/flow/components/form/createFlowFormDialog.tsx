@@ -22,7 +22,7 @@ import {
   trimFlowBasicsFormValues,
   type FlowBasicsFormValues,
 } from "./flowBasicsFormFields";
-import { EditFlowActionFormDialog } from "./editFlowActionFormDialog";
+import { EditFlowActionFormDialog } from "../actions/editFlowActionFormDialog";
 import { FLOW_FORM_DIALOG_WIDTH_CLASS } from "./flowFormLimits";
 
 type CreatePhase = "fields" | "continuePrompt";

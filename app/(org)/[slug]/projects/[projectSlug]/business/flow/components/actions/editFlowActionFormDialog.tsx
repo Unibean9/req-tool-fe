@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { CheckCircle2, ListChecks, Plus, UsersRound } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -82,11 +82,17 @@ function EditFlowActionFormDialogLoaded({
   const [rows, setRows] = useState(initialRows);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { data: stakeholders = [], isPending: stakeholdersPending } =
-    useProjectStakeholders(projectId, {
-      enabled: true,
-      isBusinessActor: true,
-    });
+  const { data: allStakeholders = [], isPending: stakeholdersPending } =
+    useProjectStakeholders(projectId, { enabled: true });
+
+  // Chỉ hiện actor có vai trò trong mô hình: business_actor hoặc other_actor
+  const stakeholders = useMemo(
+    () =>
+      allStakeholders.filter(
+        (s) => s.actorType === "business_actor" || s.actorType === "other_actor"
+      ),
+    [allStakeholders]
+  );
 
   const { data: rules = [], isPending: rulesPending } = useProjectRules(
     projectId,
@@ -134,7 +140,7 @@ function EditFlowActionFormDialogLoaded({
     setIntroRowKey(nextRow.rowKey);
   }
 
-  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+  function handleSubmit(e: React.SyntheticEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!canSubmit) return;
 
