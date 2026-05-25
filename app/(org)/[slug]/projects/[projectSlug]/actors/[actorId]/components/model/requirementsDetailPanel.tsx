@@ -65,11 +65,11 @@ export function RequirementsDetailPanel() {
     (canDeleteFeature && isDeletingFeature) ||
     (canDeleteUserStory && isDeletingUserStory);
   const deleteLabel = canDeleteEpic
-    ? "Xóa Epic"
+    ? "Delete Epic"
     : canDeleteFeature
-      ? "Xóa Feature"
+      ? "Delete Feature"
       : canDeleteUserStory
-        ? "Xóa User Story"
+        ? "Delete User Story"
         : "Xóa";
 
   return (
@@ -85,13 +85,13 @@ export function RequirementsDetailPanel() {
       >
         <DialogHeader className="border-b border-border/60 pb-3">
           <p className="text-[10px] font-semibold tracking-[0.16em] text-muted-foreground uppercase">
-            {kind ? REQUIREMENT_KIND_LABELS[kind] : "Chi tiết"}
+            {kind ? REQUIREMENT_KIND_LABELS[kind] : "Details"}
           </p>
           <DialogTitle className="truncate text-xl">
-            {node ? panelTitle(node.data) : "Chọn một thẻ trên sơ đồ"}
+            {node ? panelTitle(node.data) : "Select a card on the diagram"}
           </DialogTitle>
           <DialogDescription>
-            Chỉnh thông tin trong dialog, sau đó bấm Cập nhật để lưu.
+            Edit the information in this dialog, then click Update to save.
           </DialogDescription>
         </DialogHeader>
 
@@ -149,7 +149,7 @@ export function RequirementsDetailPanel() {
             disabled={!formId || isSaving || isDeleting}
           >
             <Save className="size-3.5" aria-hidden />
-            {isSaving ? "Đang lưu…" : "Cập nhật"}
+            {isSaving ? "Saving…" : "Update"}
           </Button>
         </DialogFooter>
       </DialogContent>

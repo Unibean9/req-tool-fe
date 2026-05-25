@@ -931,7 +931,7 @@ function ContextDiagramCanvas({
               disabled={isSyncing || !onSync}
             >
               <RefreshCw className={`size-3 ${isSyncing ? "animate-spin" : ""}`} aria-hidden />
-              {isSyncing ? "Đang đồng bộ…" : "Đồng bộ business flow"}
+              {isSyncing ? "Syncing…" : "Sync business flow"}
             </Button>
             <Button
               type="button"
@@ -942,7 +942,7 @@ function ContextDiagramCanvas({
               disabled={isSavingLayout || !onSaveLayout}
             >
               <Save className="size-3" aria-hidden />
-              {isSavingLayout ? "Đang lưu…" : "Cập nhật layout"}
+              {isSavingLayout ? "Saving…" : "Update layout"}
             </Button>
           </div>
         </Panel>
@@ -952,12 +952,12 @@ function ContextDiagramCanvas({
       <Dialog open={!!pendingConn} onOpenChange={(open) => { if (!open) setPendingConn(null); }}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
-            <DialogTitle>Đặt tên luồng dữ liệu</DialogTitle>
+            <DialogTitle>Set data flow name</DialogTitle>
           </DialogHeader>
           <Input
             value={pendingLabel}
             onChange={(e) => setPendingLabel(e.target.value)}
-            placeholder="VD: gửi yêu cầu, nhận phản hồi..."
+            placeholder="e.g. send request, receive feedback..."
             autoFocus
             onKeyDown={(e) => { if (e.key === "Enter") handleCreateFlow(); }}
           />
@@ -982,7 +982,7 @@ function ContextDiagramCanvas({
               onClick={() => handleDeleteEdge(contextMenu.edgeId)}
             >
               <Trash2 className="size-3.5" />
-              Xóa dây
+              Delete flow
             </button>
           </div>
         </>

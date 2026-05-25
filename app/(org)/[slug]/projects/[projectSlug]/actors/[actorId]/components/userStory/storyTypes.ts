@@ -50,7 +50,7 @@ export function createDefaultUserStoryRecord(featureId: string): UserStoryRecord
   return {
     feature_id: featureId,
     prefix: "",
-    title: "User Story mới",
+    title: "New User Story",
     description: "",
     actor_ref: "",
     action_text: "",

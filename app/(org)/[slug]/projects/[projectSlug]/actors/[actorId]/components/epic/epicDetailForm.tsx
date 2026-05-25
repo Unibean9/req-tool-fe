@@ -98,25 +98,25 @@ export function EpicDetailForm({
     <form id={formId} className="space-y-6" onSubmit={submit}>
         <DetailTextField
           id="epic-title"
-          label="Tiêu đề"
+          label="Title"
           value={draft.title}
           onChange={(title) => updateDraft({ title })}
           maxLength={REQ_TITLE_MAX_CHARS}
-          placeholder="VD: Quản lý lịch làm việc theo ca"
+          placeholder="e.g. Shift schedule management"
         />
         <DetailTextAreaField
           id="epic-desc"
-          label="Mô tả"
+          label="Description"
           value={draft.description}
           onChange={(description) => updateDraft({ description })}
           maxLength={REQ_DESCRIPTION_MAX_CHARS}
           rows={4}
-          placeholder="Mục tiêu nghiệp vụ, phạm vi và giá trị của epic…"
+          placeholder="Business goal, scope, and value of the epic…"
         />
         <DetailFieldRow>
           <DetailStatusSelect<PanelEditableStatus | EpicStatus>
             id="epic-status"
-            label="Trạng thái"
+            label="Status"
             value={draft.status}
             options={PANEL_EDITABLE_STATUSES}
             onChange={(status) => updateDraft({ status })}
@@ -124,7 +124,7 @@ export function EpicDetailForm({
           />
           <DetailPrioritySelect
             id="epic-priority"
-            label="Độ ưu tiên"
+            label="Priority"
             value={draft.priority}
             options={EPIC_PRIORITIES}
             onChange={(priority) => updateDraft({ priority })}

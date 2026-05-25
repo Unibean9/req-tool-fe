@@ -130,13 +130,13 @@ export function RuleLinkedFeatureSelect({
         >
           <span className="min-w-0 flex-1 truncate">
             {linkedId && selectedLoading && !displayLabel ? (
-              "Đang tải feature…"
+              "Loading feature…"
             ) : displayLabel ? (
               displayLabel
             ) : linkedId ? (
               <span className="font-mono text-xs">{linkedId}</span>
             ) : (
-              "Tìm và chọn feature…"
+              "Search and select a feature…"
             )}
           </span>
           <ChevronsUpDown className="size-4 shrink-0 text-muted-foreground" />
@@ -155,7 +155,7 @@ export function RuleLinkedFeatureSelect({
               <Input
                 type="search"
                 autoComplete="off"
-                placeholder="Tìm theo prefix-title…"
+                placeholder="Search by prefix-title…"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="h-9 border-border/80 bg-muted/30 pl-8 text-sm"
@@ -192,8 +192,8 @@ export function RuleLinkedFeatureSelect({
             ) : filteredFeatures.length === 0 ? (
               <p className="px-2 py-6 text-center text-xs text-muted-foreground">
                 {search.trim()
-                  ? "Không có feature khớp."
-                  : "Chưa có feature trong dự án."}
+                  ? "No matching features."
+                  : "No features in this project yet."}
               </p>
             ) : (
               <ul className="space-y-0.5">
@@ -237,7 +237,7 @@ export function RuleLinkedFeatureSelect({
 
       {!linkedId ? (
         <p className="text-xs text-muted-foreground">
-          Cuộn danh sách để tải thêm feature.
+          Scroll the list to load more features.
         </p>
       ) : null}
     </div>

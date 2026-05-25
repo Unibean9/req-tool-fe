@@ -71,11 +71,11 @@ function CreateFlowFormDialogBody({
     return (
       <div className="w-full min-w-0 py-2">
         <DialogHeader>
-          <DialogTitle className="text-lg">Thêm business flow actions?</DialogTitle>
+          <DialogTitle className="text-lg">Add business flow actions?</DialogTitle>
           <DialogDescription>
-            Đã tạo business flow{" "}
+            You have created the business flow{" "}
             <span className="font-medium text-foreground">{createdFlow.name}</span>
-            . Bạn có muốn khai báo các action (actor + rules) cho business flow này không?
+            . Do you want to declare the actions (actor + rules) for this business flow?
           </DialogDescription>
         </DialogHeader>
         <DialogFooter className="mt-6 flex-col gap-2 sm:flex-row sm:justify-end">
@@ -85,14 +85,14 @@ function CreateFlowFormDialogBody({
             className="w-full sm:w-auto"
             onClick={() => onOpenChange(false)}
           >
-            Bỏ qua
+            Skip
           </Button>
           <Button
             type="button"
             className="w-full sm:w-auto"
             onClick={() => onContinueToActions(createdFlow)}
           >
-            Tiếp tục
+            Continue
           </Button>
         </DialogFooter>
       </div>
@@ -124,7 +124,7 @@ function CreateFlowFormDialogBody({
           Hủy
         </Button>
         <Button type="submit" disabled={!canSubmitFields}>
-          {pendingFields ? "Đang tạo…" : "Tạo business flow"}
+          {pendingFields ? "Creating…" : "Create business flow"}
         </Button>
       </DialogFooter>
     </form>

@@ -92,12 +92,12 @@ function NfrFormDialogBody({
     <form onSubmit={handleSubmit}>
       <DialogHeader>
         <DialogTitle className="text-lg">
-          {isEdit ? "Chỉnh sửa NFR" : "Thêm NFR"}
+          {isEdit ? "Edit NFR" : "Add NFR"}
         </DialogTitle>
         <DialogDescription>
           {isEdit
-            ? "Cập nhật loại, độ ưu tiên, mô tả và feature liên kết."
-            : "Ghi nhận yêu cầu phi chức năng (hiệu năng, bảo mật, …) cho dự án."}
+            ? "Update the category, priority, description, and linked features."
+            : "Record a NFR (performance, security, …) for the project."}
         </DialogDescription>
       </DialogHeader>
 
@@ -117,10 +117,10 @@ function NfrFormDialogBody({
           disabled={pending}
           onClick={() => onOpenChange(false)}
         >
-          Hủy
+          Cancel
         </Button>
         <Button type="submit" className="font-semibold" disabled={!canSubmit}>
-          {pending ? "Đang lưu…" : isEdit ? "Lưu" : "Tạo NFR"}
+          {pending ? "Saving…" : isEdit ? "Save" : "Create NFR"}
         </Button>
       </DialogFooter>
     </form>

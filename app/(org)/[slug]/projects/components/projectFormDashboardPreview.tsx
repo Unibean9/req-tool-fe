@@ -54,7 +54,7 @@ export function ProjectFormDashboardPreview({
             </p>
           ) : (
             <p className="text-sm italic text-muted-foreground">
-              Chưa có tóm tắt.
+              No summary yet.
             </p>
           )}
         </div>
@@ -67,35 +67,35 @@ export function ProjectFormDashboardPreview({
       </header>
 
       <div className={DASHBOARD_PAIR_ROW_CLASS}>
-        <ProjectDashboardSection title="Mô tả" accent="violet">
+        <ProjectDashboardSection title="Description" accent="violet">
           {description ? (
             <ProjectDashboardProse>{description}</ProjectDashboardProse>
           ) : (
-            <EmptyHint>Chưa có mô tả chi tiết.</EmptyHint>
+            <EmptyHint>No description yet.</EmptyHint>
           )}
         </ProjectDashboardSection>
 
-        <ProjectDashboardSection title="Ngữ cảnh" accent="sky">
+        <ProjectDashboardSection title="Context" accent="sky">
           {context ? (
             <ProjectDashboardProse>{context}</ProjectDashboardProse>
           ) : (
-            <EmptyHint>Chưa có ngữ cảnh.</EmptyHint>
+            <EmptyHint>No context yet.</EmptyHint>
           )}
         </ProjectDashboardSection>
       </div>
 
       <div className={DASHBOARD_PAIR_ROW_CLASS}>
-        <ProjectDashboardSection title="Vấn đề" accent="orange">
+        <ProjectDashboardSection title="Problems" accent="orange">
           <ProjectDashboardIndexedList
             items={problems}
-            emptyLabel="Chưa có vấn đề nào."
+            emptyLabel="No problems listed yet."
           />
         </ProjectDashboardSection>
 
-        <ProjectDashboardSection title="Giải pháp đề xuất" accent="fuchsia">
+        <ProjectDashboardSection title="Proposed solutions" accent="fuchsia">
           <ProjectDashboardIndexedList
             items={proposedSolutions}
-            emptyLabel="Chưa có đề xuất giải pháp."
+            emptyLabel="No proposed solutions yet."
           />
         </ProjectDashboardSection>
       </div>
@@ -107,7 +107,7 @@ export function ProjectFormDashboardPreview({
         {roiNotes ? (
           <ProjectDashboardProse>{roiNotes}</ProjectDashboardProse>
         ) : (
-          <EmptyHint>Chưa có mục đích kinh doanh.</EmptyHint>
+          <EmptyHint>No business purpose specified yet.</EmptyHint>
         )}
       </ProjectDashboardSection>
     </div>

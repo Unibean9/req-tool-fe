@@ -185,43 +185,43 @@ export function UserStoryDetailForm({
       <div className="min-w-0 space-y-4">
           <DetailTextField
             id="story-title"
-            label="Tiêu đề"
+            label="Title"
             value={draft.title}
             onChange={(title) => updateDraft({ title })}
             maxLength={REQ_TITLE_MAX_CHARS}
-            placeholder="VD: Đăng ký ca làm việc"
+            placeholder="e.g. Register for a work shift"
           />
           <DetailTextAreaField
             id="story-desc"
-            label="Mô tả"
+            label="Description"
             value={draft.description}
             onChange={(description) => updateDraft({ description })}
             maxLength={REQ_DESCRIPTION_MAX_CHARS}
             rows={3}
-            placeholder="Ngữ cảnh, ràng buộc hoặc ghi chú thêm…"
+            placeholder="Context, constraints, or additional notes…"
           />
           <DetailTextAreaField
             id="story-action"
-            label="Hành động (action_text)"
+            label="Action"
             value={draft.action_text}
             onChange={(action_text) => updateDraft({ action_text })}
             maxLength={REQ_ACTION_TEXT_MAX_CHARS}
             rows={2}
-            placeholder="VD: đăng ký ca làm việc trên tuần tới"
+            placeholder="e.g. register for a shift next week"
           />
           <DetailTextAreaField
             id="story-goal"
-            label="Mục tiêu (goal_text)"
+            label="Goal"
             value={draft.goal_text}
             onChange={(goal_text) => updateDraft({ goal_text })}
             maxLength={REQ_GOAL_TEXT_MAX_CHARS}
             rows={2}
-            placeholder="VD: quản lý được thời gian làm việc linh hoạt"
+            placeholder="e.g. manage their working hours flexibly"
           />
           <DetailFieldRow>
             <DetailStatusSelect
               id="story-status"
-              label="Trạng thái"
+              label="Status"
               value={draft.status}
               options={PANEL_EDITABLE_STATUSES}
               onChange={(status) => updateDraft({ status })}
@@ -229,7 +229,7 @@ export function UserStoryDetailForm({
             />
             <DetailPrioritySelect
               id="story-priority"
-              label="Độ ưu tiên"
+              label="Priority"
               value={draft.priority}
               options={STORY_PRIORITIES}
               onChange={(priority) => updateDraft({ priority })}
@@ -291,7 +291,7 @@ export function UserStoryDetailForm({
         >
           {criteria.length === 0 ? (
             <p className="rounded-xl border border-dashed border-border/80 bg-muted/20 px-3 py-5 text-center text-xs text-muted-foreground">
-              Chưa có tiêu chí. Bấm &quot;Thêm tiêu chí&quot; bên dưới.
+              No criteria yet. Click &quot;Add criterion&quot; below.
             </p>
           ) : null}
           <ul className="space-y-2">
@@ -299,7 +299,7 @@ export function UserStoryDetailForm({
               <li key={item.id} className="flex items-start gap-2">
                 <span
                   className="mt-2 flex size-6 shrink-0 items-center justify-center rounded-md border border-border bg-muted/50 text-[10px] font-medium tabular-nums text-muted-foreground"
-                  title="Thứ tự (order)"
+                  title="Order"
                 >
                   {item.order + 1}
                 </span>
@@ -315,7 +315,7 @@ export function UserStoryDetailForm({
                         ),
                       })
                     }
-                    placeholder={`Tiêu chí ${i + 1}`}
+                    placeholder={`Criterion ${i + 1}`}
                     className="border-border/80 bg-muted/30 text-sm"
                   />
                   <p className="text-[10px] tabular-nums text-muted-foreground">
@@ -327,7 +327,7 @@ export function UserStoryDetailForm({
                   variant="ghost"
                   size="icon-xs"
                   className="size-8 shrink-0"
-                  title="Xóa tiêu chí"
+                  title="Remove criterion"
                   onClick={() =>
                     setCriteria((prev) => prev.filter((_, j) => j !== i))
                   }
@@ -346,11 +346,11 @@ export function UserStoryDetailForm({
             onClick={addCriterion}
           >
             <Plus className="size-3.5" />
-            Thêm tiêu chí
+            Add criterion
           </Button>
           {!canAddCriterion ? (
             <p className="text-[11px] text-muted-foreground">
-              Đã đạt giới hạn {REQ_ACCEPTANCE_CRITERIA_MAX_COUNT} tiêu chí.
+              Reached the limit of {REQ_ACCEPTANCE_CRITERIA_MAX_COUNT} criteria.
             </p>
           ) : null}
         </DetailPanelSection>

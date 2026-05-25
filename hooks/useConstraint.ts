@@ -120,11 +120,11 @@ export function useCreateProjectConstraint(
     },
     onSuccess: (data, variables, onMutateResult, context) => {
       invalidateConstraintMutationCaches(queryClient, variables.projectId);
-      toast.success("Đã tạo constraint");
+      toast.success("Constraint created");
       userOnSuccess?.(data, variables, onMutateResult, context);
     },
     onError: (error, variables, onMutateResult, context) => {
-      toast.error(getApiErrorMessage(error, "Tạo constraint thất bại"));
+      toast.error(getApiErrorMessage(error, "Failed to create constraint"));
       userOnError?.(error, variables, onMutateResult, context);
     },
   });
@@ -159,11 +159,11 @@ export function useUpdateProjectConstraint(
     },
     onSuccess: (data, variables, onMutateResult, context) => {
       invalidateConstraintMutationCaches(queryClient, variables.projectId);
-      toast.success("Đã cập nhật constraint");
+      toast.success("Constraint updated");
       userOnSuccess?.(data, variables, onMutateResult, context);
     },
     onError: (error, variables, onMutateResult, context) => {
-      toast.error(getApiErrorMessage(error, "Cập nhật constraint thất bại"));
+      toast.error(getApiErrorMessage(error, "Failed to update constraint"));
       userOnError?.(error, variables, onMutateResult, context);
     },
   });
@@ -193,11 +193,11 @@ export function useDeleteProjectConstraint(
     },
     onSuccess: (data, variables, onMutateResult, context) => {
       invalidateConstraintMutationCaches(queryClient, variables.projectId);
-      toast.success("Đã xóa constraint");
+      toast.success("Constraint deleted");
       userOnSuccess?.(data, variables, onMutateResult, context);
     },
     onError: (error, variables, onMutateResult, context) => {
-      toast.error(getApiErrorMessage(error, "Xóa constraint thất bại"));
+      toast.error(getApiErrorMessage(error, "Failed to delete constraint"));
       userOnError?.(error, variables, onMutateResult, context);
     },
   });

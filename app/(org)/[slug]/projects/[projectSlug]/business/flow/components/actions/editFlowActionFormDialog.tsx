@@ -217,10 +217,10 @@ function EditFlowActionFormDialogLoaded({
     })();
   }
 
-  const title = isCreate ? "Tạo business flow actions" : "Sửa business flow actions";
+  const title = isCreate ? "Create business flow actions" : "Edit business flow actions";
   const descriptionLead = isCreate
-    ? "Thêm Actor Business và rule(s) cho các action của business flow "
-    : "Cập nhật Actor Business và rule(s) cho từng action của business flow ";
+    ? "Add Business Actor and rule(s) for the actions of business flow "
+    : "Update Business Actor and rule(s) for each action of business flow ";
   const completeCount = rows.filter(isFlowCatalogActionRowComplete).length;
 
   return (
@@ -249,7 +249,7 @@ function EditFlowActionFormDialogLoaded({
               </span>
               <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/25 bg-emerald-500/10 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 dark:text-emerald-300">
                 <CheckCircle2 className="size-3.5" aria-hidden />
-                {completeCount} đủ thông tin
+                {completeCount} complete
               </span>
               <span className="inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-background/60 px-2.5 py-1 text-[11px] font-semibold text-muted-foreground">
                 <UsersRound className="size-3.5" aria-hidden />
@@ -267,13 +267,13 @@ function EditFlowActionFormDialogLoaded({
             onClick={handleAddAction}
           >
             <Plus className="size-4" aria-hidden />
-            Thêm action
+            Add action
           </Button>
         </div>
       </DialogHeader>
 
       <div className="min-h-0 flex-1 pr-3">
-        <div className="h-full overflow-y-auto overscroll-y-contain pr-6 [-webkit-overflow-scrolling:touch] [scrollbar-gutter:stable]">
+        <div className="h-full overflow-y-auto overscroll-y-contain pr-6 [-webkit-overflow-scrolling:touch] scrollbar-gutter-stable">
           <FlowCatalogActionRowsEditor
             rows={rows}
             onChange={setRows}
@@ -300,10 +300,10 @@ function EditFlowActionFormDialogLoaded({
           onClick={() => onOpenChange(false)}
           disabled={pending}
         >
-          Hủy
+          Cancel
         </Button>
         <Button type="submit" disabled={!canSubmit} aria-busy={pending}>
-          {isCreate ? "Tạo actions" : "Lưu actions"}
+          {isCreate ? "Create actions" : "Save actions"}
         </Button>
       </DialogFooter>
     </form>
@@ -347,9 +347,9 @@ function EditFlowActionFormDialogBody({
     return (
       <>
         <DialogHeader className="shrink-0 space-y-1">
-          <DialogTitle className="text-lg">Sửa business flow actions</DialogTitle>
+          <DialogTitle className="text-lg">Edit business flow actions</DialogTitle>
           <DialogDescription>
-            Đang tải chi tiết business flow{" "}
+            Loading business flow details for{" "}
             <span className="font-medium text-foreground">{flow.name}</span>…
           </DialogDescription>
         </DialogHeader>
@@ -361,10 +361,10 @@ function EditFlowActionFormDialogBody({
         </div>
         <DialogFooter className="mt-2 shrink-0 gap-2 sm:justify-end">
           <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-            Hủy
+            Cancel
           </Button>
           <Button type="button" disabled>
-            Đang tải…
+            Loading…
           </Button>
         </DialogFooter>
       </>
@@ -375,9 +375,9 @@ function EditFlowActionFormDialogBody({
     return (
       <>
         <DialogHeader className="shrink-0 space-y-1">
-          <DialogTitle className="text-lg">Sửa business flow actions</DialogTitle>
+          <DialogTitle className="text-lg">Edit business flow actions</DialogTitle>
           <DialogDescription>
-            Không tải được chi tiết business flow{" "}
+            Failed to load business flow details{" "}
             <span className="font-medium text-foreground">{flow.name}</span>.
           </DialogDescription>
         </DialogHeader>
@@ -386,7 +386,7 @@ function EditFlowActionFormDialogBody({
             <p className="text-sm text-destructive">
               {flowErrorObj instanceof Error
                 ? flowErrorObj.message
-                : "Không tải được chi tiết business flow."}
+                : "Failed to load business flow details."}
             </p>
             <Button
               type="button"
@@ -395,13 +395,13 @@ function EditFlowActionFormDialogBody({
               className="mt-3"
               onClick={() => void refetch()}
             >
-              Thử lại
+              Retry
             </Button>
           </div>
         </div>
         <DialogFooter className="mt-2 shrink-0 gap-2 sm:justify-end">
           <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-            Đóng
+            Close
           </Button>
         </DialogFooter>
       </>

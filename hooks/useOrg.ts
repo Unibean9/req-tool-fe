@@ -90,17 +90,17 @@ export function useCreateOrg(
     mutationFn: async (body: CreateOrgRequest): Promise<CreateOrgResponse> => {
       const result = await fetchOrg.create({ name: body.name.trim() });
       if (!result.success) {
-        throw new Error(result.message ?? "Tạo tổ chức thất bại");
+        throw new Error(result.message ?? "Failed to create organization");
       }
       return result;
     },
     onSuccess: (data, variables, onMutateResult, context) => {
       void queryClient.invalidateQueries({ queryKey: queryKeys.orgs.me() });
-      toast.success("Tạo tổ chức thành công");
+      toast.success("Organization created");
       userOnSuccess?.(data, variables, onMutateResult, context);
     },
     onError: (error, variables, onMutateResult, context) => {
-      toast.error(getApiErrorMessage(error, "Tạo tổ chức thất bại"));
+      toast.error(getApiErrorMessage(error, "Failed to create organization"));
       userOnError?.(error, variables, onMutateResult, context);
     },
   });

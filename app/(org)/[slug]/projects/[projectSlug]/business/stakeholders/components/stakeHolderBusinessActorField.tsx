@@ -47,7 +47,7 @@ export function StakeHolderActorTypeField({
         disabled={disabled}
       >
         <SelectTrigger id={id} className="h-10 w-full text-sm">
-          <SelectValue placeholder="Chọn vai trò mô hình">
+          <SelectValue placeholder="Select model role">
             {ACTOR_TYPE_LABELS[value]}
           </SelectValue>
         </SelectTrigger>

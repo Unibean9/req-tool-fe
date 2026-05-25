@@ -54,11 +54,11 @@ export function ProjectNewStepBasics({
     <div className="flex flex-col gap-6">
       <div>
         <h2 className="font-heading text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
-          Thông tin dự án
+          Project basics
         </h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Tất cả trường bắt buộc — mỗi mô tả tối thiểu {PROJECT_MIN_TEXT_CHARS}{" "}
-          ký tự.
+          All fields are required — each description must be at least {PROJECT_MIN_TEXT_CHARS}{" "}
+          characters.
         </p>
       </div>
 
@@ -66,7 +66,7 @@ export function ProjectNewStepBasics({
         <div className="grid gap-2">
           <div className="flex items-center justify-between gap-2">
             <Label htmlFor="pn-name" className="text-sm font-semibold">
-              Tên dự án <span className="text-destructive">*</span>
+              Project name <span className="text-destructive">*</span>
             </Label>
             <span
               className="text-xs tabular-nums text-muted-foreground"
@@ -81,7 +81,7 @@ export function ProjectNewStepBasics({
               id="pn-name"
               autoComplete="off"
               aria-invalid={Boolean(nameError)}
-              placeholder="Nhập tên dự án…"
+              placeholder="Enter project name…"
               value={form.name}
               onChange={(e) =>
                 onPatch({
@@ -102,7 +102,7 @@ export function ProjectNewStepBasics({
         <div className="grid gap-2">
           <div className="flex items-center justify-between gap-2">
             <Label htmlFor="pn-executive" className="text-sm font-semibold">
-              Tóm tắt <span className="text-destructive">*</span>
+              Executive summary <span className="text-destructive">*</span>
             </Label>
             <span
               className="text-xs tabular-nums text-muted-foreground"
@@ -119,7 +119,7 @@ export function ProjectNewStepBasics({
             <Textarea
               id="pn-executive"
               aria-invalid={Boolean(executiveError)}
-              placeholder="Tóm tắt ngắn cho stakeholder / ban lãnh đạo…"
+              placeholder="Short summary for stakeholders / leadership…"
               value={form.executiveSummary ?? ""}
               onChange={(e) =>
                 onPatch({
@@ -143,7 +143,7 @@ export function ProjectNewStepBasics({
         <div className="grid gap-2">
           <div className="flex items-center justify-between gap-2">
             <Label htmlFor="pn-desc" className="text-sm font-semibold">
-              Mô tả chi tiết <span className="text-destructive">*</span>
+              Detailed description <span className="text-destructive">*</span>
             </Label>
             <span
               className="text-xs tabular-nums text-muted-foreground"
@@ -156,7 +156,7 @@ export function ProjectNewStepBasics({
             <Textarea
               id="pn-desc"
               aria-invalid={Boolean(descriptionError)}
-              placeholder="Mô tả mục đích, phạm vi và đối tượng sử dụng của dự án…"
+              placeholder="Describe the project's purpose, scope, and intended audience…"
               value={form.description}
               onChange={(e) =>
                 onPatch({

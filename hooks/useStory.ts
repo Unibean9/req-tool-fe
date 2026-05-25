@@ -253,12 +253,12 @@ export function useDeleteUserStory(options?: UseDeleteUserStoryOptions) {
         );
       }
       if (showSuccessToast) {
-        toast.success("Đã xóa user story");
+        toast.success("User story deleted");
       }
       userOnSuccess?.(data, variables, onMutateResult, context);
     },
     onError: (error, variables, onMutateResult, context) => {
-      toast.error(getApiErrorMessage(error, "Xóa user story thất bại"));
+      toast.error(getApiErrorMessage(error, "Failed to delete user story"));
       userOnError?.(error, variables, onMutateResult, context);
     },
   });

@@ -35,7 +35,7 @@ function RequirementsModelWorkspace() {
     return (
       <div className="relative mt-4 flex min-h-105 flex-1 flex-col items-center justify-center gap-3 rounded-xl border border-border/80 p-6 sm:mt-6">
         <p className="max-w-md text-center text-sm text-muted-foreground">
-          {error?.message ?? "Không tải được mô hình yêu cầu."}
+          {error?.message ?? "Failed to load the requirements model."}
         </p>
         <Button type="button" variant="outline" size="sm" onClick={() => refetch()}>
           Thử lại
@@ -63,7 +63,7 @@ function RequirementsModelPageContent() {
           Mô hình yêu cầu · {actorMeta.name || "Actor"}
         </h1>
         <p className="max-w-2xl text-sm text-muted-foreground sm:text-base">
-          Tạo và quản lý mô hình yêu cầu cho actor
+          Create and manage the requirements model for this actor
         </p>
       </header>
 
@@ -97,7 +97,7 @@ export function RequirementsModelPageClient({ actorId }: { actorId: string }) {
     return (
       <div className={shellClassName}>
         <p className="text-sm text-muted-foreground">
-          Không xác định được dự án. Quay lại workspace và chọn lại dự án.
+          Project could not be determined. Go back to the workspace and select a project.
         </p>
       </div>
     );

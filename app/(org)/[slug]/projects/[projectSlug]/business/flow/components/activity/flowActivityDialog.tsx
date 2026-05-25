@@ -179,7 +179,7 @@ function FlowSwimlaneToolbar({
           disabled={pending}
           onClick={handleSaveLayout}
         >
-          {pending ? "Đang lưu…" : "Lưu layout"}
+          {pending ? "Saving…" : "Save layout"}
         </Button>
       </div>
     </div>
@@ -360,7 +360,7 @@ function FlowSwimlaneDialogBody({
       <div className="grid gap-3 py-2">
         <DialogHeader>
           <DialogTitle className="text-lg">Activity Diagram — {flowName}</DialogTitle>
-          <DialogDescription>Đang tải sơ đồ…</DialogDescription>
+          <DialogDescription>Loading diagram…</DialogDescription>
         </DialogHeader>
         <Skeleton className="h-12 w-full rounded-xl" />
         <Skeleton className="min-h-[50vh] w-full rounded-xl" />
@@ -373,10 +373,10 @@ function FlowSwimlaneDialogBody({
       <div className="grid gap-3 py-2">
         <DialogHeader>
           <DialogTitle className="text-lg">Activity Diagram — {flowName}</DialogTitle>
-          <DialogDescription>Không tải được flow.</DialogDescription>
+          <DialogDescription>Failed to load flow.</DialogDescription>
         </DialogHeader>
         <p className="text-sm text-destructive">
-          {error instanceof Error ? error.message : "Lỗi không xác định."}
+          {error instanceof Error ? error.message : "An unknown error occurred."}
         </p>
         <div className="flex flex-wrap gap-2">
           <Button type="button" variant="outline" size="sm" onClick={() => void refetch()}>
@@ -395,7 +395,7 @@ function FlowSwimlaneDialogBody({
       <DialogHeader className="shrink-0 space-y-1 pb-0">
         <DialogTitle className="text-lg">Activity Diagram — {flow.name}</DialogTitle>
         <DialogDescription>
-          Chỉnh layout activity diagram — chú thích góc trái; template business flow ở panel phải.
+          Edit the activity diagram layout — legend in the bottom left; business flow template in the right panel.
         </DialogDescription>
       </DialogHeader>
 

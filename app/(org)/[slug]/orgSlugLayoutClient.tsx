@@ -121,7 +121,7 @@ export function OrgSlugLayoutClient({
   if (!slug) {
     return (
       <div className="text-destructive p-6 text-sm">
-        Đường dẫn không hợp lệ.
+        Invalid path.
       </div>
     );
   }

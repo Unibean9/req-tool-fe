@@ -229,10 +229,10 @@ function setupProgressPercent(doneCount: number): number {
 }
 
 function setupProgressStatusLabel(percent: number): string {
-  if (percent === 100) return "Sẵn sàng";
-  if (percent >= 60) return "Gần xong";
-  if (percent > 0) return "Đang tiến hành";
-  return "Chưa bắt đầu";
+  if (percent === 100) return "Ready";
+  if (percent >= 60) return "Almost done";
+  if (percent > 0) return "In progress";
+  return "Not started";
 }
 
 function SetupProgressHoverPanel({
@@ -259,10 +259,10 @@ function SetupProgressHoverPanel({
         <div className="flex items-center justify-between gap-3">
           <div className="min-w-0 space-y-1">
             <p className="text-sm font-semibold tracking-tight text-foreground">
-              Tiến độ setup
+              Setup progress
             </p>
             <p className="text-xs leading-snug text-muted-foreground">
-              Theo dõi từng khu vực để hoàn thành cấu trúc dự án.
+              Track each area to complete the project structure.
             </p>
           </div>
           <div className="flex size-16 shrink-0 items-center justify-center rounded-full border border-primary/20 bg-primary/10">
@@ -348,7 +348,7 @@ function SetupProgressHoverPanel({
                               : "bg-muted text-muted-foreground"
                           )}
                         >
-                          {step.done ? "Hoàn thành" : "Chưa hoàn thành"}
+                          {step.done ? "Done" : "Pending"}
                         </span>
                       </Link>
                     </li>
@@ -407,7 +407,7 @@ function ProjectWorkspaceSetupProgress({
       <div className="mb-2.5 flex items-center justify-between gap-3">
         <div className="min-w-0">
           <span className="block text-xs font-semibold text-foreground">
-            Tiến độ setup
+            Setup progress
           </span>
           <span className="mt-0.5 block text-[10px] text-muted-foreground">
             {setupProgressStatusLabel(percent)}
@@ -453,7 +453,7 @@ function ProjectWorkspaceSetupProgress({
   if (isError) {
     return (
       <p className="px-1 pb-2 text-[11px] leading-snug text-muted-foreground">
-        Không tải được tiến độ setup.
+        Failed to load setup progress.
       </p>
     );
   }
@@ -584,7 +584,7 @@ function ProjectWorkspaceActorsNav({
   if (!projectId) {
     return (
       <p className="px-2 py-1.5 text-xs leading-snug text-muted-foreground">
-        Không tìm thấy dự án trong workspace này.
+        Project not found in this workspace.
       </p>
     );
   }
@@ -605,11 +605,11 @@ function ProjectWorkspaceActorsNav({
           </div>
         ) : isError ? (
           <p className="px-2 py-1.5 text-xs leading-snug text-muted-foreground">
-            Không tải được actors.
+            Failed to load actors.
           </p>
         ) : actors.length === 0 ? (
           <p className="px-2 py-1.5 text-xs leading-snug text-muted-foreground">
-            Chưa có actors.
+            No actors yet.
           </p>
         ) : (
           <ul className="list-none space-y-px py-0">
@@ -646,8 +646,8 @@ function ProjectWorkspaceActorsNav({
                         type="button"
                         variant="ghost"
                         size="icon"
-                        aria-label={`Chỉnh sửa actor ${actor.name}`}
-                        title="Chỉnh sửa"
+                        aria-label={`Edit actor ${actor.name}`}
+                        title="Edit"
                         disabled={actorRowBusy}
                         className="size-6 shrink-0 text-muted-foreground hover:bg-primary/10 hover:text-foreground"
                         onClick={() => setEditTarget(actor)}
@@ -658,8 +658,8 @@ function ProjectWorkspaceActorsNav({
                         type="button"
                         variant="ghost"
                         size="icon"
-                        aria-label={`Xóa actor ${actor.name}`}
-                        title="Xóa actor"
+                        aria-label={`Delete actor ${actor.name}`}
+                        title="Delete actor"
                         disabled={actorRowBusy}
                         className="size-6 shrink-0 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
                         onClick={() =>
@@ -732,8 +732,8 @@ function ProjectWorkspaceActorsSection({
               type="button"
               variant="ghost"
               size="icon"
-              aria-label="Thêm actor"
-              title="Thêm actor"
+              aria-label="Add actor"
+              title="Add actor"
               disabled={!canAdd}
               className="size-6 shrink-0 text-muted-foreground hover:text-foreground"
               onClick={() => setCreateDialogOpen(true)}
@@ -792,10 +792,10 @@ export function ProjectWorkspaceNavSidebar({
   const initials = userInitials(email, profile?.fullName ?? displayName);
   const avatarUrl = profile?.githubAvatarUrl?.trim() || null;
   const avatarAlt = displayName
-    ? `Ảnh đại diện — ${displayName}`
+    ? `Avatar — ${displayName}`
     : email
-      ? `Ảnh đại diện — ${email}`
-      : "Ảnh đại diện tài khoản";
+      ? `Avatar — ${email}`
+      : "Account avatar";
 
   const nav = useMemo(
     () => ({
@@ -816,28 +816,28 @@ export function ProjectWorkspaceNavSidebar({
           "flex h-full min-h-0 w-70 shrink-0 flex-col border-r border-border/60 bg-muted/20",
           className
         )}
-        aria-label="Điều hướng dự án"
+        aria-label="Project navigation"
       >
 
         <nav className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto overscroll-contain px-2 py-4 scrollbar-none [&::-webkit-scrollbar]:hidden">
           <div className="shrink-0 space-y-1">
-            <SidebarSectionTitle>Tổng quan</SidebarSectionTitle>
+            <SidebarSectionTitle>Overview</SidebarSectionTitle>
             <div className="space-y-1 px-0.5">
               <SidebarNavLink
                 href={nav.dashboard}
-                label="Tổng quan dự án"
+                label="Project overview"
                 icon={LayoutDashboard}
                 active={pathActive(pathname, nav.dashboard)}
               />
               <SidebarNavLink
                 href={nav.github}
-                label="Liên kết với Github"
+                label="Link to GitHub"
                 icon={Link2}
                 active={pathActive(pathname, nav.github)}
               />
               <SidebarNavLink
                 href={nav.members}
-                label="Thành viên (Tổ chức)"
+                label="Members (Organization)"
                 icon={Users}
                 active={pathActive(pathname, nav.members)}
               />
@@ -913,7 +913,7 @@ export function ProjectWorkspaceNavSidebar({
               </Avatar>
               <div className="min-w-0 flex-1 text-left">
                 <p className="truncate text-sm font-semibold text-foreground">
-                  {displayName || email || "Tài khoản"}
+                  {displayName || email || "Account"}
                 </p>
                 {orgFromList ? (
                   <p className="truncate text-xs text-muted-foreground">
@@ -928,7 +928,7 @@ export function ProjectWorkspaceNavSidebar({
               <DropdownMenuGroup>
                 <DropdownMenuLabel className="font-normal">
                   <span className="block truncate text-sm font-medium">
-                    {displayName || "Tài khoản"}
+                    {displayName || "Account"}
                   </span>
                   {email ? (
                     <span className="block truncate text-xs text-muted-foreground">
@@ -944,7 +944,7 @@ export function ProjectWorkspaceNavSidebar({
                 onClick={() => void logout()}
               >
                 <LogOut className="size-4" aria-hidden />
-                {isLoggingOut ? "Đang đăng xuất…" : "Đăng xuất"}
+                {isLoggingOut ? "Signing out…" : "Sign out"}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

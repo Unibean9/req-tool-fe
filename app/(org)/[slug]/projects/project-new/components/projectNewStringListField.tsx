@@ -24,11 +24,11 @@ export function ProjectNewStringListField({
   fieldKey,
   label,
   hint,
-  placeholder = "Nhập nội dung…",
+  placeholder = "Enter content…",
   items,
   onChange,
   disabled,
-  addLabel = "Thêm mục",
+  addLabel = "Add item",
   scrollable = false,
   visibleRows = PROJECT_STRING_LIST_DEFAULT_VISIBLE_ROWS,
   listViewportClassName,
@@ -50,10 +50,10 @@ export function ProjectNewStringListField({
   disabled?: boolean;
   addLabel?: string;
   scrollable?: boolean;
-  /** Số dòng hiển thị đủ trong khung (mặc định 7; mục 8+ scroll). */
+  /** Number of rows fully visible in the container (default 7; item 8+ scrolls). */
   visibleRows?: number;
   listViewportClassName?: string;
-  /** Ghi đè chiều cao vùng scroll (inline style). */
+  /** Override the scroll area height (inline style). */
   listViewportHeight?: string;
   addButtonInHeader?: boolean;
   showSubmitErrors?: boolean;
@@ -104,7 +104,7 @@ export function ProjectNewStringListField({
 
   const emptyList = (
     <p className="w-full px-3 py-4 text-center text-xs font-semibold text-muted-foreground">
-      Chưa có mục nào. Bấm &ldquo;{addLabel}&rdquo; để thêm.
+      No items yet. Click &ldquo;{addLabel}&rdquo; to add one.
     </p>
   );
 
@@ -138,7 +138,7 @@ export function ProjectNewStringListField({
                 size="icon-sm"
                 className="size-10 shrink-0 text-muted-foreground hover:text-destructive"
                 disabled={disabled}
-                aria-label={`Xóa ${label.toLowerCase()} ${index + 1}`}
+                aria-label={`Remove ${label.toLowerCase()} ${index + 1}`}
                 onClick={() => removeAt(index)}
               >
                 <Trash2 className="size-4" aria-hidden />

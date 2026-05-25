@@ -24,11 +24,11 @@ export function ProjectNewStepSolution({
     <div className="w-full space-y-6">
       <div>
         <h2 className="font-heading text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
-          Đề xuất giải pháp
+          Proposed solutions
         </h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Ngân sách và ít nhất một đề xuất — mỗi mục tối thiểu {PROJECT_MIN_TEXT_CHARS}{" "}
-          ký tự.
+          A budget and at least one proposal are required — each item must be at least {PROJECT_MIN_TEXT_CHARS}{" "}
+          characters.
         </p>
       </div>
 
@@ -44,14 +44,14 @@ export function ProjectNewStepSolution({
       <ProjectNewStringListField
         id="pn-solution"
         fieldKey="proposedSolutions"
-        label="Đề xuất giải pháp"
+        label="Proposed solutions"
         required
-        hint={`Một hoặc nhiều hướng xử lý — tối thiểu ${PROJECT_MIN_TEXT_CHARS} ký tự/mục`}
-        placeholder="Ví dụ: Tích hợp cổng thanh toán mới…"
+        hint={`One or more approaches — at least ${PROJECT_MIN_TEXT_CHARS} characters each`}
+        placeholder="E.g. Integrate a new payment gateway…"
         items={form.proposedSolutions}
         onChange={(proposedSolutions) => onPatch({ proposedSolutions })}
         disabled={disabled}
-        addLabel="Thêm đề xuất"
+        addLabel="Add proposal"
         addButtonInHeader
         showSubmitErrors={showSubmitErrors}
         errors={errors}

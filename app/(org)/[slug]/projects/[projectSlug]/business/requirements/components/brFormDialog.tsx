@@ -87,12 +87,12 @@ function BRFormDialogBody({
     <form onSubmit={handleSubmit}>
       <DialogHeader>
         <DialogTitle className="text-lg">
-          {isEdit ? "Chỉnh sửa business requirement" : "Thêm business requirement"}
+          {isEdit ? "Edit business requirement" : "Add business requirement"}
         </DialogTitle>
         <DialogDescription>
           {isEdit
-            ? "Cập nhật mô tả, priority hoặc mức độ critical."
-            : "Ghi lại một yêu cầu nghiệp vụ cốt lõi của dự án."}
+            ? "Update the description, priority, or criticality."
+            : "Document a core business requirement for the project."}
         </DialogDescription>
       </DialogHeader>
 
@@ -113,10 +113,10 @@ function BRFormDialogBody({
           disabled={pending}
           onClick={() => onOpenChange(false)}
         >
-          Hủy
+          Cancel
         </Button>
         <Button type="submit" className="font-semibold" disabled={!canSubmit}>
-          {pending ? "Đang lưu..." : isEdit ? "Lưu" : "Tạo"}
+          {pending ? "Saving…" : isEdit ? "Save" : "Create"}
         </Button>
       </DialogFooter>
     </form>

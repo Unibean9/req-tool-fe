@@ -154,7 +154,7 @@ export function useGithubOAuthPopupResult(redirectTo?: string) {
               ("data" in sample && typeof (sample as { data: unknown }).data === "object"))
           ) {
             console.warn(
-              "[GitHub OAuth] Bỏ qua postMessage — event.origin không khớp API.",
+              "[GitHub OAuth] Skip postMessage — event.origin does not match API.",
               { received: event.origin, expectedApiOrigin: apiOrigin }
             );
           }
@@ -180,7 +180,7 @@ export function useGithubOAuthPopupResult(redirectTo?: string) {
       if (!tokens) {
         if (isDev) {
           console.warn(
-            "[GitHub OAuth] postMessage từ API nhưng không có token hợp lệ. Kiểm tra payload từ backend:",
+            "[GitHub OAuth] postMessage from API but no valid token. Check payload from backend:",
             top
           );
         }
@@ -192,7 +192,7 @@ export function useGithubOAuthPopupResult(redirectTo?: string) {
       setupAutoRefresh(tokens.accessToken, dispatch as AppDispatch);
       void queryClient.invalidateQueries({ queryKey: queryKeys.auth.all });
       void queryClient.invalidateQueries({ queryKey: queryKeys.orgs.me() });
-      toast.success("Đăng nhập GitHub thành công");
+      toast.success("GitHub login successful");
 
       void persistor.flush().finally(() => {
         navigateAfterOAuthLogin(postLoginTarget);

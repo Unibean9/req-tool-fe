@@ -87,12 +87,12 @@ function ConstraintFormDialogBody({
     <form onSubmit={handleSubmit}>
       <DialogHeader>
         <DialogTitle className="text-lg">
-          {isEdit ? "Chỉnh sửa constraint" : "Thêm constraint"}
+          {isEdit ? "Edit constraint" : "Add constraint"}
         </DialogTitle>
         <DialogDescription>
           {isEdit
-            ? "Cập nhật type, mức độ hoặc mô tả ràng buộc."
-            : "Ghi lại ràng buộc quan trọng để team kiểm soát scope, deadline và nguồn lực."}
+            ? "Update the type, severity, or description of the constraint."
+            : "Record an important constraint to help the team manage scope, deadlines, and resources."}
         </DialogDescription>
       </DialogHeader>
 
@@ -117,7 +117,7 @@ function ConstraintFormDialogBody({
           Hủy
         </Button>
         <Button type="submit" className="font-semibold" disabled={!canSubmit}>
-          {pending ? "Đang lưu..." : isEdit ? "Lưu" : "Tạo constraint"}
+          {pending ? "Saving…" : isEdit ? "Lưu" : "Create constraint"}
         </Button>
       </DialogFooter>
     </form>

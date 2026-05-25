@@ -108,7 +108,7 @@ function NfrListRow({
 
           <p className="min-h-14 min-w-0 break-words text-base leading-relaxed text-foreground [overflow-wrap:anywhere]">
             {description || (
-              <span className="text-muted-foreground italic">Chưa có mô tả.</span>
+              <span className="text-muted-foreground italic">No description.</span>
             )}
           </p>
         </div>
@@ -119,13 +119,13 @@ function NfrListRow({
           <span className="inline-flex items-center gap-1.5">
             <Link2 className="size-3.5 shrink-0" aria-hidden />
             {featureCount > 0
-              ? `${featureCount} feature liên kết`
-              : "Chưa liên kết feature"}
+              ? `${featureCount} linked feature(s)`
+              : "No linked features"}
           </span>
           {date ? (
             <span className="inline-flex items-center gap-1.5 tabular-nums">
               <History className="size-3.5 shrink-0" aria-hidden />
-              Cập nhật {date}
+              Updated {date}
             </span>
           ) : null}
         </div>
@@ -136,24 +136,24 @@ function NfrListRow({
             variant="outline"
             size="sm"
             className="h-8 gap-1.5 text-xs"
-            aria-label="Chỉnh sửa NFR"
+            aria-label="Edit NFR"
             disabled={rowBusy}
             onClick={onEdit}
           >
             <Pencil className="size-3.5" aria-hidden />
-            Sửa
+            Edit
           </Button>
           <Button
             type="button"
             variant="outline"
             size="sm"
             className="h-8 gap-1.5 text-xs text-muted-foreground hover:border-destructive/40 hover:bg-destructive/10 hover:text-destructive"
-            aria-label="Xóa NFR"
+            aria-label="Delete NFR"
             disabled={rowBusy}
             onClick={onDelete}
           >
             <Trash2 className="size-3.5" aria-hidden />
-            Xóa
+            Delete
           </Button>
         </div>
       </div>
@@ -216,7 +216,7 @@ export function NfrList({
   if (!projectId) {
     return (
       <p className="rounded-xl border border-border/70 bg-card/50 px-5 py-8 text-center text-sm text-muted-foreground">
-        Không tìm thấy dự án trong workspace này.
+        No project found in this workspace.
       </p>
     );
   }
@@ -242,7 +242,7 @@ export function NfrList({
         <p className="text-sm text-destructive">
           {error instanceof Error
             ? error.message
-            : "Không tải được danh sách NFR."}
+            : "Failed to load the NFRs."}
         </p>
         <Button
           type="button"
@@ -251,7 +251,7 @@ export function NfrList({
           className="mt-4"
           onClick={() => void refetch()}
         >
-          Thử lại
+          Retry
         </Button>
       </div>
     );
@@ -274,12 +274,12 @@ export function NfrList({
         </span>
         <div className="space-y-1">
           <p className="text-sm font-medium text-foreground">
-            {hasServerFilters ? "Không có NFR phù hợp bộ lọc" : "Chưa có NFR"}
+            {hasServerFilters ? "No NFRs match the current filters" : "No NFRs yet"}
           </p>
           <p className="text-sm text-muted-foreground">
             {hasServerFilters
-              ? "Thử đổi category hoặc priority, hoặc xóa bộ lọc."
-              : 'Dùng nút "Thêm NFR" để bắt đầu.'}
+              ? "Try changing the category or priority, or clear the filters."
+              : 'Use the "Add NFR" button to get started.'}
           </p>
         </div>
       </div>
@@ -294,7 +294,7 @@ export function NfrList({
           className
         )}
       >
-        Không có kết quả cho &quot;{search.trim()}&quot;.
+        No results for &quot;{search.trim()}&quot;.
       </p>
     );
   }
@@ -307,7 +307,7 @@ export function NfrList({
           className
         )}
        
-        aria-label="Danh sách NFR"
+        aria-label="NFR list"
       >
         {filtered.map((row) => (
           <li key={row.id} className="flex min-w-0">

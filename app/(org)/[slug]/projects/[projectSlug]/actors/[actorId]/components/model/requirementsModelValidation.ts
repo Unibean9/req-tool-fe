@@ -24,7 +24,7 @@ export function validateRequirementConnection(
   const source = nodes.find((n) => n.id === sourceId);
   const target = nodes.find((n) => n.id === targetId);
   if (!source || !target) {
-    return { valid: false, message: "Không tìm thấy node." };
+    return { valid: false, message: "Node not found." };
   }
   const valid = isValidRequirementConnection(
     source.data.kind,
@@ -34,7 +34,7 @@ export function validateRequirementConnection(
     if (source.data.kind === "userStory" && target.data.kind === "epic") {
       return {
         valid: false,
-        message: "User Story phải thuộc về một Feature.",
+        message: "A User Story must belong to a Feature.",
       };
     }
     return { valid: false, message: INVALID_EDGE_MESSAGE };

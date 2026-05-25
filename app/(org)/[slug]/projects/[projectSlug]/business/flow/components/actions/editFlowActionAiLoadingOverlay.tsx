@@ -79,7 +79,7 @@ export function EditFlowActionAiLoadingOverlay({
                   id="flow-action-ai-overlay-desc"
                   className="text-sm leading-relaxed text-muted-foreground"
                 >
-                  AI đang đồng bộ activity diagram. Vui lòng chờ vài giây.
+                  AI is syncing the activity diagram. Please wait a few seconds.
                 </p>
                 <div className="flow-action-ai-title-rail" aria-hidden>
                   <span />

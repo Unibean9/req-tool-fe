@@ -262,13 +262,13 @@ export function FlowCatalogActionRowsEditor({
 
     if (droppedCount > 0) {
       toast.message(
-        `Chỉ thêm được tối đa ${FLOW_MAX_CATALOG_ACTIONS} action`,
+        `Maximum of ${FLOW_MAX_CATALOG_ACTIONS} action`,
         {
-          description: `${droppedCount} dòng bị bỏ qua.`,
+          description: `${droppedCount} line(s) were dropped.`,
         }
       );
     } else {
-      toast.success(`Đã tách ${lines.length} action từ danh sách paste`);
+      toast.success(`Split into ${lines.length} actions from pasted list`);
     }
   }
 
@@ -291,8 +291,8 @@ export function FlowCatalogActionRowsEditor({
 
       {!loading && stakeholders.length === 0 ? (
         <p className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-950 dark:text-amber-100">
-          Chưa có stakeholder nào được đánh dấu business actor. Thêm hoặc bật
-          &quot;Business actor&quot; trong Stakeholders trước khi gán action.
+          No stakeholder is marked as business actor. Add or enable
+          &quot;Business actor&quot; in Stakeholders before assigning action.
         </p>
       ) : null}
 
@@ -336,7 +336,7 @@ export function FlowCatalogActionRowsEditor({
                 {rowComplete ? (
                   <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold text-emerald-300">
                     <CheckCircle2 className="size-3" aria-hidden />
-                    Đủ thông tin
+                    Complete information
                   </span>
                 ) : null}
               </span>
@@ -349,7 +349,7 @@ export function FlowCatalogActionRowsEditor({
                       size="icon"
                       className="size-8 shrink-0 text-muted-foreground"
                       disabled={disabled || index === 0}
-                      aria-label="Đưa action lên"
+                      aria-label="Move action up"
                       onClick={() => onChange(moveRow(rows, index, -1))}
                     >
                       <ChevronUp className="size-4" aria-hidden />
@@ -360,7 +360,7 @@ export function FlowCatalogActionRowsEditor({
                       size="icon"
                       className="size-8 shrink-0 text-muted-foreground"
                       disabled={disabled || index === rows.length - 1}
-                      aria-label="Đưa action xuống"
+                      aria-label="Move action down"
                       onClick={() => onChange(moveRow(rows, index, 1))}
                     >
                       <ChevronDown className="size-4" aria-hidden />
@@ -374,7 +374,7 @@ export function FlowCatalogActionRowsEditor({
                     size="icon"
                     className="size-8 shrink-0 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
                     disabled={disabled || deletingRowKey != null}
-                    aria-label={`Xóa action ${index + 1}`}
+                    aria-label={`Remove action ${index + 1}`}
                     onClick={() => removeRow(index)}
                   >
                     <X className="size-4" aria-hidden />
@@ -390,7 +390,7 @@ export function FlowCatalogActionRowsEditor({
                     htmlFor={`${idPrefix}-desc-${row.rowKey}`}
                     className="text-xs font-semibold text-muted-foreground"
                   >
-                    Mô tả action
+                    Action description
                   </Label>
                   <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
                     {row.description.length} / {FLOW_ACTION_DESCRIPTION_MAX_CHARS}
@@ -409,7 +409,7 @@ export function FlowCatalogActionRowsEditor({
                   }
                   onPaste={(e) => handleDescriptionPaste(index, e)}
                   disabled={disabled}
-                  placeholder="Mô tả bước… (paste nhiều dòng để tách action)"
+                  placeholder="Describe the action… (paste multiple lines to split into actions)"
                   className="h-10 min-w-0 border-border/80 bg-background/70"
                 />
               </div>
@@ -438,12 +438,12 @@ export function FlowCatalogActionRowsEditor({
                     <SelectValue>
                       {row.actorId.trim()
                         ? (stakeholders.find((s) => s.id === row.actorId)?.name ??
-                          "Đã chọn")
-                        : "Chọn actor…"}
+                          "Selected")
+                        : "Select actor…"}
                     </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value={ACTOR_NONE_VALUE}>Chọn actor…</SelectItem>
+                    <SelectItem value={ACTOR_NONE_VALUE}>Select actor…</SelectItem>
                     {stakeholders.map((s) => (
                       <SelectItem key={s.id} value={s.id}>
                         {s.name.trim() || s.id}
@@ -477,10 +477,10 @@ export function FlowCatalogActionRowsEditor({
                     />
                     <span className="min-w-0 flex-1 text-left text-sm">
                       {rules.length === 0
-                        ? "Chưa có rule trong project"
+                        ? "No rules in project"
                         : row.ruleIds.length === 0
-                          ? "Chọn rules…"
-                          : `${row.ruleIds.length} rule đã chọn`}
+                          ? "Select rules…"
+                          : `${row.ruleIds.length} rules selected`}
                     </span>
                   </Button>
                 )}
@@ -503,7 +503,7 @@ export function FlowCatalogActionRowsEditor({
           onClick={addRow}
         >
           <Plus className="size-4" aria-hidden />
-          Thêm action
+          Add action
         </Button>
       ) : null}
 

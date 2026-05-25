@@ -117,11 +117,11 @@ export function useCreateProjectGoal(
     },
     onSuccess: (data, variables, onMutateResult, context) => {
       invalidateGoalMutationCaches(queryClient, variables.projectId);
-      toast.success("Đã tạo goal");
+      toast.success("Goal created");
       userOnSuccess?.(data, variables, onMutateResult, context);
     },
     onError: (error, variables, onMutateResult, context) => {
-      toast.error(getApiErrorMessage(error, "Tạo goal thất bại"));
+      toast.error(getApiErrorMessage(error, "Failed to create goal"));
       userOnError?.(error, variables, onMutateResult, context);
     },
   });
@@ -156,11 +156,11 @@ export function useUpdateProjectGoal(
     },
     onSuccess: (data, variables, onMutateResult, context) => {
       invalidateGoalMutationCaches(queryClient, variables.projectId);
-      toast.success("Đã cập nhật goal");
+      toast.success("Goal updated");
       userOnSuccess?.(data, variables, onMutateResult, context);
     },
     onError: (error, variables, onMutateResult, context) => {
-      toast.error(getApiErrorMessage(error, "Cập nhật goal thất bại"));
+      toast.error(getApiErrorMessage(error, "Failed to update goal"));
       userOnError?.(error, variables, onMutateResult, context);
     },
   });
@@ -190,11 +190,11 @@ export function useDeleteProjectGoal(
     },
     onSuccess: (data, variables, onMutateResult, context) => {
       invalidateGoalMutationCaches(queryClient, variables.projectId);
-      toast.success("Đã xóa goal");
+      toast.success("Goal deleted");
       userOnSuccess?.(data, variables, onMutateResult, context);
     },
     onError: (error, variables, onMutateResult, context) => {
-      toast.error(getApiErrorMessage(error, "Xóa goal thất bại"));
+      toast.error(getApiErrorMessage(error, "Failed to delete goal"));
       userOnError?.(error, variables, onMutateResult, context);
     },
   });

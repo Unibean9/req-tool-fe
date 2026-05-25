@@ -35,27 +35,26 @@ export function DeleteOutOfScopeDialog({
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent className="sm:max-w-sm">
         <AlertDialogHeader>
-          <AlertDialogTitle>Xóa mục out-of-scope?</AlertDialogTitle>
+          <AlertDialogTitle>Delete out-of-scope item?</AlertDialogTitle>
           <AlertDialogDescription>
             {target ? (
               <>
-                Mục{" "}
                 <span className="font-medium text-foreground">
                   «{target.preview}»
                 </span>{" "}
-                sẽ bị xóa khỏi dự án. Bạn không thể hoàn tác thao tác này.
+                will be permanently removed from the project. This action cannot be undone.
               </>
             ) : null}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={deletePending}>Hủy</AlertDialogCancel>
+          <AlertDialogCancel disabled={deletePending}>Cancel</AlertDialogCancel>
           <AlertDialogAction
             variant="destructive"
             disabled={deletePending || !target}
             onClick={() => void onConfirmDelete()}
           >
-            {deletePending ? "Đang xóa..." : "Xóa"}
+            {deletePending ? "Deleting…" : "Delete"}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

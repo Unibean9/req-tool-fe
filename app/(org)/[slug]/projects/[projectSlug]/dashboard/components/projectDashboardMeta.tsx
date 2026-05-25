@@ -88,7 +88,7 @@ export function ProjectDashboardMeta({
     >
       {start ? (
         <ProjectDashboardMetaItem
-          label="Bắt đầu"
+          label="Start Date"
           value={start}
           icon={CalendarArrowUp}
           accent="mint"
@@ -96,7 +96,7 @@ export function ProjectDashboardMeta({
       ) : null}
       {end ? (
         <ProjectDashboardMetaItem
-          label="Kết thúc"
+          label="End Date"
           value={end}
           icon={CalendarArrowDown}
           accent="sky"
@@ -104,11 +104,11 @@ export function ProjectDashboardMeta({
       ) : null}
       {hasBudget ? (
         <ProjectDashboardMetaItem
-          label="Ngân sách"
+          label="Budget"
           value={amount}
           icon={Coins}
           accent="amber"
-          suffix="VNĐ"
+          suffix="VND"
         />
       ) : null}
     </div>

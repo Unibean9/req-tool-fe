@@ -238,7 +238,7 @@ function OrgAccountDropdownMenu({
 
         <div className="px-2 pt-2 pb-1">
           <p className="px-1 pb-1.5 text-xs font-medium text-muted-foreground">
-            Tổ chức
+            Organizations
           </p>
           <div className="relative">
             <Search
@@ -250,14 +250,14 @@ function OrgAccountDropdownMenu({
               type="text"
               inputMode="search"
               autoComplete="off"
-              placeholder="Tìm tổ chức…"
+              placeholder="Search organizations…"
               value={orgMenuQuery}
               onChange={(e) => setOrgMenuQuery(e.target.value)}
               onKeyDown={(e) => {
                 e.stopPropagation();
               }}
               className="h-9 border-border/80 bg-muted/50 pr-2 pl-9 text-sm shadow-none"
-              aria-label="Tìm tổ chức"
+              aria-label="Search organizations"
             />
           </div>
         </div>
@@ -277,8 +277,8 @@ function OrgAccountDropdownMenu({
           ) : filteredOrgs.length === 0 ? (
             <p className="px-2 py-2 text-center text-xs text-muted-foreground">
               {orgMenuQuery.trim()
-                ? "Không tìm thấy tổ chức."
-                : "Chưa có tổ chức nào."}
+                ? "No organizations found."
+                : "No organizations yet."}
             </p>
           ) : (
             filteredOrgs.map((org) => {
@@ -304,7 +304,7 @@ function OrgAccountDropdownMenu({
                       active ? "text-muted-foreground" : "text-foreground"
                     )}
                   >
-                    {isSwitching ? "Đang chuyển…" : org.name}
+                    {isSwitching ? "Switching…" : org.name}
                   </span>
                   {active ? (
                     <Check
@@ -326,7 +326,7 @@ function OrgAccountDropdownMenu({
             onClick={() => setCreateOrgOpen(true)}
           >
             <Plus className="size-4 text-muted-foreground" aria-hidden />
-            Tạo tổ chức
+            Create organization
           </DropdownMenuItem>
         </div>
 
@@ -341,7 +341,7 @@ function OrgAccountDropdownMenu({
               onClick={() => void logout()}
             >
               <LogOut className="size-4" />
-              {isLoggingOut ? "Đang đăng xuất…" : "Đăng xuất"}
+              {isLoggingOut ? "Logging out…" : "Logout"}
             </DropdownMenuItem>
           </DropdownMenuGroup>
         </div>
@@ -406,7 +406,7 @@ function OrgWorkspaceMobileBottomNav({
         "fixed right-0 bottom-0 left-0 z-40 flex items-center gap-1 border-t border-border/70 bg-background/95 px-1 pt-1.5 pb-[max(0.5rem,env(safe-area-inset-bottom))] backdrop-blur-md supports-backdrop-filter:bg-background/90",
         className
       )}
-      aria-label="Điều hướng workspace"
+      aria-label="Workspace navigation"
     >
       <Link
         href="/"
@@ -428,13 +428,13 @@ function OrgWorkspaceMobileBottomNav({
         <div className="flex min-w-0 flex-1 items-stretch justify-around gap-0.5 overflow-x-auto overscroll-x-contain [-ms-overflow-style:none] scrollbar-none [&::-webkit-scrollbar]:hidden">
           <OrgMobileTabLink
             href={`/${encodeURIComponent(orgSlug!)}/projects`}
-            label="Dự án"
+            label="Projects"
             icon={FolderKanban}
             active={isProjectsTab}
           />
           <OrgMobileTabLink
             href={`/${encodeURIComponent(orgSlug!)}/members`}
-            label="Thành viên"
+            label="Members"
             icon={Users}
             active={isMembersTab}
           />
@@ -500,10 +500,10 @@ export function OrgAppHeader({ className }: { className?: string }) {
   const initials = userInitials(email, profile?.fullName ?? displayName);
   const avatarUrl = profile?.githubAvatarUrl?.trim() || null;
   const avatarAlt = displayName
-    ? `Ảnh đại diện — ${displayName}`
+    ? `Avatar — ${displayName}`
     : email
-      ? `Ảnh đại diện — ${email}`
-      : "Ảnh đại diện tài khoản";
+      ? `Avatar — ${email}`
+      : "Account avatar";
 
   const pathname = usePathname() ?? "";
   const segments = pathname.split("/").filter(Boolean);
@@ -649,16 +649,16 @@ export function OrgAppHeader({ className }: { className?: string }) {
                   <LayoutGroup id="org-header-tabs">
                     <nav
                       className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 sm:gap-x-4"
-                      aria-label="Khu vực làm việc tổ chức"
+                      aria-label="Organization workspace"
                     >
                       <OrgWorkspaceTab
                         href={`/${encodeURIComponent(orgSlug)}/projects`}
-                        label="Dự án"
+                        label="Projects"
                         active={isProjectsTab}
                       />
                       <OrgWorkspaceTab
                         href={`/${encodeURIComponent(orgSlug)}/members`}
-                        label="Thành viên"
+                        label="Members"
                         active={isMembersTab}
                       />
                     </nav>

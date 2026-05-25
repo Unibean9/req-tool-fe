@@ -133,7 +133,7 @@ function OrgMembersFlowInner({
     const { nodes: built } = buildOrgMembersFlowGraph(ownerId, members);
     const stored = readOrgMembersStoredPositions(orgId);
     setNodes(mergeStoredNodePositions(built, stored));
-    // graphKey = orgId + membership — chỉ reset layout khi cấu trúc đổi, không khi refetch cùng dữ liệu.
+    // graphKey = orgId + membership — only reset layout when the structure changes, not when refetching the same data.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [graphKey, setNodes]);
 
@@ -213,17 +213,17 @@ export function Members() {
       <div className={cn(membersPageOuterClassName, "overflow-y-auto")}>
         <MemberHeader />
         <Alert className="mt-4 shrink-0 sm:mt-6" variant="destructive">
-          <AlertTitle>Không tải được danh sách thành viên</AlertTitle>
+          <AlertTitle>Failed to load members</AlertTitle>
           <AlertDescription className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <span>
-              {error instanceof Error ? error.message : "Đã có lỗi xảy ra."}
+              {error instanceof Error ? error.message : "An error occurred."}
             </span>
             <button
               type="button"
               onClick={() => void refetch()}
               className="shrink-0 rounded-lg border border-border bg-card px-3 py-1.5 text-sm font-medium text-foreground hover:bg-accent"
             >
-              Thử lại
+              Try again
             </button>
           </AlertDescription>
         </Alert>

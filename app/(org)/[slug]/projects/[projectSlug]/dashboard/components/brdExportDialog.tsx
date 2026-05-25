@@ -240,7 +240,7 @@ function ScanOverlay({ visible }: { visible: boolean }) {
                 transition={{ duration: 2.6, repeat: Infinity, ease: "easeInOut" }}
               >
                 <span className="text-[11px] font-medium tracking-wide text-primary">
-                  Đang vẽ PDF…
+                  Generating PDF…
                 </span>
               </motion.div>
             </motion.div>
@@ -360,7 +360,7 @@ export function BrdExportDialog({
               disabled={loading || !markdown}
             >
               <Download className="size-3" />
-              Tải .md
+              Download .md
             </Button>
             <Button
               variant="outline"
@@ -370,7 +370,7 @@ export function BrdExportDialog({
               disabled={converting || loading || !markdown}
             >
               <Download className="size-3" />
-              Tải .pdf
+              Download .pdf
             </Button>
             <DialogClose
               render={
@@ -393,7 +393,7 @@ export function BrdExportDialog({
                       strokeLinecap="round"
                     />
                   </svg>
-                  <span className="sr-only">Đóng</span>
+                  <span className="sr-only">Close</span>
                 </button>
               }
             />
@@ -412,7 +412,7 @@ export function BrdExportDialog({
                 )}
               />
               <span className="text-[11px] font-medium text-muted-foreground">
-                {loading ? "Đang tải nội dung…" : "Markdown"}
+                {loading ? "Loading content…" : "Markdown"}
               </span>
             </div>
             <ScrollArea className="min-h-0 flex-1">
@@ -449,7 +449,7 @@ export function BrdExportDialog({
               )}
               whileTap={!converting ? { scale: 0.88 } : undefined}
               whileHover={!converting ? { scale: 1.08 } : undefined}
-              title={pdfUrl ? "Tạo lại PDF" : "Tạo PDF"}
+              title={pdfUrl ? "Regenerate PDF" : "Generate PDF"}
             >
               <AnimatePresence mode="wait" initial={false}>
                 {converting ? (
@@ -485,7 +485,7 @@ export function BrdExportDialog({
               className="select-none text-[10px] leading-snug text-muted-foreground"
               style={{ writingMode: "vertical-lr" }}
             >
-              {converting ? "Đang tạo…" : pdfUrl ? "Tạo lại" : "Tạo PDF"}
+              {converting ? "Generating…" : pdfUrl ? "Regenerate" : "Generate PDF"}
             </span>
           </div>
 
@@ -516,8 +516,8 @@ export function BrdExportDialog({
                     <FileText className="size-7 opacity-20" />
                   </div>
                   <div className="text-center">
-                    <p className="text-sm font-medium">Chưa có PDF</p>
-                    <p className="mt-1 text-xs opacity-60">Nhấn nút → để tạo PDF từ nội dung markdown</p>
+                    <p className="text-sm font-medium">No PDF yet</p>
+                    <p className="mt-1 text-xs opacity-60">Click the → button to generate a PDF from the markdown content</p>
                   </div>
                 </div>
               )}

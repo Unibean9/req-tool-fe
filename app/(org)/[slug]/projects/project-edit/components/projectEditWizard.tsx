@@ -187,7 +187,7 @@ export function ProjectEditWizard({
         open={previewOpen}
         onOpenChange={setPreviewOpen}
         form={wizardForm}
-        description="Tóm tắt thông tin trước khi lưu — bố cục giống trang tổng quan dự án."
+        description="A summary of your changes before saving — laid out like the project dashboard."
       />
     </div>
   );

@@ -20,8 +20,8 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug, projectSlug } = await params;
   return buildPageMetadata({
-    title: "Workspace dự án",
-    description: "Không gian làm việc dự án trên Requirements | Bean9.",
+    title: "Project workspace",
+    description: "Project workspace on Requirements | Bean9.",
     path: `/${segmentForPath(slug)}/projects/${segmentForPath(projectSlug)}`,
     noindex: true,
   });

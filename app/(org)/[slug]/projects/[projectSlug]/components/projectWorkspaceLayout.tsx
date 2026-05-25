@@ -36,7 +36,7 @@ const PROJECT_RAIL_GRADIENTS = [
   "from-sky-400 to-blue-700",
 ] as const;
 
-/** Chỉ animate scale — bo góc tròn ↔ vuông đổi tức thì khi hover/active. */
+/** Only animate scale — round ↔ square instantly when hover/active. */
 const RAIL_ICON_SCALE_MOTION =
   "transition-transform duration-200 ease-out will-change-transform";
 
@@ -239,10 +239,10 @@ export function ProjectWorkspaceLayout({
   return (
     <ProjectWorkspaceNavProvider value={{ navigateAfterProjectDelete }}>
     <div className="flex h-full min-h-0 w-full flex-1 flex-row overflow-hidden bg-background">
-      {/* Rail 1 — danh sách dự án (kiểu Discord) */}
+      {/* Rail 1 — project list (Discord style) */}
       <aside
         className="flex w-21 shrink-0 flex-col items-center bg-sidebar py-3"
-        aria-label="Tổ chức và dự án"
+        aria-label="Organization and projects"
       >
         <ProjectWorkspaceOrgRailSwitcher />
 
@@ -289,8 +289,8 @@ export function ProjectWorkspaceLayout({
 
         <Link
           href={newProjectHref}
-          title="Thêm dự án"
-          aria-label="Thêm dự án"
+          title="Add project"
+          aria-label="Add project"
           className={cn(
             RAIL_ICON_SCALE_MOTION,
             "group/add flex size-12 shrink-0 scale-100 items-center justify-center rounded-full bg-muted/50 text-primary outline-none active:scale-[0.96] focus-visible:ring-2 focus-visible:ring-ring/50 hover:scale-[1.06] hover:rounded-2xl hover:bg-primary hover:text-primary-foreground"

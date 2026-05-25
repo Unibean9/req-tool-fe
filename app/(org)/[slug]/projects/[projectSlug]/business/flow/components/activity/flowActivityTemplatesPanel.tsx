@@ -191,7 +191,7 @@ function formatTemplateMarkdownCopy(template: ProjectFlowTemplate): string {
 
   const steps = sortedTemplateSteps(template);
   if (steps.length === 0) {
-    lines.push("_Chưa có bước._");
+    lines.push("_No steps._");
   } else {
     steps.forEach((step, index) => {
       const actorLabel = resolveActorLabel(template, step.actor);
@@ -228,15 +228,15 @@ function formatTemplateMarkdownCopy(template: ProjectFlowTemplate): string {
 async function copyTemplateMarkdown(template: ProjectFlowTemplate) {
   const steps = sortedTemplateSteps(template);
   if (steps.length === 0 && template.actors.length === 0) {
-    toast.message("Template chưa có nội dung để copy");
+    toast.message("Template has no content to copy");
     return;
   }
   const text = formatTemplateMarkdownCopy(template);
   try {
     await navigator.clipboard.writeText(text);
-    toast.success("Đã copy markdown template");
+    toast.success("Markdown template copied");
   } catch {
-    toast.error("Không copy được — thử lại hoặc cấp quyền clipboard");
+    toast.error("Copy failed — try again or grant clipboard permission");
   }
 }
 
@@ -319,7 +319,7 @@ function FlowTemplateStepRow({
             )}
             aria-expanded={rulesOpen}
             aria-controls={`${stepKey}-rules`}
-            aria-label={`Bước ${step.step}: ${step.description.trim() || "—"} — ${ruleLabels.length} rule, ${rulesOpen ? "thu gọn" : "mở"} danh sách`}
+            aria-label={`Step ${step.step}: ${step.description.trim() || "—"} — ${ruleLabels.length} rule, ${rulesOpen ? "collapse" : "expand"} list`}
           >
             <span
               className={cn(
@@ -435,7 +435,7 @@ function FlowSwimlaneTemplateRow({
         >
           <div className="flex w-full items-center justify-between gap-2">
             <span className="rounded-md border border-border/70 bg-muted/50 px-2 py-0.5 font-mono text-[10px] font-medium text-muted-foreground">
-              {template.code || "—"} · {steps.length} bước
+              {template.code || "—"} · {steps.length} steps
             </span>
             <ChevronDown
               className={cn(
@@ -446,7 +446,7 @@ function FlowSwimlaneTemplateRow({
             />
           </div>
           <h3 className="text-left text-base font-bold tracking-tight text-foreground uppercase">
-            {template.name || "Template không tên"}
+            {template.name || "Unnamed template"}
           </h3>
         </CollapsibleTrigger>
         <Button
@@ -467,7 +467,7 @@ function FlowSwimlaneTemplateRow({
           {template.actors.length > 0 ? (
             <div className="space-y-2">
               <p className="text-[10px] font-semibold tracking-[0.12em] text-muted-foreground uppercase">
-                Actor
+                Business actor(s)
               </p>
               <div className="flex flex-wrap gap-1.5">
                 {template.actors.map((actor, index) => {
@@ -517,7 +517,7 @@ function FlowSwimlaneTemplateRow({
               })}
             </ol>
           ) : (
-            <p className="text-xs text-muted-foreground">Chưa có bước mô tả.</p>
+            <p className="text-xs text-muted-foreground">No step description.</p>
           )}
         </div>
       </CollapsibleContent>
@@ -548,8 +548,8 @@ export function FlowSwimlaneTemplatesPanel({
 
   const templates = data ?? [];
   const templateCountLabel = isPending
-    ? "Đang tải…"
-    : `${templates.length} mẫu`;
+    ? "Loading…"
+    : `${templates.length} templates`;
 
   return (
     <AnimatePresence mode="wait" initial={false}>
@@ -593,7 +593,7 @@ export function FlowSwimlaneTemplatesPanel({
                   variant="ghost"
                   size="icon-sm"
                   className="shrink-0 text-muted-foreground hover:text-foreground"
-                  aria-label="Đóng danh sách template"
+                  aria-label="Close template list"
                   onClick={() => setPanelOpen(false)}
                 >
                   <X className="size-4" aria-hidden />
@@ -608,7 +608,7 @@ export function FlowSwimlaneTemplatesPanel({
                 ) : isError ? (
                   <div className="space-y-2 py-4">
                     <p className="text-xs text-destructive">
-                      {getApiErrorMessage(error, "Không tải được template.")}
+                      {getApiErrorMessage(error, "Failed to load templates.")}
                     </p>
                     <Button
                       type="button"
@@ -625,12 +625,12 @@ export function FlowSwimlaneTemplatesPanel({
                         )}
                         aria-hidden
                       />
-                      Thử lại
+                      Retry
                     </Button>
                   </div>
                 ) : templates.length === 0 ? (
                   <p className="py-10 text-center text-xs text-muted-foreground">
-                    Chưa có template cho business flow này.
+                    No templates for this business flow.
                   </p>
                 ) : (
                   <div className="space-y-1">
@@ -668,7 +668,7 @@ export function FlowSwimlaneTemplatesPanel({
             variant="secondary"
             size="icon"
             className="h-11 w-10 rounded-r-none rounded-l-lg border border-border/90 border-r-0 bg-card/95 shadow-lg backdrop-blur-md"
-            aria-label="Mở danh sách template business flow"
+            aria-label="Open business flow template list"
             onClick={() => setPanelOpen(true)}
           >
             <ChevronLeft className="size-5" aria-hidden />

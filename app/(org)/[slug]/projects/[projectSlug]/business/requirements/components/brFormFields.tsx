@@ -14,9 +14,9 @@ import type { BRPriority } from "@/hooks/useBR";
 import { cn } from "@/lib/utils";
 
 export const BR_PRIORITY_FORM_LABELS: Record<BRPriority, string> = {
-  low: "Thấp",
-  medium: "Trung bình",
-  high: "Cao",
+  low: "Low",
+  medium: "Medium",
+  high: "High",
 };
 
 export type BRFormValues = {
@@ -61,20 +61,20 @@ export function BRFormFields({
   return (
     <>
       <div className="grid gap-2">
-        <Label htmlFor={descriptionId}>Mô tả</Label>
+        <Label htmlFor={descriptionId}>Description</Label>
         <Textarea
           id={descriptionId}
           value={values.description}
           onChange={(e) => onChange({ description: e.target.value })}
           disabled={disabled}
-          placeholder="Ví dụ: Hệ thống phải cho phép người dùng đăng ký tài khoản bằng email..."
+          placeholder="e.g. The system must allow users to register with their email..."
           className="min-h-28"
         />
       </div>
 
       <div className="grid grid-cols-2 gap-4">
         <div className="grid gap-2">
-          <Label htmlFor={priorityId}>Ưu tiên</Label>
+          <Label htmlFor={priorityId}>Priority</Label>
           <Select
             value={values.priority}
             onValueChange={(priority) =>
@@ -124,7 +124,7 @@ export function BRFormFields({
                     : "border-muted-foreground"
                 )}
               />
-              Có
+              Yes
             </button>
             <div className="w-px bg-border/80" />
             <button
@@ -147,7 +147,7 @@ export function BRFormFields({
                     : "border-muted-foreground"
                 )}
               />
-              Không
+              No
             </button>
           </div>
         </div>

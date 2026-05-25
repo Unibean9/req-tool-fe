@@ -19,7 +19,7 @@ export const OrgWorkspaceContext =
 export function useOrgWorkspace(): OrgWorkspaceContextValue {
   const ctx = useContext(OrgWorkspaceContext);
   if (!ctx) {
-    throw new Error("useOrgWorkspace chỉ dùng trong OrgSlugLayout.");
+    throw new Error("useOrgWorkspace must be used within OrgSlugLayout.");
   }
   return ctx;
 }

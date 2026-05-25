@@ -28,7 +28,7 @@ export function ProjectEditToolbar({
       )}
     >
       <p className="min-w-0 truncate text-sm text-muted-foreground lg:hidden">
-        {step?.title ?? ""} · Bước {currentStepIndex + 1}/{PROJECT_NEW_STEPS.length}
+        {step?.title ?? ""} · Step {currentStepIndex + 1}/{PROJECT_NEW_STEPS.length}
       </p>
       <div className="ml-auto flex shrink-0 items-center gap-2">
         <Button
@@ -39,7 +39,7 @@ export function ProjectEditToolbar({
           onClick={onPreview}
         >
           <Eye className="size-4" aria-hidden />
-          Xem trước
+          Preview
         </Button>
         <Button
           type="button"
@@ -49,7 +49,7 @@ export function ProjectEditToolbar({
           onClick={onExit}
         >
           <LogOut className="size-4" aria-hidden />
-          Thoát
+          Exit
         </Button>
       </div>
     </div>

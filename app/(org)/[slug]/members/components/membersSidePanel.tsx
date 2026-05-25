@@ -62,11 +62,11 @@ import {
 
 const PANEL_MOTION_EASE = [0.22, 1, 0.36, 1] as const;
 
-/** Khung viền — hai cột dùng chung để đồng bộ. */
+/** Border frame — shared by both columns for visual consistency. */
 const ADD_MEMBER_PANEL_FRAME_CLASS =
   "overflow-hidden rounded-lg border border-border/70";
 
-/** Vùng cuộn cố định chiều cao; nội dung dài scroll trong khung. */
+/** Fixed-height scroll area; long content scrolls within the frame. */
 const ADD_MEMBER_PANEL_SCROLL_CLASS =
   "h-[min(48vh,17.5rem)] overflow-y-auto overscroll-contain p-1.5";
 
@@ -156,8 +156,8 @@ function MembershipRow({
     labels.userId
   );
   const avatarAlt = labels.displayName
-    ? `Ảnh đại diện — ${labels.displayName}`
-    : "Ảnh đại diện";
+    ? `Avatar — ${labels.displayName}`
+    : "Avatar";
 
   return (
     <div
@@ -213,7 +213,7 @@ function MembershipRow({
           size="icon-sm"
           disabled={removeDisabled}
           className="shrink-0 text-destructive hover:bg-destructive/12 hover:text-destructive disabled:text-muted-foreground"
-          aria-label="Xóa khỏi tổ chức"
+          aria-label="Remove from organization"
           onClick={(e) => {
             e.stopPropagation();
             onRequestRemove();
@@ -233,8 +233,8 @@ type OrgMembersSidePanelProps = {
 };
 
 /**
- * Panel: danh sách `useOrgMembersScrollInfinity` (tìm `q` server + cuộn tải thêm); dialog thêm
- * thành viên dùng `useUserSearchInfiniteScroll` + chọn user + role mặc định member.
+ * Panel: member list via `useOrgMembersScrollInfinity` (server-side `q` search + scroll-to-load-more);
+ * add-member dialog uses `useUserSearchInfiniteScroll` + user selection + default role of member.
  */
 export function OrgMembersSidePanel({
   orgId,
@@ -319,21 +319,21 @@ export function OrgMembersSidePanel({
                 <div className="flex items-center justify-between gap-2">
                   <CardTitle className="flex min-w-0 flex-1 items-center gap-2 text-sm font-semibold">
                     <Users className="size-4 shrink-0 text-primary" aria-hidden />
-                    Danh sách
+                    Members
                   </CardTitle>
                   <Button
                     type="button"
                     variant="ghost"
                     size="icon-sm"
                     className="shrink-0 text-muted-foreground hover:text-foreground"
-                    aria-label="Đóng danh sách thành viên"
+                    aria-label="Close member list"
                     onClick={() => setPanelOpen(false)}
                   >
                     <X className="size-4" aria-hidden />
                   </Button>
                 </div>
                 <CardDescription className="text-xs">
-                  Nhóm trưởng và thành viên trong tổ chức.
+                  Team leads and members in this organization.
                 </CardDescription>
               </CardHeader>
 
@@ -345,7 +345,7 @@ export function OrgMembersSidePanel({
             />
             <Input
               type="search"
-              placeholder="Tìm theo tên hoặc email…"
+              placeholder="Search by name or email…"
               value={listSearch}
               onChange={(e) => setListSearch(e.target.value)}
               className="h-9 border-border/80 pr-3 pl-9 text-xs"
@@ -360,7 +360,7 @@ export function OrgMembersSidePanel({
             <div className="flex flex-col gap-4 pb-1">
               {membersLoadingFirst ? (
                 <p className="text-xs text-muted-foreground">
-                  Đang tải danh sách…
+                  Loading members…
                 </p>
               ) : (
                 <>
@@ -368,7 +368,7 @@ export function OrgMembersSidePanel({
                     <section className="space-y-2">
                       <h3 className="flex items-center gap-1.5 text-[11px] font-semibold tracking-wide text-(--chart-1) uppercase">
                         <UserRound className="size-3.5" aria-hidden />
-                        Nhóm trưởng
+                        Team Lead
                       </h3>
                       <div className="space-y-1.5">
                         {ownerMember ? (
@@ -398,15 +398,15 @@ export function OrgMembersSidePanel({
 
                   <section className="space-y-2">
                     <h3 className="text-[11px] font-semibold tracking-wide text-sky-300/90 uppercase">
-                      Thành viên
+                      Members
                     </h3>
                     {memberListFiltered.length === 0 ? (
                       <p className="text-xs text-muted-foreground">
                         {queryNorm
-                          ? "Không có thành viên khớp tìm kiếm."
+                          ? "No members match your search."
                           : hasOrgOwner
-                            ? "Chưa có thành viên nào khác."
-                            : "Chưa có thành viên."}
+                            ? "No other members yet."
+                            : "No members yet."}
                       </p>
                     ) : (
                       <div className="space-y-1.5">
@@ -428,7 +428,7 @@ export function OrgMembersSidePanel({
                     )}
                     {orgMembersInfinite.isFetchingNextPage ? (
                       <p className="text-center text-[11px] text-muted-foreground">
-                        Đang tải thêm…
+                        Loading more…
                       </p>
                     ) : null}
                   </section>
@@ -445,7 +445,7 @@ export function OrgMembersSidePanel({
               onClick={() => setAddOpen(true)}
             >
               <Plus className="size-4" aria-hidden />
-              Thêm thành viên
+              Add member
             </Button>
           ) : null}
               </CardContent>
@@ -472,7 +472,7 @@ export function OrgMembersSidePanel({
               variant="secondary"
               size="icon"
               className="h-11 w-10 rounded-l-none rounded-r-lg border border-border/90 border-l-0 bg-card/95 shadow-lg backdrop-blur-md"
-              aria-label="Mở danh sách thành viên"
+              aria-label="Open member list"
               onClick={() => setPanelOpen(true)}
             >
               <ChevronRight className="size-5" aria-hidden />
@@ -497,22 +497,22 @@ export function OrgMembersSidePanel({
       >
         <AlertDialogContent className="sm:max-w-sm">
           <AlertDialogHeader>
-            <AlertDialogTitle>Xóa khỏi tổ chức?</AlertDialogTitle>
+            <AlertDialogTitle>Remove from organization?</AlertDialogTitle>
             <AlertDialogDescription>
               {removeTarget ? (
                 <>
-                  Người dùng{" "}
+                  User{" "}
                   <span className="font-medium text-foreground">
                     «{removeTarget.label}»
                   </span>{" "}
-                  sẽ bị gỡ khỏi tổ chức. Bạn có thể mời lại sau nếu cần.
+                  will be removed from the organization. You can invite them back later if needed.
                 </>
               ) : null}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={removePending}>
-              Hủy
+              Cancel
             </AlertDialogCancel>
             <AlertDialogAction
               variant="destructive"
@@ -527,12 +527,12 @@ export function OrgMembersSidePanel({
                     });
                     setRemoveTarget(null);
                   } catch {
-                    /* toast lỗi từ hook */
+                    /* error toast from hook */
                   }
                 })();
               }}
             >
-              {removePending ? "Đang xóa…" : "Xóa"}
+              {removePending ? "Removing…" : "Remove"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -628,9 +628,9 @@ function AddOrgMemberDialog({
         showCloseButton
       >
         <DialogHeader>
-          <DialogTitle className="text-lg">Thêm thành viên</DialogTitle>
+          <DialogTitle className="text-lg">Add member</DialogTitle>
           <DialogDescription>
-            Tìm theo tên hoặc email để thêm vào danh sách mời
+            Search by name or email to add people to the invite list
           </DialogDescription>
         </DialogHeader>
 
@@ -643,7 +643,7 @@ function AddOrgMemberDialog({
           >
             <div className="relative shrink-0">
               <Label htmlFor="add-member-search" className="sr-only">
-                Tìm người dùng
+                Search users
               </Label>
               <Search
                 className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
@@ -653,7 +653,7 @@ function AddOrgMemberDialog({
                 id="add-member-search"
                 type="search"
                 autoComplete="off"
-                placeholder="Nhập tên hoặc email…"
+                placeholder="Enter name or email…"
                 value={searchDraft}
                 onChange={(e) => setSearchDraft(e.target.value)}
                 disabled={isPending}
@@ -663,7 +663,7 @@ function AddOrgMemberDialog({
 
             <div className="flex flex-col gap-2">
               <p className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
-                Kết quả
+                Results
               </p>
               <div className={cn(ADD_MEMBER_PANEL_FRAME_CLASS, "bg-muted/15")}>
                 <div
@@ -672,15 +672,15 @@ function AddOrgMemberDialog({
                 >
                 {!hasQuery ? (
                   <p className="px-2 py-8 text-center text-xs text-muted-foreground">
-                    Nhập để tìm kiếm.
+                    Type to search.
                   </p>
               ) : searchLoadingFirst ? (
                 <p className="px-2 py-6 text-center text-xs text-muted-foreground">
-                  Đang tìm…
+                  Searching…
                 </p>
               ) : searchHits.length === 0 ? (
                 <p className="px-2 py-6 text-center text-xs text-muted-foreground">
-                  Không có người dùng khớp.
+                  No matching users found.
                 </p>
               ) : (
                 <ul className="space-y-1">
@@ -705,8 +705,8 @@ function AddOrgMemberDialog({
                                 src={u.githubAvatarUrl}
                                 alt={
                                   u.fullName
-                                    ? `Ảnh GitHub — ${u.fullName}`
-                                    : "Ảnh GitHub"
+                                    ? `GitHub avatar — ${u.fullName}`
+                                    : "GitHub avatar"
                                 }
                               />
                             ) : null}
@@ -733,7 +733,7 @@ function AddOrgMemberDialog({
                           </div>
                           {inList ? (
                             <span className="shrink-0 text-[10px] font-medium text-primary">
-                              Đang mời
+                              Added
                             </span>
                           ) : (
                             <Plus
@@ -749,7 +749,7 @@ function AddOrgMemberDialog({
               )}
               {userSearchInfinite.isFetchingNextPage ? (
                 <p className="py-2 text-center text-[11px] text-muted-foreground">
-                  Đang tải thêm…
+                  Loading more…
                 </p>
               ) : null}
                 </div>
@@ -760,20 +760,20 @@ function AddOrgMemberDialog({
           <div className={cn(ADD_MEMBER_DIALOG_COLUMN_CLASS, "sm:pl-4")}>
             <div className="flex h-11 shrink-0 items-center rounded-lg border border-border/60 bg-muted/25 px-3 text-sm">
               <p className="truncate text-muted-foreground">
-                <span className="font-medium text-foreground">Vai trò:</span>{" "}
-                Thành viên mặc định.
+                <span className="font-medium text-foreground">Role:</span>{" "}
+                Member (default).
               </p>
             </div>
 
             <div className="flex flex-col gap-2">
               <p className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
-                Danh sách mời ({pendingMembers.length})
+                Invite list ({pendingMembers.length})
               </p>
               <div className={cn(ADD_MEMBER_PANEL_FRAME_CLASS, "bg-muted/20")}>
                 <div className={ADD_MEMBER_PANEL_SCROLL_CLASS}>
                 {pendingMembers.length === 0 ? (
                   <p className="px-2 py-8 text-center text-xs text-muted-foreground italic">
-                    Chưa có ai.
+                    No one added yet.
                   </p>
               ) : (
                 <ul className="space-y-1">
@@ -788,8 +788,8 @@ function AddOrgMemberDialog({
                             src={u.githubAvatarUrl}
                             alt={
                               u.fullName
-                                ? `Ảnh GitHub — ${u.fullName}`
-                                : "Ảnh GitHub"
+                                ? `GitHub avatar — ${u.fullName}`
+                                : "GitHub avatar"
                             }
                           />
                         ) : null}
@@ -816,7 +816,7 @@ function AddOrgMemberDialog({
                         size="icon-sm"
                         className="size-8 shrink-0 text-muted-foreground hover:text-destructive"
                         disabled={isPending}
-                        aria-label={`Gỡ ${u.fullName} khỏi danh sách mời`}
+                        aria-label={`Remove ${u.fullName} from invite list`}
                         onClick={() => removePending(u.id)}
                       >
                         <Trash2 className="size-3.5" aria-hidden />
@@ -838,7 +838,7 @@ function AddOrgMemberDialog({
             onClick={() => handleDialogOpenChange(false)}
             disabled={isPending}
           >
-            Hủy
+            Cancel
           </Button>
           <Button
             type="button"
@@ -847,10 +847,10 @@ function AddOrgMemberDialog({
             onClick={submitMembers}
           >
             {isPending
-              ? "Đang thêm…"
+              ? "Adding…"
               : pendingMembers.length > 1
-                ? `Thêm ${pendingMembers.length} thành viên`
-                : "Thêm thành viên"}
+                ? `Add ${pendingMembers.length} members`
+                : "Add member"}
           </Button>
         </DialogFooter>
       </DialogContent>

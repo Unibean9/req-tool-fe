@@ -43,19 +43,19 @@ export function DeleteFlowDialog({
                 <span className="font-medium text-foreground">
                   «{target.flowName}»
                 </span>{" "}
-                sẽ bị xóa khỏi dự án. Bạn không thể hoàn tác thao tác này.
+                will be removed from the project. This action cannot be undone.
               </>
             ) : null}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={deletePending}>Hủy</AlertDialogCancel>
+          <AlertDialogCancel disabled={deletePending}>Cancel</AlertDialogCancel>
           <AlertDialogAction
             variant="destructive"
             disabled={deletePending || !target}
             onClick={() => void onConfirmDelete()}
           >
-            {deletePending ? "Đang xóa…" : "Xóa"}
+            {deletePending ? "Deleting…" : "Xóa"}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

@@ -11,8 +11,8 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params;
   return buildPageMetadata({
-    title: "Thành viên",
-    description: "Quản lý thành viên trong tổ chức.",
+    title: "Members",
+    description: "Manage members in the organization.",
     path: `/${segmentForMetadataPath(slug)}/members`,
     noindex: true,
   });

@@ -80,7 +80,7 @@ export function FlowBasicsFormFields({
           }
           disabled={disabled}
           maxLength={FLOW_CODE_MAX_CHARS}
-          placeholder="VD: REQ-VAL, ONBOARD-01…"
+          placeholder="E.g.: REQ-VAL, ONBOARD-01…"
           autoComplete="off"
           className="h-10 min-w-0 border-border/80 bg-muted/30 font-mono text-sm"
         />
@@ -92,7 +92,7 @@ export function FlowBasicsFormFields({
             htmlFor={`${idPrefix}-name`}
             className="text-sm font-semibold"
           >
-            Tên
+            Name
           </Label>
           <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
             {values.name.length} / {FLOW_TITLE_MAX_CHARS}
@@ -108,7 +108,7 @@ export function FlowBasicsFormFields({
           }
           disabled={disabled}
           maxLength={FLOW_TITLE_MAX_CHARS}
-          placeholder="VD: User checkout, Onboarding…"
+          placeholder="E.g.: User checkout, Onboarding…"
           className="h-10 min-w-0 border-border/80 bg-muted/30"
         />
       </div>
@@ -119,7 +119,7 @@ export function FlowBasicsFormFields({
             htmlFor={`${idPrefix}-description`}
             className="text-sm font-semibold"
           >
-            Mô tả
+            Description
           </Label>
           <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
             {values.description.length} / {FLOW_DESCRIPTION_MAX_CHARS}
@@ -134,7 +134,7 @@ export function FlowBasicsFormFields({
             })
           }
           disabled={disabled}
-          placeholder="Mô tả ngắn gọn business flow…"
+          placeholder="Brief description of the business flow…"
           rows={5}
           className="min-h-30 min-w-0 border-border/80 bg-muted/30 text-sm"
         />

@@ -6,10 +6,10 @@ import type {
 export const REQUIREMENTS_PALETTE_DRAG_MIME = "application/req-tool-requirement-node";
 
 export const REQUIREMENT_NODE_DEFAULT_TITLES: Record<RequirementNodeKind, string> = {
-  actor: "Actor mới",
-  epic: "Epic mới",
-  feature: "Feature mới",
-  userStory: "User Story mới",
+  actor: "New Actor",
+  epic: "New Epic",
+  feature: "New Feature",
+  userStory: "New User Story",
 };
 
 export const REQUIREMENT_KIND_LABELS: Record<RequirementNodeKind, string> = {
@@ -80,7 +80,7 @@ export const VALID_REQUIREMENT_EDGES: ReadonlyArray<
 ];
 
 export const INVALID_EDGE_MESSAGE =
-  "Chỉ nối Epic → Feature → User Story. Epic được gắn với actor hiện tại khi kéo từ palette.";
+  "Only Epic → Feature → User Story connections are allowed. Epics are automatically linked to the current actor when dragged from the palette.";
 
 export const PALETTE_CREATABLE_KINDS = [
   "epic",

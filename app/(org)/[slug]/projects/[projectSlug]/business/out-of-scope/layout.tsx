@@ -16,7 +16,7 @@ export async function generateMetadata({
   const title = projectName ? `${projectName} | Out of Scope` : "Out of Scope";
   return buildPageMetadata({
     title,
-    description: "Các hạng mục ngoài phạm vi của dự án.",
+    description: "Items outside the scope of the project.",
     path: `/${segmentForMetadataPath(slug)}/projects/${segmentForMetadataPath(projectSlug)}/business/out-of-scope`,
     noindex: true,
   });

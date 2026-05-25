@@ -237,7 +237,7 @@ export function useCreateOrgProject(
     }: CreateOrgProjectVariables): Promise<CreateOrgProjectResponse> => {
       const result = await fetchProject.createProject(orgId, body);
       if (!result.success) {
-        throw new Error(result.message ?? "Tạo dự án thất bại");
+        throw new Error(result.message ?? "Failed to create project");
       }
       return result;
     },
@@ -258,11 +258,11 @@ export function useCreateOrgProject(
         return { ...old, data: [...old.data, created] };
       });
       void queryClient.invalidateQueries({ queryKey: key });
-      toast.success("Đã tạo dự án");
+      toast.success("Project created");
       userOnSuccess?.(data, variables, onMutateResult, context);
     },
     onError: (error, variables, onMutateResult, context) => {
-      toast.error(getApiErrorMessage(error, "Tạo dự án thất bại"));
+      toast.error(getApiErrorMessage(error, "Failed to create project"));
       userOnError?.(error, variables, onMutateResult, context);
     },
   });
@@ -300,7 +300,7 @@ export function useUpdateOrgProject(
         body
       );
       if (!result.success) {
-        throw new Error(result.message ?? "Cập nhật dự án thất bại");
+        throw new Error(result.message ?? "Failed to update project");
       }
       return result;
     },
@@ -331,11 +331,11 @@ export function useUpdateOrgProject(
       void queryClient.invalidateQueries({
         queryKey: projectContextDiagramQueryKey(variables.projectId),
       });
-      toast.success("Đã cập nhật dự án");
+      toast.success("Project updated");
       userOnSuccess?.(data, variables, onMutateResult, context);
     },
     onError: (error, variables, onMutateResult, context) => {
-      toast.error(getApiErrorMessage(error, "Cập nhật dự án thất bại"));
+      toast.error(getApiErrorMessage(error, "Failed to update project"));
       userOnError?.(error, variables, onMutateResult, context);
     },
   });
@@ -400,7 +400,7 @@ export function useDeleteOrgProject(
       void queryClient.invalidateQueries({
         queryKey: orgProjectsQueryKey(variables.orgId),
       });
-      toast.success("Đã xóa dự án");
+      toast.success("Project deleted");
     },
     onError: (error, variables, mutateContext, mutationContext) => {
       if (mutateContext?.previousList) {
@@ -409,7 +409,7 @@ export function useDeleteOrgProject(
           mutateContext.previousList
         );
       }
-      toast.error(getApiErrorMessage(error, "Xóa dự án thất bại"));
+      toast.error(getApiErrorMessage(error, "Failed to delete project"));
       userOnError?.(error, variables, mutateContext, mutationContext);
     },
   });

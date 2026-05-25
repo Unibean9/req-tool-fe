@@ -53,10 +53,10 @@ export function useSyncContextDiagram(projectId: string) {
       void queryClient.invalidateQueries({
         queryKey: projectContextDiagramQueryKey(pid),
       });
-      toast.success("Đã đồng bộ");
+      toast.success("Context diagram synced");
     },
     onError: (error) => {
-      toast.error(getApiErrorMessage(error, "Đồng bộ context diagram thất bại"));
+      toast.error(getApiErrorMessage(error, "Failed to sync context diagram"));
     },
   });
 }
@@ -68,10 +68,10 @@ export function useSaveContextDiagramLayout(projectId: string) {
     mutationFn: (layout: PutContextDiagramLayoutRequest) =>
       fetchContextDiagram.putLayout(projectId, layout),
     onSuccess: () => {
-      toast.success("Đã lưu layout");
+      toast.success("Layout saved");
     },
     onError: (error) => {
-      toast.error(getApiErrorMessage(error, "Lưu layout thất bại"));
+      toast.error(getApiErrorMessage(error, "Failed to save layout"));
     },
   });
 }
@@ -91,7 +91,7 @@ export function useCreateContextDiagramFlow(projectId: string) {
       });
     },
     onError: (error) => {
-      toast.error(getApiErrorMessage(error, "Tạo luồng dữ liệu thất bại"));
+      toast.error(getApiErrorMessage(error, "Failed to create flow"));
     },
   });
 }
@@ -113,7 +113,7 @@ export function useUpdateContextDiagramFlow(projectId: string) {
       });
     },
     onError: (error) => {
-      toast.error(getApiErrorMessage(error, "Cập nhật luồng dữ liệu thất bại"));
+      toast.error(getApiErrorMessage(error, "Failed to update flow"));
     },
   });
 }
@@ -132,7 +132,7 @@ export function useDeleteContextDiagramFlow(projectId: string) {
       });
     },
     onError: (error) => {
-      toast.error(getApiErrorMessage(error, "Xóa luồng dữ liệu thất bại"));
+      toast.error(getApiErrorMessage(error, "Failed to delete flow"));
     },
   });
 }

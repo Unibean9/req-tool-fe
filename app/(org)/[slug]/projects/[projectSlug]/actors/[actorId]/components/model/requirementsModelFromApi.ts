@@ -417,7 +417,7 @@ export function userStoryNodeDataToCreateRequest(
   actorRefFallback: string
 ): CreateFeatureUserStoryRequest {
   return {
-    title: data.title.trim() || "User Story mới",
+    title: data.title.trim() || "New User Story",
     description: data.description,
     actorRef: data.actor_ref.trim() || actorRefFallback,
     actionText: data.action_text,

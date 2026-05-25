@@ -165,7 +165,7 @@ export function useOrgMembersScrollInfinity(
         offset,
       });
       if (!res.success) {
-        throw new Error(res.message ?? "Không thể tải danh sách thành viên");
+        throw new Error(res.message ?? "Failed to load member list");
       }
       return { offset, limit, items: res.data };
     },
@@ -332,7 +332,7 @@ export function useUserSearchInfiniteScroll(
       const offset = pageParam;
       const res = await fetchUser.searchUsers({ q: query, limit, offset });
       if (!res.success) {
-        throw new Error(res.message ?? "Không thể tải dữ liệu");
+        throw new Error(res.message ?? "Failed to load data");
       }
       return { offset, limit, items: res.data };
     },
@@ -395,7 +395,7 @@ export function useAddOrgMember(
     }: AddOrgMembersVariables): Promise<AddOrgMembersResponse> => {
       const result = await fetchUser.addOrgMembers(orgId, body);
       if (!result.success) {
-        throw new Error(result.message ?? "Thêm thành viên thất bại");
+        throw new Error(result.message ?? "Failed to add member");
       }
       return result;
     },
@@ -406,26 +406,26 @@ export function useAddOrgMember(
       const { added, skipped, notFound } = data.data;
       if (added.length > 0) {
         const extra: string[] = [];
-        if (skipped.length > 0) extra.push(`bỏ qua ${skipped.length}`);
-        if (notFound.length > 0) extra.push(`không tìm thấy ${notFound.length}`);
+        if (skipped.length > 0) extra.push(`skipped ${skipped.length}`);
+        if (notFound.length > 0) extra.push(`not found ${notFound.length}`);
         toast.success(
           added.length === 1
-            ? `Đã thêm thành viên${extra.length ? ` (${extra.join(", ")})` : ""}`
-            : `Đã thêm ${added.length} thành viên${extra.length ? ` (${extra.join(", ")})` : ""}`
+            ? `Member added${extra.length ? ` (${extra.join(", ")})` : ""}`
+            : `Member added ${added.length}${extra.length ? ` (${extra.join(", ")})` : ""}`
         );
       } else {
         toast.warning(
           notFound.length > 0
-            ? `Không tìm thấy: ${notFound.join(", ")}`
+            ? `Not found: ${notFound.join(", ")}`
             : skipped.length > 0
-              ? `Đã bỏ qua: ${skipped.join(", ")}`
-              : "Không thêm được thành viên"
+              ? `Skipped: ${skipped.join(", ")}`
+              : "Failed to add member"
         );
       }
       userOnSuccess?.(data, variables, onMutateResult, context);
     },
     onError: (error, variables, onMutateResult, context) => {
-      toast.error(getApiErrorMessage(error, "Thêm thành viên thất bại"));
+      toast.error(getApiErrorMessage(error, "Failed to add member"));
       userOnError?.(error, variables, onMutateResult, context);
     },
   });
@@ -458,11 +458,11 @@ export function useRemoveOrgMember(
       void queryClient.invalidateQueries({
         queryKey: queryKeys.orgs.members(variables.orgId),
       });
-      toast.success("Đã xóa thành viên");
+      toast.success("Member deleted");
       userOnSuccess?.(data, variables, onMutateResult, context);
     },
     onError: (error, variables, onMutateResult, context) => {
-      toast.error(getApiErrorMessage(error, "Xóa thành viên thất bại"));
+      toast.error(getApiErrorMessage(error, "Failed to delete member"));
       userOnError?.(error, variables, onMutateResult, context);
     },
   });

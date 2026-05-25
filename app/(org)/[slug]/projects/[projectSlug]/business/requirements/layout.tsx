@@ -16,7 +16,7 @@ export async function generateMetadata({
   const title = projectName ? `${projectName} | Business Requirements` : "Business Requirements";
   return buildPageMetadata({
     title,
-    description: "Yêu cầu nghiệp vụ của dự án.",
+    description: "Business requirements for the project.",
     path: `/${segmentForMetadataPath(slug)}/projects/${segmentForMetadataPath(projectSlug)}/business/requirements`,
     noindex: true,
   });

@@ -73,7 +73,7 @@ const CATEGORY_META: Record<OutOfScopeCategory, CategoryMeta> = {
 function formatDate(value: string): string {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "";
-  return new Intl.DateTimeFormat("vi-VN", {
+  return new Intl.DateTimeFormat("en-US", {
     day: "2-digit",
     month: "2-digit",
     year: "numeric",
@@ -173,7 +173,7 @@ export function OutOfScopeTable({
   if (!projectId) {
     return (
       <p className="rounded-xl border border-border/70 bg-card/50 px-5 py-8 text-center text-sm text-muted-foreground">
-        Không tìm thấy dự án trong workspace này.
+        No project found in this workspace.
       </p>
     );
   }
@@ -199,7 +199,7 @@ export function OutOfScopeTable({
         <p className="text-sm text-destructive">
           {error instanceof Error
             ? error.message
-            : "Không tải được danh sách out-of-scope."}
+            : "Failed to load out-of-scope items."}
         </p>
         <Button
           type="button"
@@ -208,7 +208,7 @@ export function OutOfScopeTable({
           className="mt-4"
           onClick={() => void refetch()}
         >
-          Thử lại
+          Retry
         </Button>
       </div>
     );
@@ -227,10 +227,10 @@ export function OutOfScopeTable({
         </span>
         <div className="space-y-1">
           <p className="text-sm font-medium text-foreground">
-            Chưa có mục out-of-scope
+            No out-of-scope items
           </p>
           <p className="text-sm text-muted-foreground">
-            Dùng nút &quot;Thêm out of scope&quot; để bắt đầu.
+            Use the &quot;Add out-of-scope&quot; button to get started.
           </p>
         </div>
       </div>
@@ -245,7 +245,7 @@ export function OutOfScopeTable({
           className
         )}
       >
-        Không có kết quả cho &quot;{search.trim()}&quot;.
+        No results for &quot;{search.trim()}&quot;.
       </p>
     );
   }
@@ -263,9 +263,9 @@ export function OutOfScopeTable({
           <TableHeader>
             <TableRow className="border-border/70 bg-muted/30 hover:bg-muted/30">
               <TableHead className="w-12 pl-4 text-center">#</TableHead>
-              <TableHead className="w-44">Danh mục</TableHead>
-              <TableHead className="min-w-60">Mô tả</TableHead>
-              <TableHead className="w-36">Cập nhật</TableHead>
+              <TableHead className="w-44">Category</TableHead>
+              <TableHead className="min-w-60">Description</TableHead>
+              <TableHead className="w-36">Updated</TableHead>
               <TableHead className="w-24 pr-4 text-right" />
             </TableRow>
           </TableHeader>
@@ -300,7 +300,7 @@ export function OutOfScopeTable({
                     <p className="text-sm leading-relaxed text-foreground">
                       {row.description.trim() || (
                         <span className="italic text-muted-foreground">
-                          Chưa có mô tả.
+                          No description.
                         </span>
                       )}
                     </p>
@@ -322,7 +322,7 @@ export function OutOfScopeTable({
                         variant="ghost"
                         size="icon"
                         className="size-8 text-muted-foreground hover:text-foreground"
-                        aria-label="Chỉnh sửa"
+                        aria-label="Edit"
                         disabled={rowBusy}
                         onClick={() => setEditTarget(row)}
                       >
@@ -333,7 +333,7 @@ export function OutOfScopeTable({
                         variant="ghost"
                         size="icon"
                         className="size-8 text-muted-foreground hover:border-destructive/40 hover:bg-destructive/10 hover:text-destructive"
-                        aria-label="Xóa"
+                        aria-label="Delete"
                         disabled={rowBusy}
                         onClick={() =>
                           setDeleteTarget({

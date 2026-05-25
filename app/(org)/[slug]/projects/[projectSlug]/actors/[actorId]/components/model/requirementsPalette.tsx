@@ -18,13 +18,13 @@ const PALETTE_ITEMS: {
   icon: typeof Layers;
   hint: string;
 }[] = [
-  { kind: "epic", icon: Layers, hint: "Gắn vào actor hiện tại" },
+  { kind: "epic", icon: Layers, hint: "Linked to the current actor" },
   {
     kind: "feature",
     icon: ListTree,
-    hint: "Thả lên thẻ Epic (không thả trống canvas)",
+    hint: "Drop onto an Epic card (not onto an empty canvas)",
   },
-  { kind: "userStory", icon: BookOpen, hint: "Thuộc một Feature" },
+  { kind: "userStory", icon: BookOpen, hint: "Belongs to a Feature" },
 ];
 
 type RequirementsPaletteProps = {
@@ -43,7 +43,7 @@ export function RequirementsPalette({
         "flex shrink-0 flex-col border-r border-border/80 bg-card/40 transition-[width] duration-200 ease-out",
         open ? "w-56" : "w-11"
       )}
-      aria-label="Palette thành phần"
+      aria-label="Component palette"
       aria-expanded={open}
     >
       <div className={REQUIREMENTS_WORKSPACE_TOOLBAR_CLASS}>
@@ -57,8 +57,8 @@ export function RequirementsPalette({
               variant="ghost"
               size="icon-xs"
               className="ml-auto shrink-0"
-              title="Đóng palette"
-              aria-label="Đóng palette thêm mới"
+              title="Close palette"
+              aria-label="Close add-new palette"
               onClick={() => onOpenChange(false)}
             >
               <PanelLeftClose className="size-4" aria-hidden />
@@ -70,8 +70,8 @@ export function RequirementsPalette({
             variant="ghost"
             size="icon-xs"
             className="mx-auto shrink-0"
-            title="Mở palette thêm mới"
-            aria-label="Mở palette thêm mới"
+            title="Open add-new palette"
+            aria-label="Open add-new palette"
             onClick={() => onOpenChange(true)}
           >
             <PanelLeft className="size-4" aria-hidden />
@@ -82,7 +82,7 @@ export function RequirementsPalette({
       {open ? (
         <>
           <p className="shrink-0 px-3 pb-2 pt-2 text-[11px] leading-snug text-muted-foreground">
-            Thêm mới thành phần yêu cầu
+            Add a new requirements component
           </p>
           <ul className="flex flex-1 flex-col gap-2 overflow-y-auto p-3 pt-0">
             {PALETTE_ITEMS.map(({ kind, icon: Icon, hint }) => {

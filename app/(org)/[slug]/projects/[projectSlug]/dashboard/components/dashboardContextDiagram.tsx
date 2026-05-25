@@ -35,7 +35,7 @@ export function DashboardContextDiagram({
     <div className="min-h-130 flex-1 overflow-hidden rounded-xl border border-border/50 bg-card/30">
       {isLoading ? (
         <div className="flex h-full min-h-130 items-center justify-center">
-          <span className="text-sm text-muted-foreground">Đang tải…</span>
+          <span className="text-sm text-muted-foreground">Loading…</span>
         </div>
       ) : (
         <ContextDiagram

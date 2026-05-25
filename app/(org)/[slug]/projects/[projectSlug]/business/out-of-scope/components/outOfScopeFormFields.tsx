@@ -65,7 +65,7 @@ export function OutOfScopeFormFields({
   return (
     <>
       <div className="grid gap-2">
-        <Label htmlFor={categoryId}>Danh mục</Label>
+        <Label htmlFor={categoryId}>Category</Label>
         <Select
           value={values.category}
           onValueChange={(category) =>
@@ -93,13 +93,13 @@ export function OutOfScopeFormFields({
       </div>
 
       <div className="grid gap-2">
-        <Label htmlFor={descriptionId}>Mô tả</Label>
+        <Label htmlFor={descriptionId}>Description</Label>
         <Textarea
           id={descriptionId}
           value={values.description}
           onChange={(e) => onChange({ description: e.target.value })}
           disabled={disabled}
-          placeholder="Ví dụ: Tính năng đăng nhập bằng mạng xã hội nằm ngoài phạm vi dự án..."
+          placeholder="e.g. Social login is out-of-scope for this project..."
           className="min-h-28"
         />
       </div>

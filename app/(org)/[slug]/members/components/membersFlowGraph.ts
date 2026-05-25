@@ -24,12 +24,12 @@ export function membershipRoleSubtitle(
     orgHasNoOwner?: boolean;
   } = {}
 ): string {
-  if (options.syntheticLeader) return "Nhóm trưởng";
-  if (options.orgHasNoOwner) return "Thành viên";
+  if (options.syntheticLeader) return "Team Lead";
+  if (options.orgHasNoOwner) return "Member";
   const r = role.trim().toLowerCase();
-  if (LEADER_ROLES.has(r)) return "Nhóm trưởng";
-  if (r === "member") return "Thành viên";
-  if (!r) return "Thành viên";
+  if (LEADER_ROLES.has(r)) return "Team Lead";
+  if (r === "member") return "Member";
+  if (!r) return "Member";
   return r.charAt(0).toUpperCase() + r.slice(1).toLowerCase();
 }
 
@@ -118,9 +118,9 @@ export type OrgGroupFlowData = {
 };
 
 /**
- * Dựng nodes/edges cho org chart:
- * - có `ownerId`: Leader → hub "Thành viên" → các thành viên;
- * - không owner: một hàng thành viên.
+ * Builds nodes/edges for the org chart:
+ * - with `ownerId`: Leader → "Members" hub → individual members;
+ * - without owner: a single row of members.
  */
 export function buildOrgMembersFlowGraph(
   ownerId: string | null,
@@ -205,7 +205,7 @@ export function buildOrgMembersFlowGraph(
     id: "group-members",
     type: "orgGroup",
     position: { x: cx - L.groupWidth / 2, y: groupY },
-    data: { label: "Thành viên" } satisfies OrgGroupFlowData,
+    data: { label: "Members" } satisfies OrgGroupFlowData,
   });
 
   edges.push({

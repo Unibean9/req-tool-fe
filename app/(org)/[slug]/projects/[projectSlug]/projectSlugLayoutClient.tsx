@@ -39,7 +39,7 @@ export function ProjectSlugLayoutClient({
   const { data: projects, isPending, isError } = useOrgProjects(orgId);
 
   const projectsList = useMemo(() => projects ?? [], [projects]);
-  /** Có cache list — không chờ `isFetching` (tránh skeleton khi quay từ wizard). */
+  /** Cache list available — don't wait for `isFetching` (avoids skeleton when returning from wizard). */
   const projectsListReady = projects !== undefined && !isPending;
   const projectExists = projectsList.some((p) => p.slug === projectSlug);
 

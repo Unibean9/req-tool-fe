@@ -56,7 +56,7 @@ function EpicNodeCardComponent({
               variant="ghost"
               size="icon-xs"
               className="size-7"
-              title={data.collapsed ? "Mở rộng" : "Thu gọn"}
+              title={data.collapsed ? "Expand" : "Collapse"}
               onClick={(e) => {
                 e.stopPropagation();
                 toggleNodeCollapsed(id);
@@ -69,7 +69,7 @@ function EpicNodeCardComponent({
               variant="secondary"
               size="icon-xs"
               className="size-7"
-              title="Thêm Feature"
+              title="Add Feature"
               disabled={isCreatingFeature}
               onClick={(e) => {
                 e.stopPropagation();

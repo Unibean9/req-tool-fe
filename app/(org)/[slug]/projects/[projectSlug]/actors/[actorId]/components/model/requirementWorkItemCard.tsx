@@ -209,7 +209,7 @@ export function WorkItemCardList({
       ))}
       {rest > 0 ? (
         <li className="list-none pl-0 text-[11px] text-muted-foreground">
-          +{rest} tiêu chí khác
+          +{rest} more
         </li>
       ) : null}
     </ol>

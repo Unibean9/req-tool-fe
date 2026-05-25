@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-/** Khóa chiều cao theo flex — không scroll trang; chỉ scroll trong panel/sơ đồ nếu cần. */
+/** Locks height using flex — no page scroll; scroll only within the panel/diagram if needed. */
 export default function OrgMembersLayout({ children }: { children: ReactNode }) {
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden">

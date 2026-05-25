@@ -21,34 +21,34 @@ export function ActorDetailForm({
 }) {
   return (
     <div className="space-y-6">
-      <DetailPanelSection title="Thông tin">
+      <DetailPanelSection title="Information">
         <DetailTextField
           id="actor-title"
-          label="Tên actor"
+          label="Actor name"
           value={data.title}
           onChange={(title) => onChange({ title })}
           maxLength={REQ_ACTOR_TITLE_MAX_CHARS}
-          placeholder="VD: Nhân viên ca"
+          placeholder="e.g. Shift Employee"
         />
         <DetailTextAreaField
           id="actor-desc"
-          label="Mô tả ngắn"
+          label="Short description"
           value={data.description}
           onChange={(description) => onChange({ description })}
           maxLength={REQ_ACTOR_DESCRIPTION_MAX_CHARS}
           rows={2}
-          placeholder="Vai trò tóm tắt trên sơ đồ…"
+          placeholder="Brief role summary on the diagram…"
         />
       </DetailPanelSection>
-      <DetailPanelSection title="Vai trò">
+      <DetailPanelSection title="Role">
         <DetailTextAreaField
           id="actor-role"
-          label="Mô tả vai trò"
+          label="Role description"
           value={data.roleDescription ?? ""}
           onChange={(roleDescription) => onChange({ roleDescription })}
           maxLength={REQ_ACTOR_ROLE_MAX_CHARS}
           rows={3}
-          placeholder="VD: Người đăng ký và theo dõi ca làm việc của bản thân"
+          placeholder="e.g. Registers and tracks their own work shifts"
         />
       </DetailPanelSection>
     </div>

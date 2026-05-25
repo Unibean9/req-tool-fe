@@ -92,12 +92,12 @@ function RuleFormDialogBody({
     <form onSubmit={handleSubmit}>
       <DialogHeader>
         <DialogTitle className="text-lg">
-          {isEdit ? "Chỉnh sửa rule" : "Thêm rule"}
+          {isEdit ? "Edit rule" : "Add rule"}
         </DialogTitle>
         <DialogDescription>
           {isEdit
-            ? "Cập nhật định nghĩa, loại, trạng thái dynamic và nguồn của rule."
-            : "Ghi nhận quy tắc nghiệp vụ, ràng buộc hoặc chính sách của dự án."}
+            ? "Update the definition, type, dynamic status, and source of the rule."
+            : "Record a business rule, constraint, or policy for the project."}
         </DialogDescription>
       </DialogHeader>
 
@@ -116,10 +116,10 @@ function RuleFormDialogBody({
           disabled={pending}
           onClick={() => onOpenChange(false)}
         >
-          Hủy
+          Cancel
         </Button>
         <Button type="submit" className="font-semibold" disabled={!canSubmit}>
-          {pending ? "Đang lưu…" : isEdit ? "Lưu" : "Tạo rule"}
+          {pending ? "Saving…" : isEdit ? "Save" : "Create rule"}
         </Button>
       </DialogFooter>
     </form>

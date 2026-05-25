@@ -173,18 +173,18 @@ export function useCreateProjectStakeholder(
     }: CreateProjectStakeholderVariables): Promise<CreateProjectStakeholderResponse> => {
       const result = await fetchStakeHolder.create(projectId, body);
       if (!result.success) {
-        throw new Error(result.message ?? "Tạo stakeholder thất bại");
+        throw new Error(result.message ?? "Failed to create stakeholder");
       }
       return result;
     },
     onSuccess: (data, variables, onMutateResult, context) => {
       invalidateProjectStakeholdersLists(queryClient, variables.projectId);
       void queryClient.invalidateQueries({ queryKey: projectContextDiagramQueryKey(variables.projectId) });
-      toast.success("Đã tạo stakeholder");
+      toast.success("Stakeholder created");
       userOnSuccess?.(data, variables, onMutateResult, context);
     },
     onError: (error, variables, onMutateResult, context) => {
-      toast.error(getApiErrorMessage(error, "Tạo stakeholder thất bại"));
+      toast.error(getApiErrorMessage(error, "Failed to create stakeholder"));
       userOnError?.(error, variables, onMutateResult, context);
     },
   });
@@ -220,7 +220,7 @@ export function useUpdateProjectStakeholder(
         body
       );
       if (!result.success) {
-        throw new Error(result.message ?? "Cập nhật stakeholder thất bại");
+        throw new Error(result.message ?? "Failed to update stakeholder");
       }
       return result;
     },

@@ -63,7 +63,7 @@ function FeatureNodeCardComponent({
               variant="ghost"
               size="icon-xs"
               className="size-7"
-              title={data.collapsed ? "Mở rộng" : "Thu gọn"}
+              title={data.collapsed ? "Expand" : "Collapse"}
               onClick={(e) => {
                 e.stopPropagation();
                 toggleNodeCollapsed(id);
@@ -76,7 +76,7 @@ function FeatureNodeCardComponent({
               variant="secondary"
               size="icon-xs"
               className="size-7"
-              title="Thêm User Story"
+              title="Add User Story"
               disabled={isCreatingUserStory}
               onClick={(e) => {
                 e.stopPropagation();

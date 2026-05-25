@@ -84,9 +84,9 @@ export function CreateProjectActorDialog({
       <DialogContent className="sm:max-w-md" showCloseButton>
         <form onSubmit={handleSubmit}>
           <DialogHeader>
-            <DialogTitle className="text-lg">Thêm actor</DialogTitle>
+            <DialogTitle className="text-lg">Add actor</DialogTitle>
             <DialogDescription>
-              Tên và mô tả vai trò (giới hạn ký tự để hiển thị gọn trên sidebar).
+              Name and role description (character limit keeps it compact in the sidebar).
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-3 px-1 py-2">
@@ -96,7 +96,7 @@ export function CreateProjectActorDialog({
                   htmlFor="sidebar-actor-name"
                   className="text-sm font-semibold"
                 >
-                  Tên
+                  Name
                 </Label>
                 <span className="text-[10px] tabular-nums text-muted-foreground">
                   {name.length}/{ACTOR_NAME_MAX_CHARS}
@@ -110,7 +110,7 @@ export function CreateProjectActorDialog({
                 onChange={(e) =>
                   setName(e.target.value.slice(0, ACTOR_NAME_MAX_CHARS))
                 }
-                placeholder="VD: Người dùng cuối"
+                placeholder="E.g.: Customer"
                 disabled={createActorMutation.isPending}
                 className="h-10"
               />
@@ -121,7 +121,7 @@ export function CreateProjectActorDialog({
                   htmlFor="sidebar-actor-role"
                   className="text-sm font-semibold"
                 >
-                  Mô tả vai trò
+                  Role description
                 </Label>
                 <span className="text-[10px] tabular-nums text-muted-foreground">
                   {roleDescription.length}/{ACTOR_ROLE_DESCRIPTION_MAX_CHARS}
@@ -136,7 +136,7 @@ export function CreateProjectActorDialog({
                     e.target.value.slice(0, ACTOR_ROLE_DESCRIPTION_MAX_CHARS)
                   )
                 }
-                placeholder="VD: Người xác nhận yêu cầu từ bộ phận kinh doanh"
+                placeholder="E.g.: Confirms requirements from the business team"
                 disabled={createActorMutation.isPending}
                 rows={3}
                 className="min-h-18 resize-none text-sm"
@@ -150,10 +150,10 @@ export function CreateProjectActorDialog({
               disabled={createActorMutation.isPending}
               onClick={() => handleOpenChange(false)}
             >
-              Hủy
+              Cancel
             </Button>
             <Button type="submit" disabled={!canSubmit}>
-              {createActorMutation.isPending ? "Đang tạo…" : "Tạo actor"}
+              {createActorMutation.isPending ? "Creating…" : "Add actor"}
             </Button>
           </DialogFooter>
         </form>

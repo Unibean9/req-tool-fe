@@ -91,29 +91,29 @@ export function FeatureDetailForm({
     <form id={formId} className="space-y-6" onSubmit={submit}>
       <DetailPanelSection
         title="Feature"
-        hint="Khả năng nghiệp vụ cụ thể thuộc epic. Bấm cập nhật khi đã chỉnh xong."
+        hint="A specific business capability within an epic. Click Update when done editing."
       >
         <DetailTextField
           id="feature-title"
-          label="Tiêu đề"
+          label="Title"
           value={draft.title}
           onChange={(title) => updateDraft({ title })}
           maxLength={REQ_TITLE_MAX_CHARS}
-          placeholder="VD: Xem và chỉnh sửa lịch ca"
+          placeholder="e.g. View and edit shift schedule"
         />
         <DetailTextAreaField
           id="feature-desc"
-          label="Mô tả"
+          label="Description"
           value={draft.description}
           onChange={(description) => updateDraft({ description })}
           maxLength={REQ_DESCRIPTION_MAX_CHARS}
           rows={4}
-          placeholder="Khả năng nghiệp vụ mà feature này cung cấp…"
+          placeholder="The business capability this feature provides…"
         />
         <DetailFieldRow>
           <DetailStatusSelect
             id="feature-status"
-            label="Trạng thái"
+            label="Status"
             value={draft.status}
             options={PANEL_EDITABLE_STATUSES}
             onChange={(status) => updateDraft({ status })}
@@ -121,7 +121,7 @@ export function FeatureDetailForm({
           />
           <DetailPrioritySelect
             id="feature-priority"
-            label="Độ ưu tiên"
+            label="Priority"
             value={draft.priority}
             options={FEATURE_PRIORITIES}
             onChange={(priority) => updateDraft({ priority })}

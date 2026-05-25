@@ -30,12 +30,12 @@ export function ProjectEmptyState({
         />
 
         <h1 className="font-heading text-xl font-bold tracking-tight text-foreground sm:text-2xl">
-          Chưa có dự án
+          No projects yet
         </h1>
         <p className="mt-3 max-w-md text-sm leading-relaxed text-muted-foreground sm:text-base">
-          <span className="font-medium text-foreground">{orgName}</span> chưa có
-          workspace dự án nào. Tạo dự án đầu tiên để bắt đầu thu thập yêu cầu và
-          làm việc cùng nhóm.
+          <span className="font-medium text-foreground">{orgName}</span> has no
+          project workspaces yet. Create your first project to start collecting requirements and
+          collaborating with your team.
         </p>
 
         <Link
@@ -47,7 +47,7 @@ export function ProjectEmptyState({
           )}
         >
           <Plus className="size-4" aria-hidden />
-          Tạo dự án mới
+          Create new project
           <ArrowUpRight className="size-4 opacity-80" aria-hidden />
         </Link>
       </div>

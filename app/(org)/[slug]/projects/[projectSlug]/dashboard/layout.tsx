@@ -16,7 +16,7 @@ export async function generateMetadata({
   const title = projectName ? `${projectName} | Dashboard` : "Dashboard";
   return buildPageMetadata({
     title,
-    description: "Tổng quan dự án.",
+    description: "Project overview.",
     path: `/${segmentForMetadataPath(slug)}/projects/${segmentForMetadataPath(projectSlug)}/dashboard`,
     noindex: true,
   });

@@ -32,7 +32,7 @@ export function ProjectNewSidebar({
         <Link
           href={projectsHref}
           className="flex items-center gap-3 outline-none focus-visible:ring-[3px] focus-visible:ring-ring/45 rounded-lg"
-          aria-label="Về danh sách dự án"
+          aria-label="Back to projects list"
         >
           <span className="relative flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-lg ring-1 ring-border/50">
             <Image
@@ -45,13 +45,13 @@ export function ProjectNewSidebar({
             />
           </span>
           <p className="truncate font-heading text-base font-semibold tracking-tight text-foreground">
-            Dự án mới
+            New project
           </p>
         </Link>
       </div>
 
       <nav
-        aria-label="Các bước tạo dự án"
+        aria-label="Project creation steps"
         className="flex min-h-0 flex-1 flex-col px-6 py-6"
       >
         <ol
@@ -94,7 +94,7 @@ export function ProjectNewSidebar({
                     !canSelect && "cursor-default"
                   )}
                   aria-current={isActive ? "step" : undefined}
-                  aria-label={`Bước ${index + 1}: ${step.title}`}
+                  aria-label={`Step ${index + 1}: ${step.title}`}
                 >
                   {isComplete ? (
                     <Check className="size-4" strokeWidth={2.5} aria-hidden />

@@ -35,7 +35,7 @@ function UserStoryNodeCardComponent({
   const description =
     data.description.trim() ||
     (data.actor_ref
-      ? `${data.actor_ref} — mô tả ngắn cho story.`
+      ? `${data.actor_ref} — short story description.`
       : "");
 
   const acTexts = data.acceptance_criteria

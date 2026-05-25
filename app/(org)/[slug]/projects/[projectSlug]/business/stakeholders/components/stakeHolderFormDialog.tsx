@@ -97,19 +97,19 @@ function StakeHolderFormDialogBody({
     <form onSubmit={handleSubmit}>
       <DialogHeader>
         <DialogTitle className="text-lg">
-          {isEdit ? "Chỉnh sửa stakeholder" : "Thêm stakeholder"}
+          {isEdit ? "Edit stakeholder" : "Add stakeholder"}
         </DialogTitle>
         <DialogDescription>
           {isEdit ? (
             <>
-              Cập nhật thông tin cho{" "}
+              Update information for{" "}
               <span className="font-medium text-foreground">
                 {stakeholder.name}
               </span>
               .
             </>
           ) : (
-            "Ghi nhận bên liên quan, vai trò và mức ảnh hưởng trong dự án."
+            "Record a stakeholder's role and influence level in the project."
           )}
         </DialogDescription>
       </DialogHeader>
@@ -126,16 +126,16 @@ function StakeHolderFormDialogBody({
           onClick={() => onOpenChange(false)}
           disabled={pending}
         >
-          Hủy
+          Cancel
         </Button>
         <Button type="submit" disabled={!canSubmit}>
           {pending
             ? isEdit
-              ? "Đang lưu…"
-              : "Đang tạo…"
+              ? "Saving…"
+              : "Creating…"
             : isEdit
-              ? "Lưu thay đổi"
-              : "Tạo stakeholder"}
+              ? "Save changes"
+              : "Create stakeholder"}
         </Button>
       </DialogFooter>
     </form>

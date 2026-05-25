@@ -63,19 +63,19 @@ const features = [
     icon: GitBranch,
     tone: "jade" as const,
     title: "Actor → Story",
-    body: "Epic đến Acceptance Criteria.",
+    body: "Epic to Acceptance Criteria.",
   },
   {
     icon: Users,
     tone: "blue" as const,
     title: "Workspace",
-    body: "Phân quyền theo thành viên.",
+    body: "Permission by member.",
   },
   {
     icon: Target,
     tone: "violet" as const,
     title: "Goals & NFR",
-    body: "Mục tiêu và luồng nghiệp vụ.",
+    body: "Goals and business flow.",
   },
 ] as const;
 
@@ -97,11 +97,10 @@ function AuthMarketingAside() {
     <div className="relative z-10 flex h-full min-h-0 w-full flex-col gap-5 overflow-hidden px-6 py-8 lg:gap-6 lg:px-10 lg:py-10 xl:px-12 2xl:px-14">
       <header className="w-full shrink-0">
         <p className="text-[11px] font-semibold tracking-[0.12em] text-brand-mint">
-          Công cụ yêu cầu
+          Requirements tool
         </p>
         <h2 className="mt-2 max-w-2xl text-pretty font-heading text-xl font-semibold leading-snug tracking-tight text-foreground lg:text-[1.5rem] lg:leading-tight xl:text-[1.625rem]">
-          Một nơi cho toàn bộ nội dung{" "}
-          <span className="text-brand-mint">kỹ thuật</span> dự án.
+          One place for all technical project content.
         </h2>
       </header>
 
@@ -114,7 +113,7 @@ function AuthMarketingAside() {
           <div className="relative h-full min-h-[min(38vh,20rem)] w-full xl:min-h-[min(44vh,24rem)]">
             <SafeImage
               src="/auth-image.png"
-              alt="Minh họa làm việc với Requirements | Bean9"
+              alt="Illustration of working with Requirements | Bean9"
               fill
               priority
               sizes="(max-width: 1024px) 50vw, 640px"
@@ -171,7 +170,7 @@ function AuthMarketingAside() {
             ))}
           </div>
           <p className="text-[11px] text-muted-foreground">
-            Đang được dùng bởi các nhóm sinh viên
+            Used by student groups
           </p>
         </div>
         <div className="flex gap-2" aria-hidden>
@@ -192,9 +191,9 @@ function AuthMarketingAside() {
 function AuthLegalFooter() {
   return (
     <p className="max-w-sm text-[11px] leading-relaxed text-muted-foreground">
-      Bằng cách đăng nhập, bạn đồng ý với{" "}
-      <span className="font-semibold text-foreground">Điều khoản dịch vụ</span> và{" "}
-      <span className="font-semibold text-foreground">Chính sách bảo mật</span>.
+      By logging in, you agree to the{" "}
+      <span className="font-semibold text-foreground">Terms of Service</span> and{" "}
+      <span className="font-semibold text-foreground">Privacy Policy</span>.
     </p>
   );
 }
@@ -213,7 +212,7 @@ export default function AuthRouteGroupLayout({ children }: { children: ReactNode
               <Suspense
                 fallback={
                   <p className="text-sm text-muted-foreground" role="status">
-                    Đang tải…
+                    Loading…
                   </p>
                 }
               >

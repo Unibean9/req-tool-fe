@@ -2,11 +2,13 @@
 
 import { useMemo, useState } from "react";
 import {
+  Briefcase,
+  CircleDashed,
   MessageSquareText,
   MoreVertical,
   Pencil,
-  Tags,
   Trash2,
+  UserRound,
   UsersRound,
 } from "lucide-react";
 
@@ -44,9 +46,9 @@ import { parseImpactAreaTags } from "./stakeHolderFormFields";
 import type { StakeholderActorTypeFilter } from "./stakeHolderToolbar";
 
 const INFLUENCE_LEVEL_LABELS: Record<StakeholderInfluenceLevel, string> = {
-  high: "Cao",
-  medium: "Trung bình",
-  low: "Thấp",
+  high: "High",
+  medium: "Medium",
+  low: "Low",
 };
 
 const ACTOR_TYPE_LABELS: Record<StakeholderActorType, string> = {
@@ -54,17 +56,6 @@ const ACTOR_TYPE_LABELS: Record<StakeholderActorType, string> = {
   business_actor: "Business actor",
   other_actor: "Other actor",
 };
-
-function actorTypeBadgeClassName(type: StakeholderActorType): string {
-  return cn(
-    "inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-semibold leading-none",
-    type === "business_actor" &&
-      "border-brand-mint/35 bg-brand-mint/20 text-foreground",
-    type === "other_actor" &&
-      "border-amber-500/35 bg-amber-500/15 text-amber-700 dark:text-amber-200",
-    type === "none" && "border-border/60 bg-muted/30 text-muted-foreground"
-  );
-}
 
 function avatarClassName(type: StakeholderActorType): string {
   return cn(
@@ -77,14 +68,12 @@ function avatarClassName(type: StakeholderActorType): string {
   );
 }
 
-function stakeholderInitials(name: string): string {
-  const trimmed = name.trim();
-  if (!trimmed) return "?";
-  const parts = trimmed.split(/\s+/).filter(Boolean);
-  if (parts.length >= 2) {
-    return `${parts[0]![0] ?? ""}${parts[parts.length - 1]![0] ?? ""}`.toUpperCase();
-  }
-  return trimmed.slice(0, 2).toUpperCase();
+function actorTypeIcon(type: StakeholderActorType) {
+  if (type === "business_actor")
+    return <Briefcase className="size-3.5" aria-hidden />;
+  if (type === "other_actor")
+    return <UserRound className="size-3.5" aria-hidden />;
+  return <CircleDashed className="size-3.5" aria-hidden />;
 }
 
 function influenceBadgeClassName(level: StakeholderInfluenceLevel): string {
@@ -104,16 +93,17 @@ function foldForSearch(s: string): string {
 
 function ImpactAreaTags({ impactArea }: { impactArea: string }) {
   const tags = parseImpactAreaTags(impactArea);
-  if (tags.length === 0)
-    return <span className="italic text-muted-foreground">—</span>;
+  if (tags.length === 0) return null;
 
   return (
-    <div className="flex flex-wrap items-center gap-1">
+    <div className="flex flex-wrap gap-1" role="list" aria-label="Impact areas">
       {tags.map((tag, index) => (
         <span
           key={`${tag}-${index}`}
-          className="inline-flex max-w-full rounded-full border border-border/70 bg-muted/35 px-2 py-0.5 text-[11px] leading-snug text-foreground/85"
+          role="listitem"
+          className="inline-flex max-w-full items-center gap-0.5 rounded-md border border-brand-jade/30 bg-brand-jade/12 px-1.5 py-0.5 text-[11px] font-medium leading-snug tracking-wide text-brand-mint"
         >
+          <span className="opacity-50 select-none" aria-hidden>#</span>
           {tag}
         </span>
       ))}
@@ -197,7 +187,7 @@ export function StakeHolderTable({
   if (!projectId) {
     return (
       <p className="rounded-xl border border-border/70 bg-card/50 px-5 py-8 text-center text-sm text-muted-foreground">
-        Không tìm thấy dự án trong workspace này.
+        No project found in this workspace.
       </p>
     );
   }
@@ -223,7 +213,7 @@ export function StakeHolderTable({
         <p className="text-sm text-destructive">
           {error instanceof Error
             ? error.message
-            : "Không tải được danh sách stakeholders."}
+            : "Failed to load the stakeholders."}
         </p>
         <Button
           type="button"
@@ -232,7 +222,7 @@ export function StakeHolderTable({
           className="mt-4"
           onClick={() => void refetch()}
         >
-          Thử lại
+          Retry
         </Button>
       </div>
     );
@@ -241,11 +231,11 @@ export function StakeHolderTable({
   if (stakeholders.length === 0) {
     const filterHint =
       businessActorFilter === "business_actor"
-        ? "Không có stakeholder nào có vai trò Business actor."
+        ? "No stakeholders with the Business actor role."
         : businessActorFilter === "other_actor"
-          ? "Không có stakeholder nào có vai trò Other actor."
+          ? "No stakeholders with the Other actor role."
           : businessActorFilter === "none"
-            ? "Không có stakeholder nào có vai trò None."
+            ? "No stakeholders with the None role."
             : null;
 
     return (
@@ -261,11 +251,11 @@ export function StakeHolderTable({
         <div className="space-y-1">
           <p className="text-sm font-medium text-foreground">
             {filterHint
-              ? "Không có stakeholder phù hợp"
-              : "Chưa có stakeholder"}
+              ? "No matching stakeholders"
+              : "No stakeholders yet"}
           </p>
           <p className="text-sm text-muted-foreground">
-            {filterHint ?? 'Dùng nút "Thêm mới" để bắt đầu.'}
+            {filterHint ?? 'Use the "Add new" button to get started.'}
           </p>
         </div>
       </div>
@@ -280,7 +270,7 @@ export function StakeHolderTable({
           className
         )}
       >
-        Không có kết quả cho &quot;{search.trim()}&quot;.
+        No results for &quot;{search.trim()}&quot;.
       </p>
     );
   }
@@ -289,37 +279,26 @@ export function StakeHolderTable({
     <>
       <div
         className={cn(
-          "overflow-hidden rounded-xl border border-border/70 bg-card shadow-sm",
+          "flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-border/70 bg-card shadow-sm",
           className
         )}
       >
-        <div className="overflow-auto max-h-[calc(100svh-10rem)]">
+        <div className="min-h-0 flex-1 overflow-auto">
           <Table>
             <TableHeader>
               <TableRow className="border-border/70 bg-muted/30 hover:bg-muted/30">
                 <TableHead className="w-12 pl-4 text-center">#</TableHead>
-                <TableHead className="min-w-48">Tên / Vai trò</TableHead>
-                <TableHead className="w-40">Vai trò mô hình</TableHead>
-                <TableHead className="min-w-48">
-                  <span className="inline-flex items-center gap-1.5">
-                    <Tags className="size-3.5" aria-hidden />
-                    Khu vực tác động
-                  </span>
-                </TableHead>
-                <TableHead className="w-36">Mức ảnh hưởng</TableHead>
-                <TableHead className="min-w-48">
-                  <span className="inline-flex items-center gap-1.5">
-                    <MessageSquareText className="size-3.5" aria-hidden />
-                    Ghi chú
-                  </span>
+                <TableHead className="min-w-64 max-w-80">Name / Role</TableHead>
+                <TableHead className="min-w-44">System description</TableHead>
+                <TableHead className="w-36">Influence level</TableHead>
+                <TableHead className="min-w-44">
+                    Notes
                 </TableHead>
                 <TableHead className="w-12 pr-4 text-right" />
               </TableRow>
             </TableHeader>
             <TableBody>
               {filtered.map((row, index) => {
-                const initials = stakeholderInitials(row.name);
-
                 return (
                   <TableRow key={row.id} className="border-border/60 align-top">
                     <TableCell className="pl-4 text-center text-xs tabular-nums text-muted-foreground">
@@ -327,38 +306,43 @@ export function StakeHolderTable({
                     </TableCell>
 
                     <TableCell className="py-3">
-                      <div className="flex items-center gap-2.5">
-                        <span
-                          className={avatarClassName(row.actorType)}
-                          aria-hidden
-                        >
-                          {initials}
-                        </span>
-                        <div className="min-w-0">
-                          <p className="truncate text-sm font-medium text-foreground">
-                            {row.name}
-                          </p>
-                          {row.role.trim() ? (
-                            <p className="truncate text-xs text-muted-foreground">
-                              {row.role}
+                      <div className="flex flex-col gap-1.5">
+                        <div className="flex items-center gap-2.5">
+                          <span
+                            className={avatarClassName(row.actorType)}
+                            aria-label={ACTOR_TYPE_LABELS[row.actorType]}
+                          >
+                            {actorTypeIcon(row.actorType)}
+                          </span>
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-medium text-foreground">
+                              {row.name}
                             </p>
-                          ) : (
-                            <p className="text-xs italic text-muted-foreground">
-                              Chưa có vai trò
-                            </p>
-                          )}
+                            {row.role.trim() ? (
+                              <p className="truncate text-xs text-muted-foreground">
+                                {row.role}
+                              </p>
+                            ) : (
+                              <p className="text-xs italic text-muted-foreground">
+                                No role
+                              </p>
+                            )}
+                          </div>
                         </div>
+                        <ImpactAreaTags impactArea={row.impactArea} />
                       </div>
                     </TableCell>
 
-                    <TableCell>
-                      <span className={actorTypeBadgeClassName(row.actorType)}>
-                        {ACTOR_TYPE_LABELS[row.actorType]}
-                      </span>
-                    </TableCell>
-
-                    <TableCell className="py-3">
-                      <ImpactAreaTags impactArea={row.impactArea} />
+                    <TableCell className="whitespace-normal wrap-break-word py-3">
+                      {row.systemDescription.trim() ? (
+                        <p className="text-sm leading-relaxed text-foreground/85">
+                          {row.systemDescription}
+                        </p>
+                      ) : (
+                        <span className="text-xs italic text-muted-foreground">
+                          —
+                        </span>
+                      )}
                     </TableCell>
 
                     <TableCell>
@@ -384,14 +368,14 @@ export function StakeHolderTable({
                         <DropdownMenuTrigger
                           disabled={rowBusy}
                           className="flex size-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50"
-                          aria-label={`Tùy chọn ${row.name}`}
+                          aria-label={`Options for ${row.name}`}
                         >
                           <MoreVertical className="size-4" aria-hidden />
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="min-w-48">
                           <DropdownMenuItem onClick={() => setEditTarget(row)}>
                             <Pencil className="size-4" aria-hidden />
-                            Chỉnh sửa
+                            Edit
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem
@@ -404,7 +388,7 @@ export function StakeHolderTable({
                             }
                           >
                             <Trash2 className="size-4" aria-hidden />
-                            Xóa
+                            Delete
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>

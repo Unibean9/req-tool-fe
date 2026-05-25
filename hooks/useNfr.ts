@@ -166,11 +166,11 @@ export function useCreateProjectNfr(
     },
     onSuccess: (data, variables, onMutateResult, context) => {
       invalidateNfrMutationCaches(queryClient, variables.projectId);
-      toast.success("Đã tạo NFR");
+      toast.success("NFR created");
       userOnSuccess?.(data, variables, onMutateResult, context);
     },
     onError: (error, variables, onMutateResult, context) => {
-      toast.error(getApiErrorMessage(error, "Tạo NFR thất bại"));
+      toast.error(getApiErrorMessage(error, "Failed to create NFR"));
       userOnError?.(error, variables, onMutateResult, context);
     },
   });
@@ -205,11 +205,11 @@ export function useUpdateProjectNfr(
     },
     onSuccess: (data, variables, onMutateResult, context) => {
       invalidateNfrMutationCaches(queryClient, variables.projectId);
-      toast.success("Đã cập nhật NFR");
+      toast.success("NFR updated");
       userOnSuccess?.(data, variables, onMutateResult, context);
     },
     onError: (error, variables, onMutateResult, context) => {
-      toast.error(getApiErrorMessage(error, "Cập nhật NFR thất bại"));
+      toast.error(getApiErrorMessage(error, "Failed to update NFR"));
       userOnError?.(error, variables, onMutateResult, context);
     },
   });
@@ -239,11 +239,11 @@ export function useDeleteProjectNfr(
     },
     onSuccess: (data, variables, onMutateResult, context) => {
       invalidateNfrMutationCaches(queryClient, variables.projectId);
-      toast.success("Đã xóa NFR");
+      toast.success("NFR deleted");
       userOnSuccess?.(data, variables, onMutateResult, context);
     },
     onError: (error, variables, onMutateResult, context) => {
-      toast.error(getApiErrorMessage(error, "Xóa NFR thất bại"));
+      toast.error(getApiErrorMessage(error, "Failed to delete NFR"));
       userOnError?.(error, variables, onMutateResult, context);
     },
   });

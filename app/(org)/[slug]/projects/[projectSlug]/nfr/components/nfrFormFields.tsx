@@ -62,7 +62,7 @@ export function NfrFormFields({
     <div className="grid gap-4">
       <div className="grid gap-2 sm:grid-cols-2 sm:gap-4">
         <div className="grid gap-2">
-          <Label htmlFor="nfr-category">Loại NFR</Label>
+          <Label htmlFor="nfr-category">Category</Label>
           <Select
             value={values.category}
             onValueChange={(v) => onChange({ category: v as NfrCategory })}
@@ -84,7 +84,7 @@ export function NfrFormFields({
         </div>
 
         <div className="grid gap-2">
-          <Label htmlFor="nfr-priority">Độ ưu tiên</Label>
+          <Label htmlFor="nfr-priority">Priority</Label>
           <Select
             value={values.priority}
             onValueChange={(v) => onChange({ priority: v as NfrPriority })}
@@ -108,7 +108,7 @@ export function NfrFormFields({
 
       <div className="grid gap-2">
         <div className="flex items-baseline justify-between gap-2">
-          <Label htmlFor="nfr-description">Mô tả NFR</Label>
+          <Label htmlFor="nfr-description">Description</Label>
           <span className="text-[11px] tabular-nums text-muted-foreground">
             {values.description.length} / {NFR_DESCRIPTION_MAX_CHARS}
           </span>
@@ -118,7 +118,7 @@ export function NfrFormFields({
           value={values.description}
           maxLength={NFR_DESCRIPTION_MAX_CHARS}
           disabled={disabled}
-          placeholder="Ví dụ: Thời gian phản hồi API ≤ 300ms ở p95…"
+          placeholder="E.g.: API response time ≤ 300ms at p95…"
           rows={4}
           className="min-h-24 text-sm"
           onChange={(e) =>

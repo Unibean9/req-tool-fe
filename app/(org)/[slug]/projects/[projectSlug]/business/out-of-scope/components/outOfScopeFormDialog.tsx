@@ -87,12 +87,12 @@ function OutOfScopeFormDialogBody({
     <form onSubmit={handleSubmit}>
       <DialogHeader>
         <DialogTitle className="text-lg">
-          {isEdit ? "Chỉnh sửa out-of-scope" : "Thêm out-of-scope"}
+          {isEdit ? "Edit out-of-scope item" : "Add out-of-scope item"}
         </DialogTitle>
         <DialogDescription>
           {isEdit
-            ? "Cập nhật category hoặc mô tả mục nằm ngoài phạm vi dự án."
-            : "Ghi lại những gì không nằm trong phạm vi dự án để tránh scope creep."}
+            ? "Update the category or description of this out-of-scope item."
+            : "Document what is out of scope to prevent scope creep."}
         </DialogDescription>
       </DialogHeader>
 
@@ -116,7 +116,7 @@ function OutOfScopeFormDialogBody({
           Hủy
         </Button>
         <Button type="submit" className="font-semibold" disabled={!canSubmit}>
-          {pending ? "Đang lưu..." : isEdit ? "Lưu" : "Tạo mục"}
+          {pending ? "Saving…" : isEdit ? "Save" : "Create item"}
         </Button>
       </DialogFooter>
     </form>

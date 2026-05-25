@@ -85,9 +85,9 @@ function EditProjectActorDialogForm({
   return (
     <>
       <DialogHeader>
-        <DialogTitle className="text-lg">Chỉnh sửa actor</DialogTitle>
+        <DialogTitle className="text-lg">Edit actor</DialogTitle>
         <DialogDescription>
-          Cập nhật tên và mô tả vai trò (giới hạn ký tự như khi tạo).
+          Update the name and role description (same character limits as when creating).
         </DialogDescription>
       </DialogHeader>
       <form onSubmit={(e) => void handleEditSubmit(e)}>
@@ -98,7 +98,7 @@ function EditProjectActorDialogForm({
                 htmlFor="sidebar-edit-actor-name"
                 className="text-sm font-semibold"
               >
-                Tên
+                Name
               </Label>
               <span className="text-[10px] tabular-nums text-muted-foreground">
                 {editName.length}/{ACTOR_NAME_MAX_CHARS}
@@ -112,7 +112,7 @@ function EditProjectActorDialogForm({
               onChange={(e) =>
                 setEditName(e.target.value.slice(0, ACTOR_NAME_MAX_CHARS))
               }
-              placeholder="VD: Người dùng cuối"
+              placeholder="E.g.: Customer"
               disabled={updatePending}
               className="h-10"
             />
@@ -123,7 +123,7 @@ function EditProjectActorDialogForm({
                 htmlFor="sidebar-edit-actor-role"
                 className="text-sm font-semibold"
               >
-                Mô tả vai trò
+                Role description
               </Label>
               <span className="text-[10px] tabular-nums text-muted-foreground">
                 {editRoleDescription.length}/{ACTOR_ROLE_DESCRIPTION_MAX_CHARS}
@@ -138,7 +138,7 @@ function EditProjectActorDialogForm({
                   e.target.value.slice(0, ACTOR_ROLE_DESCRIPTION_MAX_CHARS)
                 )
               }
-              placeholder="VD: Người xác nhận yêu cầu từ bộ phận kinh doanh"
+              placeholder="E.g.: Confirms requirements from the business team"
               disabled={updatePending}
               rows={3}
               className="min-h-18 resize-none text-sm"
@@ -152,10 +152,10 @@ function EditProjectActorDialogForm({
             disabled={updatePending}
             onClick={() => onOpenChange(false)}
           >
-            Hủy
+            Cancel
           </Button>
           <Button type="submit" disabled={!canSubmitEdit}>
-            {updatePending ? "Đang lưu…" : "Lưu"}
+            {updatePending ? "Saving…" : "Save"}
           </Button>
         </DialogFooter>
       </form>

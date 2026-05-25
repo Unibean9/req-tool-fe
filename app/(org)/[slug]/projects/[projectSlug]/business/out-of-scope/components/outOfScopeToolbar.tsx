@@ -22,7 +22,7 @@ import { OutOfScopeFormDialog } from "./outOfScopeFormDialog";
 export type OutOfScopeCategoryFilter = OutOfScopeCategory | "all";
 
 function categoryFilterLabel(value: OutOfScopeCategoryFilter): string {
-  if (value === "all") return "Tất cả danh mục";
+  if (value === "all") return "All categories";
   return OUT_OF_SCOPE_CATEGORY_LABELS[value];
 }
 
@@ -61,7 +61,7 @@ export function OutOfScopeToolbar({
                 Out Of Scope
               </h1>
               <p className="text-sm text-pretty text-muted-foreground">
-                Xác định rõ những gì không nằm trong phạm vi dự án để tránh
+                Clearly define what falls outside the project scope to prevent scope creep
                 scope creep
               </p>
             </div>
@@ -75,7 +75,7 @@ export function OutOfScopeToolbar({
             onClick={() => setCreateOpen(true)}
           >
             <Plus className="size-4" aria-hidden />
-            Thêm mới
+            Add
           </Button>
         </div>
 
@@ -89,9 +89,9 @@ export function OutOfScopeToolbar({
               type="search"
               value={search}
               onChange={(e) => onSearchChange(e.target.value)}
-              placeholder="Tìm theo mô tả hoặc danh mục..."
+              placeholder="Search by description or category…"
               autoComplete="off"
-              aria-label="Tìm out-of-scope"
+              aria-label="Search out-of-scope items"
               className="h-10 w-full border-border/80 bg-muted/40 pr-3 pl-10 text-sm shadow-none"
             />
           </div>
@@ -104,13 +104,13 @@ export function OutOfScopeToolbar({
           >
             <SelectTrigger
               className="h-10 w-full shrink-0 border-border/80 bg-muted/40 sm:w-52"
-              aria-label="Lọc theo danh mục"
+              aria-label="Filter by category"
             >
               <SelectValue>{categoryFilterLabel(categoryFilter)}</SelectValue>
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all" label="Tất cả danh mục">
-                Tất cả danh mục
+              <SelectItem value="all" label="All categories">
+                All categories
               </SelectItem>
               {OUT_OF_SCOPE_CATEGORIES.map((cat) => (
                 <SelectItem

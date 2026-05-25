@@ -116,11 +116,11 @@ export function useCreateProjectOutOfScope(
     },
     onSuccess: (data, variables, onMutateResult, context) => {
       invalidateOutOfScopeMutationCaches(queryClient, variables.projectId);
-      toast.success("Đã tạo out-of-scope");
+      toast.success("Out-of-scope created");
       userOnSuccess?.(data, variables, onMutateResult, context);
     },
     onError: (error, variables, onMutateResult, context) => {
-      toast.error(getApiErrorMessage(error, "Tạo out-of-scope thất bại"));
+      toast.error(getApiErrorMessage(error, "Failed to create out-of-scope"));
       userOnError?.(error, variables, onMutateResult, context);
     },
   });
@@ -155,11 +155,11 @@ export function useUpdateProjectOutOfScope(
     },
     onSuccess: (data, variables, onMutateResult, context) => {
       invalidateOutOfScopeMutationCaches(queryClient, variables.projectId);
-      toast.success("Đã cập nhật out-of-scope");
+      toast.success("Out-of-scope updated");
       userOnSuccess?.(data, variables, onMutateResult, context);
     },
     onError: (error, variables, onMutateResult, context) => {
-      toast.error(getApiErrorMessage(error, "Cập nhật out-of-scope thất bại"));
+      toast.error(getApiErrorMessage(error, "Failed to update out-of-scope"));
       userOnError?.(error, variables, onMutateResult, context);
     },
   });
@@ -189,11 +189,11 @@ export function useDeleteProjectOutOfScope(
     },
     onSuccess: (data, variables, onMutateResult, context) => {
       invalidateOutOfScopeMutationCaches(queryClient, variables.projectId);
-      toast.success("Đã xóa out-of-scope");
+      toast.success("Out-of-scope deleted");
       userOnSuccess?.(data, variables, onMutateResult, context);
     },
     onError: (error, variables, onMutateResult, context) => {
-      toast.error(getApiErrorMessage(error, "Xóa out-of-scope thất bại"));
+      toast.error(getApiErrorMessage(error, "Failed to delete out-of-scope"));
       userOnError?.(error, variables, onMutateResult, context);
     },
   });

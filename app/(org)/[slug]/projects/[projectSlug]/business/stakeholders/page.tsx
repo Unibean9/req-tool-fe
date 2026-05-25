@@ -8,10 +8,7 @@ import { useOrgProjects } from "@/hooks/useProject";
 
 import { useOrgWorkspace } from "../../../../orgWorkspaceContext";
 import { StakeHolderTable } from "./components/stakeHolderTable";
-import {
-  StakeHolderToolbar,
-  type StakeholderBusinessActorFilter,
-} from "./components/stakeHolderToolbar";
+import { StakeHolderToolbar } from "./components/stakeHolderToolbar";
 
 function StakeholdersPageSkeleton() {
   return (
@@ -38,7 +35,7 @@ export default function ProjectBusinessStakeholdersPage() {
   const { orgId } = useOrgWorkspace();
   const [search, setSearch] = useState("");
   const [businessActorFilter, setBusinessActorFilter] =
-    useState<StakeholderBusinessActorFilter>("all");
+    useState<"all" | "business_actor" | "other_actor" | "none">("all");
 
   const projectSlug = useMemo(() => {
     const raw = params?.projectSlug;
@@ -80,6 +77,7 @@ export default function ProjectBusinessStakeholdersPage() {
         projectId={project?.id ?? null}
         search={search}
         businessActorFilter={businessActorFilter}
+        className="flex-1 min-h-0"
       />
     </div>
   );

@@ -69,7 +69,7 @@ export function FlowSwimlaneLegend() {
   return (
     <div
       className="pointer-events-none absolute bottom-0 left-0 z-20 max-w-54 rounded-tr-lg border border-border/80 border-b-0 border-l-0 bg-card/95 pt-2 pr-2.5 pb-2 pl-2.5 shadow-md backdrop-blur-sm"
-      aria-label="Chú thích thao tác swimlane"
+      aria-label="Swimlane interaction legend"
     >
       <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
         Chú thích
@@ -77,7 +77,7 @@ export function FlowSwimlaneLegend() {
       <ul className="space-y-1.5">
         <LegendItem
           icon={<LegendWaypointIcon />}
-          label="Kéo chấm tròn — chỉnh đường dây"
+          label="Drag the dot — adjust the edge path"
         />
         <LegendItem
           icon={
@@ -86,21 +86,21 @@ export function FlowSwimlaneLegend() {
               aria-hidden
             />
           }
-          label="Chuột phải đoạn lệch — căn một đường thẳng"
+          label="Right-click a bent segment — straighten the edge"
         />
         <LegendItem
           icon={
             <Trash2 className="size-3.5 text-foreground/75" aria-hidden />
           }
-          label="Chuột phải trên chấm — xóa điểm gãy"
+          label="Right-click on a dot — remove the waypoint"
         />
         <LegendItem
           icon={<Tag className="size-3.5 text-foreground/75" aria-hidden />}
-          label="Kéo chữ trên dây — đổi vị trí nhãn"
+          label="Drag the label on an edge — reposition it"
         />
         <LegendItem
           icon={<LegendEdgeIcon />}
-          label="Double-click dây — thêm gãy khúc"
+          label="Double-click an edge — add a waypoint"
         />
         <LegendItem
           icon={
@@ -109,7 +109,7 @@ export function FlowSwimlaneLegend() {
               aria-hidden
             />
           }
-          label="Kéo đầu dây — đổi điểm nối node"
+          label="Drag an edge end — reconnect to a different node"
         />
         <LegendItem
           icon={
@@ -123,7 +123,7 @@ export function FlowSwimlaneLegend() {
               <Move className="size-3 shrink-0 text-foreground/75" />
             </span>
           }
-          label="Giữ Space + kéo — di chuyển canvas"
+          label="Hold Space + drag — pan the canvas"
         />
       </ul>
     </div>

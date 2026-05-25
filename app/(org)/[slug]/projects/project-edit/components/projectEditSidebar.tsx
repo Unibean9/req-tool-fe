@@ -12,7 +12,7 @@ export type ProjectEditSidebarProps = {
   dashboardHref: string;
   currentStepIndex: number;
   onStepSelect: (index: number) => void;
-  /** Chỉnh sửa dự án đã có dữ liệu — mọi bước coi như xong, nhảy bước tự do. */
+  /** Editing an existing project — all steps are treated as complete, allowing free navigation. */
   freeNavigation?: boolean;
   className?: string;
 };
@@ -35,7 +35,7 @@ export function ProjectEditSidebar({
         <Link
           href={dashboardHref}
           className="flex items-center gap-3 rounded-lg outline-none focus-visible:ring-[3px] focus-visible:ring-ring/45"
-          aria-label="Về tổng quan dự án"
+          aria-label="Back to project dashboard"
         >
           <span className="relative flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-lg ring-1 ring-border/50">
             <Image
@@ -48,13 +48,13 @@ export function ProjectEditSidebar({
             />
           </span>
           <p className="truncate font-heading text-base font-semibold tracking-tight text-foreground">
-            Chỉnh sửa dự án
+            Edit project
           </p>
         </Link>
       </div>
 
       <nav
-        aria-label="Các bước chỉnh sửa dự án"
+        aria-label="Project edit steps"
         className="flex min-h-0 flex-1 flex-col px-6 py-6"
       >
         <ol
@@ -99,7 +99,7 @@ export function ProjectEditSidebar({
                     !canSelect && "cursor-default"
                   )}
                   aria-current={isActive ? "step" : undefined}
-                  aria-label={`Bước ${index + 1}: ${step.title}`}
+                  aria-label={`Step ${index + 1}: ${step.title}`}
                 >
                   {isComplete ? (
                     <Check className="size-4" strokeWidth={2.5} aria-hidden />

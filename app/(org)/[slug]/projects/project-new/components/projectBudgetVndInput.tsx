@@ -32,7 +32,7 @@ type ProjectBudgetVndInputProps = {
 
 export function ProjectBudgetVndInput({
   id = "pn-budget",
-  label = "Ngân sách",
+  label = "Budget",
   required = false,
   value,
   onChange,
@@ -120,7 +120,7 @@ export function ProjectBudgetVndInput({
           onChange={(e) => handleChange(e.target.value)}
           onKeyDown={handleKeyDown}
           onPaste={handlePaste}
-          placeholder="Nhập số tiền"
+          placeholder="Enter amount"
           className={cn(
             "h-10 w-full min-w-0 border-2 border-border/90 pr-14 pl-10 text-left tabular-nums dark:border-zinc-600",
             showError && error && "border-destructive"

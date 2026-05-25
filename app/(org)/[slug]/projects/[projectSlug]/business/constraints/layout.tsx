@@ -16,7 +16,7 @@ export async function generateMetadata({
   const title = projectName ? `${projectName} | Constraints` : "Constraints";
   return buildPageMetadata({
     title,
-    description: "Ràng buộc của dự án.",
+    description: "Constraints for the project.",
     path: `/${segmentForMetadataPath(slug)}/projects/${segmentForMetadataPath(projectSlug)}/business/constraints`,
     noindex: true,
   });

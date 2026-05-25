@@ -40,7 +40,7 @@ export function GoalToolbar({
                 Goals
               </h1>
               <p className="text-sm text-pretty text-muted-foreground">
-                Mục tiêu kinh doanh và tiêu chí thành công của dự án
+                Business goals and success criteria for the project
               </p>
             </div>
           </div>
@@ -52,7 +52,7 @@ export function GoalToolbar({
             onClick={() => setCreateOpen(true)}
           >
             <Plus className="size-4" aria-hidden />
-            Thêm mới
+            Add
           </Button>
         </div>
 
@@ -65,9 +65,9 @@ export function GoalToolbar({
             type="search"
             value={search}
             onChange={(e) => onSearchChange(e.target.value)}
-            placeholder="Tìm theo mô tả hoặc tiêu chí thành công…"
+            placeholder="Search by description or success metric…"
             autoComplete="off"
-            aria-label="Tìm goal"
+            aria-label="Search goals"
             className="h-10 w-full border-border/80 bg-muted/40 pr-3 pl-10 text-sm shadow-none"
           />
         </div>

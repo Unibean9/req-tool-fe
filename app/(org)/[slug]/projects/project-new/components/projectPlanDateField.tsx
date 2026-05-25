@@ -48,7 +48,7 @@ export function ProjectPlanDateField({
         onChange={onChange}
         minDate={minDate}
         disabled={disabled}
-        placeholder="Chọn ngày"
+        placeholder="Select date"
         aria-invalid={Boolean(showError && error)}
         className={cn(showError && error && "border-destructive")}
       />

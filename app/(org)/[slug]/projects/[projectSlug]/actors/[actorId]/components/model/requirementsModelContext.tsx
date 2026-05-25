@@ -1195,7 +1195,7 @@ export function RequirementsModelProvider({
         );
         if (!epic) {
           toast.message(
-            "Thả Feature lên thẻ Epic, hoặc bấm nút + trên Epic."
+            "Drop the Feature onto an Epic card, or click the + button on an Epic."
           );
           return;
         }
@@ -1210,7 +1210,7 @@ export function RequirementsModelProvider({
           "feature"
         );
         if (!feature) {
-          toast.message("Thả User Story lên thẻ Feature, hoặc bấm nút + trên Feature.");
+          toast.message("Drop the User Story onto a Feature card, or click the + button on a Feature.");
           return;
         }
         createUserStoryUnderFeature(feature.id, position);

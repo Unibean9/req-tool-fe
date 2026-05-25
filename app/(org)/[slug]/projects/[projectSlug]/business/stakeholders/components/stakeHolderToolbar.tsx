@@ -1,7 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Search, UserRoundCheck, UsersRound } from "lucide-react";
+import {
+  Briefcase,
+  CircleDashed,
+  Plus,
+  Search,
+  UserRound,
+  UserRoundCheck,
+  UsersRound,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,7 +35,7 @@ export type StakeholderActorTypeFilter =
 export type StakeholderBusinessActorFilter = StakeholderActorTypeFilter;
 
 const FILTER_LABELS: Record<StakeholderActorTypeFilter, string> = {
-  all: "Tất cả stakeholders",
+  all: "All stakeholders",
   none: "None",
   business_actor: "Business actor",
   other_actor: "Other actor",
@@ -59,7 +67,7 @@ export function StakeHolderToolbar({
   return (
     <>
       <header className={cn("flex flex-col gap-4", className)}>
-        <div className="flex items-start justify-between gap-4">
+        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
           <div className="flex min-w-0 items-center gap-3">
             <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-muted/80 text-primary">
               <UsersRound className="size-5" aria-hidden />
@@ -69,20 +77,50 @@ export function StakeHolderToolbar({
                 Stakeholders
               </h1>
               <p className="text-sm text-muted-foreground text-pretty">
-                Bên liên quan và mức ảnh hưởng trong dự án
+                Stakeholders and their influence levels in the project
               </p>
             </div>
           </div>
-          <Button
-            type="button"
-            size="default"
-            className="h-10 shrink-0 font-semibold"
-            disabled={createDisabled}
-            onClick={() => setCreateOpen(true)}
-          >
-            <Plus className="size-4" aria-hidden />
-            Thêm mới
-          </Button>
+
+          <div className="flex shrink-0 items-center gap-3">
+            {/* Actor type icon legend */}
+            <div
+              className="hidden items-center gap-3 sm:flex"
+              aria-label="Actor type legend"
+            >
+              <span className="flex items-center gap-1.5">
+                <span className="flex size-5 shrink-0 items-center justify-center rounded bg-brand-mint/25 ring-1 ring-brand-mint/35 text-foreground">
+                  <Briefcase className="size-3" aria-hidden />
+                </span>
+                <span className="text-[11px] text-muted-foreground">Business actor</span>
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="flex size-5 shrink-0 items-center justify-center rounded bg-amber-500/15 ring-1 ring-amber-500/30 text-amber-700 dark:text-amber-200">
+                  <UserRound className="size-3" aria-hidden />
+                </span>
+                <span className="text-[11px] text-muted-foreground">Other actor</span>
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="flex size-5 shrink-0 items-center justify-center rounded bg-muted/65 ring-1 ring-border/70 text-muted-foreground">
+                  <CircleDashed className="size-3" aria-hidden />
+                </span>
+                <span className="text-[11px] text-muted-foreground">None</span>
+              </span>
+            </div>
+
+            <span className="hidden h-5 w-px shrink-0 rounded-full bg-border/60 sm:block" aria-hidden />
+
+            <Button
+              type="button"
+              size="default"
+              className="h-10 shrink-0 font-semibold"
+              disabled={createDisabled}
+              onClick={() => setCreateOpen(true)}
+            >
+              <Plus className="size-4" aria-hidden />
+              Add
+            </Button>
+          </div>
         </div>
 
         <div className="flex flex-row flex-wrap items-center gap-3">
@@ -95,9 +133,9 @@ export function StakeHolderToolbar({
               type="search"
               value={search}
               onChange={(e) => onSearchChange(e.target.value)}
-              placeholder="Tìm theo tên, vai trò, lĩnh vực…"
+              placeholder="Search by name, role, area…"
               autoComplete="off"
-              aria-label="Tìm stakeholder"
+              aria-label="Search stakeholders"
               className="h-10 w-full border-border/80 bg-muted/40 pr-3 pl-10 text-sm shadow-none"
             />
           </div>
@@ -117,7 +155,7 @@ export function StakeHolderToolbar({
             >
               <SelectTrigger
                 className="h-10 w-full border-border/80 bg-muted/40 pl-10"
-                aria-label="Lọc theo vai trò mô hình"
+                aria-label="Filter by model role"
               >
                 <SelectValue>
                   {FILTER_LABELS[businessActorFilter]}
@@ -140,6 +178,7 @@ export function StakeHolderToolbar({
             </Select>
           </div>
         </div>
+
       </header>
 
       <StakeHolderFormDialog

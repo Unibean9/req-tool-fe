@@ -33,12 +33,12 @@ const RULE_TYPE_LABELS: Record<ProjectRuleType, string> = {
 };
 
 function ruleTypeFilterLabel(value: RuleTypeFilter): string {
-  if (value === "all") return "Tất cả";
+  if (value === "all") return "All";
   return RULE_TYPE_LABELS[value];
 }
 
 function ruleDynamicFilterLabel(value: RuleDynamicFilter): string {
-  if (value === "all") return "Tất cả";
+  if (value === "all") return "All";
   return value === "dynamic" ? "Dynamic" : "Static";
 }
 
@@ -81,7 +81,7 @@ export function RuleToolbar({
                 Rules
               </h1>
               <p className="text-sm text-pretty text-muted-foreground">
-                Quy tắc nghiệp vụ và ràng buộc liên kết tới feature
+                Business rules and constraints linked to features
               </p>
             </div>
           </div>
@@ -93,7 +93,7 @@ export function RuleToolbar({
             onClick={() => setCreateOpen(true)}
           >
             <Plus className="size-4" aria-hidden />
-            Thêm mới
+            Add
           </Button>
         </div>
 
@@ -107,9 +107,9 @@ export function RuleToolbar({
               type="search"
               value={search}
               onChange={(e) => onSearchChange(e.target.value)}
-              placeholder="Tìm theo định nghĩa, loại hoặc nguồn…"
+              placeholder="Search by definition, type, or source…"
               autoComplete="off"
-              aria-label="Tìm rule"
+              aria-label="Search rules"
               className="h-10 w-full border-border/80 bg-muted/40 pr-3 pl-10 text-sm shadow-none"
             />
           </div>
@@ -120,15 +120,15 @@ export function RuleToolbar({
           >
             <SelectTrigger
               className="h-10 w-full shrink-0 border-border/80 bg-muted/40 sm:w-45"
-              aria-label="Lọc rule theo loại"
+              aria-label="Filter rules by type"
             >
-              <SelectValue placeholder="Loại">
+              <SelectValue placeholder="Type">
                 {ruleTypeFilterLabel(typeFilter)}
               </SelectValue>
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all" label="Tất cả">
-                Tất cả
+              <SelectItem value="all" label="All">
+                All
               </SelectItem>
               {PROJECT_RULE_TYPES.map((type) => (
                 <SelectItem key={type} value={type} label={RULE_TYPE_LABELS[type]}>
@@ -146,20 +146,20 @@ export function RuleToolbar({
           >
             <SelectTrigger
               className="h-10 w-full shrink-0 border-border/80 bg-muted/40 sm:w-40"
-              aria-label="Lọc rule theo trạng thái"
+              aria-label="Filter rules by status"
             >
-              <SelectValue placeholder="Trạng thái">
+              <SelectValue placeholder="Status">
                 {ruleDynamicFilterLabel(dynamicFilter)}
               </SelectValue>
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all" label="Tất cả">
-                Tất cả
+              <SelectItem value="all" label="All">
+                All
               </SelectItem>
-              <SelectItem value="dynamic" label="Trạng thái dynamic">
+              <SelectItem value="dynamic" label="Dynamic">
                 Dynamic
               </SelectItem>
-              <SelectItem value="static" label="Trạng thái static">
+              <SelectItem value="static" label="Static">
                  Static
               </SelectItem>
             </SelectContent>

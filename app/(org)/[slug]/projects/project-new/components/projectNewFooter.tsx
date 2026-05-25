@@ -43,7 +43,7 @@ export function ProjectNewFooter({
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0 flex-1 sm:max-w-xs">
           <p className="text-sm font-medium text-foreground">
-            Bước {currentStepIndex + 1} / {totalSteps}
+            Step {currentStepIndex + 1} / {totalSteps}
           </p>
           <div
             className="mt-2 h-1 w-full overflow-hidden rounded-full bg-muted"
@@ -51,7 +51,7 @@ export function ProjectNewFooter({
             aria-valuemin={0}
             aria-valuemax={100}
             aria-valuenow={progress}
-            aria-label="Tiến độ tạo dự án"
+            aria-label="Project creation progress"
           >
             <div
               className="h-full rounded-full bg-primary transition-[width] duration-300 ease-out"
@@ -69,7 +69,7 @@ export function ProjectNewFooter({
               onClick={onBack}
             >
               <ArrowLeft className="size-4" aria-hidden />
-              Quay lại
+              Back
             </Button>
           ) : null}
           <Button
@@ -80,12 +80,12 @@ export function ProjectNewFooter({
             className="gap-2 font-semibold"
           >
             {nextLoading ? (
-              "Đang tạo…"
+              "Creating…"
             ) : isLastStep ? (
-              "Tạo dự án"
+              "Create project"
             ) : (
               <>
-                Tiếp theo
+                Next
                 <ArrowRight className="size-4" aria-hidden />
               </>
             )}

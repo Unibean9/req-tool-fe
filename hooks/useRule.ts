@@ -113,11 +113,11 @@ export function useCreateProjectRule(
     },
     onSuccess: (data, variables, onMutateResult, context) => {
       invalidateRuleMutationCaches(queryClient, variables.projectId);
-      toast.success("Đã tạo rule");
+      toast.success("Rule created");
       userOnSuccess?.(data, variables, onMutateResult, context);
     },
     onError: (error, variables, onMutateResult, context) => {
-      toast.error(getApiErrorMessage(error, "Tạo rule thất bại"));
+      toast.error(getApiErrorMessage(error, "Failed to create rule"));
       userOnError?.(error, variables, onMutateResult, context);
     },
   });
@@ -152,11 +152,11 @@ export function useUpdateProjectRule(
     },
     onSuccess: (data, variables, onMutateResult, context) => {
       invalidateRuleMutationCaches(queryClient, variables.projectId);
-      toast.success("Đã cập nhật rule");
+      toast.success("Rule updated");
       userOnSuccess?.(data, variables, onMutateResult, context);
     },
     onError: (error, variables, onMutateResult, context) => {
-      toast.error(getApiErrorMessage(error, "Cập nhật rule thất bại"));
+      toast.error(getApiErrorMessage(error, "Failed to update rule"));
       userOnError?.(error, variables, onMutateResult, context);
     },
   });
@@ -186,11 +186,11 @@ export function useDeleteProjectRule(
     },
     onSuccess: (data, variables, onMutateResult, context) => {
       invalidateRuleMutationCaches(queryClient, variables.projectId);
-      toast.success("Đã xóa rule");
+      toast.success("Rule deleted");
       userOnSuccess?.(data, variables, onMutateResult, context);
     },
     onError: (error, variables, onMutateResult, context) => {
-      toast.error(getApiErrorMessage(error, "Xóa rule thất bại"));
+      toast.error(getApiErrorMessage(error, "Failed to delete rule"));
       userOnError?.(error, variables, onMutateResult, context);
     },
   });

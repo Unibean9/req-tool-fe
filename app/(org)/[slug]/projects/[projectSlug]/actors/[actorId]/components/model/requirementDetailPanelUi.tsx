@@ -223,7 +223,7 @@ export function DetailLabelTagsField({
   onChange,
   maxTagLength = 48,
   maxTags = 12,
-  placeholder = "Gõ label rồi Enter…",
+  placeholder = "Type a label and press Enter…",
 }: {
   id: string;
   label: string;
@@ -274,7 +274,7 @@ export function DetailLabelTagsField({
             <button
               type="button"
               className="shrink-0 rounded-sm text-muted-foreground hover:text-foreground"
-              aria-label={`Xóa label ${tag}`}
+              aria-label={`Remove label ${tag}`}
               onClick={() => removeTag(index)}
             >
               ×
@@ -286,7 +286,7 @@ export function DetailLabelTagsField({
             id={id}
             type="text"
             className="min-w-28 flex-1 border-0 bg-transparent px-1 py-0.5 text-sm outline-none placeholder:text-muted-foreground"
-            placeholder={tags.length === 0 ? placeholder : "Thêm…"}
+            placeholder={tags.length === 0 ? placeholder : "Add…"}
             onKeyDown={(e) => {
               if (e.key === "Enter" || e.key === ",") {
                 e.preventDefault();
@@ -312,7 +312,7 @@ export function DetailLabelTagsField({
         ) : null}
       </div>
       <p className="text-[11px] text-muted-foreground">
-        Enter hoặc dấu phẩy để thêm. Tối đa {maxTags} label.
+        Press Enter or comma to add. Tối đa {maxTags} label.
       </p>
     </div>
   );
@@ -347,7 +347,7 @@ export function DetailStatusSelect<T extends string>({
         }}
       >
         <SelectTrigger id={id} className="w-full border-border/80 bg-muted/30 text-sm">
-          <SelectValue placeholder="Chọn trạng thái">
+          <SelectValue placeholder="Select status">
             {colored ? (
               <WorkItemColoredPill
                 text={workItemStatusLabel(value)}
@@ -403,7 +403,7 @@ export function DetailPrioritySelect<T extends string>({
       </Label>
       <Select value={value} onValueChange={(v) => onChange(v as T)}>
         <SelectTrigger id={id} className="w-full border-border/80 bg-muted/30 text-sm">
-          <SelectValue placeholder="Chọn độ ưu tiên">
+          <SelectValue placeholder="Select priority">
             {colored ? (
               <WorkItemColoredPill
                 text={workItemPriorityLabel(value)}

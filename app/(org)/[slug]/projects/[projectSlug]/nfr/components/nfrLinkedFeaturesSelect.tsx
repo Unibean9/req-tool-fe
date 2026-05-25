@@ -57,7 +57,7 @@ function SelectedFeatureChip({
   const label = feature
     ? formatFeaturePrefixTitle(feature)
     : isPending
-      ? "Đang tải…"
+      ? "Loading…"
       : featureId.slice(0, 8);
 
   return (
@@ -69,7 +69,7 @@ function SelectedFeatureChip({
         size="icon"
         className="size-5 shrink-0 text-muted-foreground hover:text-foreground"
         disabled={disabled}
-        aria-label={`Gỡ feature ${label}`}
+        aria-label={`Remove feature ${label}`}
         onClick={onRemove}
       >
         <X className="size-3" aria-hidden />
@@ -127,7 +127,7 @@ export function NfrLinkedFeaturesSelect({
 
   return (
     <div className="grid gap-2">
-      <Label htmlFor={id}>Feature liên kết (tuỳ chọn)</Label>
+      <Label htmlFor={id}>Linked features (optional)</Label>
       <Popover
         open={open}
         onOpenChange={(next) => {
@@ -147,8 +147,8 @@ export function NfrLinkedFeaturesSelect({
         >
           <span className="min-w-0 flex-1 truncate">
             {selectedIds.length === 0
-              ? "Tìm và chọn feature…"
-              : `Đã chọn ${selectedIds.length} feature`}
+              ? "Search and select features…"
+              : `${selectedIds.length} feature(s) selected`}
           </span>
           <ChevronsUpDown className="size-4 shrink-0 text-muted-foreground" />
         </PopoverTrigger>
@@ -166,7 +166,7 @@ export function NfrLinkedFeaturesSelect({
               <Input
                 type="search"
                 autoComplete="off"
-                placeholder="Tìm theo prefix-title…"
+                placeholder="Search by prefix-title…"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="h-9 border-border/80 bg-muted/30 pl-8 text-sm"
@@ -187,8 +187,8 @@ export function NfrLinkedFeaturesSelect({
             ) : filteredFeatures.length === 0 ? (
               <p className="px-2 py-6 text-center text-xs text-muted-foreground">
                 {search.trim()
-                  ? "Không có feature khớp."
-                  : "Chưa có feature trong dự án."}
+                  ? "No matching features."
+                  : "No features in this project yet."}
               </p>
             ) : (
               <ul className="space-y-0.5">
@@ -244,7 +244,7 @@ export function NfrLinkedFeaturesSelect({
         </div>
       ) : (
         <p className="text-xs text-muted-foreground">
-          Có thể chọn nhiều feature. Cuộn danh sách để tải thêm.
+          You can select multiple features. Scroll to load more.
         </p>
       )}
     </div>

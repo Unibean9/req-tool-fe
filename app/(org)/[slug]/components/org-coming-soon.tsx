@@ -12,7 +12,7 @@ export function OrgComingSoon({ title, description }: OrgComingSoonProps) {
         {title}
       </h1>
       <p className="text-muted-foreground text-sm leading-relaxed">
-        {description ?? "Tính năng đang được hoàn thiện. Quay lại sau nhé."}
+        {description ?? "This feature is being built. Check back soon."}
       </p>
       <p className="text-muted-foreground/80 font-mono text-xs">Coming soon</p>
     </div>

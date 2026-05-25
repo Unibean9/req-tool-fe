@@ -97,7 +97,7 @@ function severityBadgeClassName(severity: ConstraintSeverity): string {
 function formatDate(value: string): string {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "";
-  return new Intl.DateTimeFormat("vi-VN", {
+  return new Intl.DateTimeFormat("en-US", {
     day: "2-digit",
     month: "2-digit",
     year: "numeric",
@@ -200,7 +200,7 @@ export function ConstraintTable({
   if (!projectId) {
     return (
       <p className="rounded-xl border border-border/70 bg-card/50 px-5 py-8 text-center text-sm text-muted-foreground">
-        Không tìm thấy dự án trong workspace này.
+        No project found in this workspace.
       </p>
     );
   }
@@ -226,7 +226,7 @@ export function ConstraintTable({
         <p className="text-sm text-destructive">
           {error instanceof Error
             ? error.message
-            : "Không tải được danh sách constraints."}
+            : "Failed to load constraints."}
         </p>
         <Button
           type="button"
@@ -235,7 +235,7 @@ export function ConstraintTable({
           className="mt-4"
           onClick={() => void refetch()}
         >
-          Thử lại
+          Retry
         </Button>
       </div>
     );
@@ -254,10 +254,10 @@ export function ConstraintTable({
         </span>
         <div className="space-y-1">
           <p className="text-sm font-medium text-foreground">
-            Chưa có constraint
+            No constraints yet
           </p>
           <p className="text-sm text-muted-foreground">
-            Dùng nút &quot;Thêm constraint&quot; để bắt đầu.
+            Use the &quot;Add constraint&quot; button to get started.
           </p>
         </div>
       </div>
@@ -272,7 +272,7 @@ export function ConstraintTable({
           className
         )}
       >
-        Không có kết quả phù hợp với bộ lọc hiện tại.
+        No results match the current filters.
       </p>
     );
   }
@@ -290,10 +290,10 @@ export function ConstraintTable({
           <TableHeader>
             <TableRow className="border-border/70 bg-muted/30 hover:bg-muted/30">
               <TableHead className="w-12 pl-4 text-center">#</TableHead>
-              <TableHead className="min-w-60">Đặc điểm</TableHead>
-              <TableHead className="w-32">Loại</TableHead>
-              <TableHead className="w-32">Mức độ</TableHead>
-              <TableHead className="w-36">Cập nhật</TableHead>
+              <TableHead className="min-w-60">Description</TableHead>
+              <TableHead className="w-32">Type</TableHead>
+              <TableHead className="w-32">Severity</TableHead>
+              <TableHead className="w-36">Updated</TableHead>
               <TableHead className="w-24 pr-4 text-right" />
             </TableRow>
           </TableHeader>
@@ -313,7 +313,7 @@ export function ConstraintTable({
                     <p className="text-sm leading-relaxed text-foreground">
                       {row.description.trim() || (
                         <span className="italic text-muted-foreground">
-                          Chưa có mô tả.
+                          No description.
                         </span>
                       )}
                     </p>
@@ -353,7 +353,7 @@ export function ConstraintTable({
                         variant="ghost"
                         size="icon"
                         className="size-8 text-muted-foreground hover:text-foreground"
-                        aria-label="Chỉnh sửa"
+                        aria-label="Edit"
                         disabled={rowBusy}
                         onClick={() => setEditTarget(row)}
                       >
@@ -364,7 +364,7 @@ export function ConstraintTable({
                         variant="ghost"
                         size="icon"
                         className="size-8 text-muted-foreground hover:border-destructive/40 hover:bg-destructive/10 hover:text-destructive"
-                        aria-label="Xóa"
+                        aria-label="Delete"
                         disabled={rowBusy}
                         onClick={() =>
                           setDeleteTarget({

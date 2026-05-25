@@ -16,7 +16,7 @@ export async function generateMetadata({
   const title = projectName ? `${projectName} | Non-Functional Requirements` : "Non-Functional Requirements";
   return buildPageMetadata({
     title,
-    description: "Yêu cầu phi chức năng của dự án.",
+    description: "Non-functional requirements for the project.",
     path: `/${segmentForMetadataPath(slug)}/projects/${segmentForMetadataPath(projectSlug)}/nfr`,
     noindex: true,
   });

@@ -24,9 +24,9 @@ type OrgOwnerFlowNode = Node<OrgOwnerFlowData, "orgOwner">;
 type OrgMemberFlowNode = Node<OrgMemberFlowData, "orgMember">;
 type OrgGroupFlowNode = Node<OrgGroupFlowData, "orgGroup">;
 
-/** Leader — xanh brand (chart-1). */
+/** Team Lead — brand color (chart-1). */
 const LEADER_ACCENT = "var(--chart-1)";
-/** Thành viên — xanh dương tách biệt với leader. */
+/** Member — blue distinct from the leader accent. */
 const MEMBER_ACCENT = "rgb(56 189 248)";
 
 function memberCardInitials(
@@ -68,8 +68,8 @@ function MemberAvatar({
 }) {
   const initials = memberCardInitials(displayName, email, userId);
   const alt = displayName
-    ? `Ảnh đại diện — ${displayName}`
-    : "Ảnh đại diện thành viên";
+    ? `Avatar — ${displayName}`
+    : "Member avatar";
 
   return (
     <div className="absolute -top-7 left-1/2 -translate-x-1/2">
@@ -125,7 +125,7 @@ export const OrgOwnerCard = memo(function OrgOwnerCard(
         <p className="truncate text-[11px] text-muted-foreground">{email}</p>
       ) : (
         <p className="truncate text-[11px] text-muted-foreground/70">
-          {synthetic ? "Chưa có hồ sơ" : "—"}
+          {synthetic ? "No profile" : "—"}
         </p>
       )}
       <p className="mt-0.5 text-xs font-medium text-(--chart-1)">

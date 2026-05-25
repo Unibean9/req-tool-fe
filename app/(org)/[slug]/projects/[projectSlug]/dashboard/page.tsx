@@ -103,7 +103,7 @@ export default function ProjectDashboardPage() {
     return (
       <div className="rounded-xl border border-border/70 bg-card/50 px-5 py-8 text-center">
         <p className="text-sm text-destructive">
-          {err instanceof Error ? err.message : "Không tải được dự án."}
+          {err instanceof Error ? err.message : "Failed to load the project."}
         </p>
         <Button
           type="button"
@@ -115,7 +115,7 @@ export default function ProjectDashboardPage() {
             void refetchDetail();
           }}
         >
-          Thử lại
+          Try again
         </Button>
       </div>
     );
@@ -125,7 +125,7 @@ export default function ProjectDashboardPage() {
     return (
       <div className="rounded-xl border border-border/70 bg-card/50 px-5 py-8 text-center">
         <p className="text-sm text-muted-foreground">
-          Không tìm thấy dự án trong tổ chức.
+          No project found in this organization.
         </p>
       </div>
     );
@@ -143,35 +143,35 @@ export default function ProjectDashboardPage() {
       {activeTab === "overview" ? (
         <>
           <div className={DASHBOARD_PAIR_ROW_CLASS}>
-            <ProjectDashboardSection title="Mô tả" accent="violet">
+            <ProjectDashboardSection title="Description" accent="violet">
               {project.description.trim() ? (
                 <ProjectDashboardProse>{project.description}</ProjectDashboardProse>
               ) : (
-                <EmptyHint>Chưa có mô tả chi tiết.</EmptyHint>
+                <EmptyHint>No description provided.</EmptyHint>
               )}
             </ProjectDashboardSection>
 
-            <ProjectDashboardSection title="Ngữ cảnh" accent="sky">
+            <ProjectDashboardSection title="Context" accent="sky">
               {project.context.trim() ? (
                 <ProjectDashboardProse>{project.context}</ProjectDashboardProse>
               ) : (
-                <EmptyHint>Chưa có ngữ cảnh.</EmptyHint>
+                <EmptyHint>No context provided.</EmptyHint>
               )}
             </ProjectDashboardSection>
           </div>
 
           <div className={DASHBOARD_PAIR_ROW_CLASS}>
-            <ProjectDashboardSection title="Vấn đề" accent="orange">
+            <ProjectDashboardSection title="Problems" accent="orange">
               <ProjectDashboardIndexedList
                 items={project.problems}
-                emptyLabel="Chưa có vấn đề nào."
+                emptyLabel="No problems listed."
               />
             </ProjectDashboardSection>
 
-            <ProjectDashboardSection title="Giải pháp đề xuất" accent="fuchsia">
+            <ProjectDashboardSection title="Proposed Solutions" accent="fuchsia">
               <ProjectDashboardIndexedList
                 items={project.proposedSolutions}
-                emptyLabel="Chưa có đề xuất giải pháp."
+                emptyLabel="No proposed solutions yet."
               />
             </ProjectDashboardSection>
           </div>
@@ -183,7 +183,7 @@ export default function ProjectDashboardPage() {
             {project.roiNotes.trim() ? (
               <ProjectDashboardProse>{project.roiNotes}</ProjectDashboardProse>
             ) : (
-              <EmptyHint>Chưa có mục đích kinh doanh.</EmptyHint>
+              <EmptyHint>No business purpose defined.</EmptyHint>
             )}
           </ProjectDashboardSection>
         </>

@@ -111,7 +111,7 @@ export function useActorRequirementModel(
     queryFn: async () => {
       const res = await fetchActor.getRequirementModel(pid, aid);
       if (!res.success) {
-        throw new Error(res.message ?? "Không tải được mô hình yêu cầu");
+        throw new Error(res.message ?? "Failed to load requirement model");
       }
       return res;
     },
@@ -161,7 +161,7 @@ export function useCreateProjectActor(
     }: CreateProjectActorVariables): Promise<CreateProjectActorResponse> => {
       const result = await fetchActor.create(projectId, body);
       if (!result.success) {
-        throw new Error(result.message ?? "Tạo actor thất bại");
+        throw new Error(result.message ?? "Failed to create actor");
       }
       return result;
     },
@@ -169,11 +169,11 @@ export function useCreateProjectActor(
       void queryClient.invalidateQueries({
         queryKey: projectActorsQueryKey(variables.projectId),
       });
-      toast.success("Đã tạo actor");
+      toast.success("Actor created");
       userOnSuccess?.(data, variables, onMutateResult, context);
     },
     onError: (error, variables, onMutateResult, context) => {
-      toast.error(getApiErrorMessage(error, "Tạo actor thất bại"));
+      toast.error(getApiErrorMessage(error, "Failed to create actor"));
       userOnError?.(error, variables, onMutateResult, context);
     },
   });
@@ -205,7 +205,7 @@ export function useUpdateProjectActor(
     }: UpdateProjectActorVariables): Promise<UpdateProjectActorResponse> => {
       const result = await fetchActor.update(projectId, actorId, body);
       if (!result.success) {
-        throw new Error(result.message ?? "Cập nhật actor thất bại");
+        throw new Error(result.message ?? "Failed to update actor");
       }
       return result;
     },
@@ -213,11 +213,11 @@ export function useUpdateProjectActor(
       void queryClient.invalidateQueries({
         queryKey: projectActorsQueryKey(variables.projectId),
       });
-      toast.success("Đã cập nhật actor");
+      toast.success("Actor updated");
       userOnSuccess?.(data, variables, onMutateResult, context);
     },
     onError: (error, variables, onMutateResult, context) => {
-      toast.error(getApiErrorMessage(error, "Cập nhật actor thất bại"));
+      toast.error(getApiErrorMessage(error, "Failed to update actor"));
       userOnError?.(error, variables, onMutateResult, context);
     },
   });
@@ -248,11 +248,11 @@ export function useDeleteProjectActor(
       void queryClient.invalidateQueries({
         queryKey: projectActorsQueryKey(variables.projectId),
       });
-      toast.success("Đã xóa actor");
+      toast.success("Actor deleted");
       userOnSuccess?.(data, variables, onMutateResult, context);
     },
     onError: (error, variables, onMutateResult, context) => {
-      toast.error(getApiErrorMessage(error, "Xóa actor thất bại"));
+      toast.error(getApiErrorMessage(error, "Failed to delete actor"));
       userOnError?.(error, variables, onMutateResult, context);
     },
   });
@@ -298,7 +298,7 @@ export function useCreateActorEpic(options?: UseCreateActorEpicOptions) {
     }: CreateActorEpicVariables): Promise<CreateActorEpicResponse> => {
       const result = await fetchActor.createEpic(projectId, actorId, body);
       if (!result.success) {
-        throw new Error(result.message ?? "Tạo epic thất bại");
+        throw new Error(result.message ?? "Failed to create epic");
       }
       return result;
     },
@@ -322,12 +322,12 @@ export function useCreateActorEpic(options?: UseCreateActorEpicOptions) {
         );
       }
       if (showSuccessToast) {
-        toast.success("Đã tạo epic");
+        toast.success("Epic created");
       }
       userOnSuccess?.(data, variables, onMutateResult, context);
     },
     onError: (error, variables, onMutateResult, context) => {
-      toast.error(getApiErrorMessage(error, "Tạo epic thất bại"));
+      toast.error(getApiErrorMessage(error, "Failed to create epic"));
       userOnError?.(error, variables, onMutateResult, context);
     },
   });
@@ -350,7 +350,7 @@ export function useActorCanvasLayout(
     queryFn: async () => {
       const res = await fetchActor.getCanvasLayout(pid, aid);
       if (!res.success) {
-        throw new Error(res.message ?? "Không tải được layout canvas");
+        throw new Error(res.message ?? "Failed to load canvas layout");
       }
       return res;
     },
@@ -416,7 +416,7 @@ export function useSaveActorCanvasLayout(
           : undefined;
       // Backend có thể trả 501 khi route chưa implement — không spam toast.
       if (code !== 501) {
-        toast.error(getApiErrorMessage(error, "Lưu layout thất bại"));
+        toast.error(getApiErrorMessage(error, "Failed to save canvas layout"));
       }
       userOnError?.(error, variables, onMutateResult, context);
     },

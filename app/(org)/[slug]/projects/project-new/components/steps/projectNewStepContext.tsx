@@ -35,11 +35,11 @@ export function ProjectNewStepContext({
     <div className="flex flex-col gap-6">
       <div>
         <h2 className="font-heading text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
-          Ngữ cảnh và vấn đề
+          Context and problems
         </h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Tất cả trường bắt buộc — ngữ cảnh và mỗi vấn đề tối thiểu{" "}
-          {PROJECT_MIN_TEXT_CHARS} ký tự; cần ít nhất một vấn đề.
+          All fields are required — the context and each problem must be at least{" "}
+          {PROJECT_MIN_TEXT_CHARS} characters; at least one problem is required.
         </p>
       </div>
 
@@ -47,7 +47,7 @@ export function ProjectNewStepContext({
         <div className="grid gap-2">
           <div className="flex items-center justify-between gap-2">
             <Label htmlFor="pn-context" className="text-sm font-semibold">
-              Ngữ cảnh <span className="text-destructive">*</span>
+              Context <span className="text-destructive">*</span>
             </Label>
             <span
               className="text-xs tabular-nums text-muted-foreground"
@@ -60,7 +60,7 @@ export function ProjectNewStepContext({
             <Textarea
               id="pn-context"
               aria-invalid={Boolean(contextError)}
-              placeholder="Mô tả tình trạng hiện tại, hệ thống đang dùng, hoặc bối cảnh liên quan…"
+              placeholder="Describe the current state, systems in use, or relevant background…"
               value={form.context}
               onChange={(e) =>
                 onPatch({
@@ -81,14 +81,14 @@ export function ProjectNewStepContext({
         <ProjectNewStringListField
           id="pn-problems"
           fieldKey="problems"
-          label="Vấn đề cần giải quyết"
+          label="Problems to solve"
           required
-          hint={`Ít nhất một mục, mỗi mục tối thiểu ${PROJECT_MIN_TEXT_CHARS} ký tự`}
-          placeholder="Vd: Thanh toán chậm, thiếu báo cáo…"
+          hint={`At least one item, each at least ${PROJECT_MIN_TEXT_CHARS} characters`}
+          placeholder="E.g. Slow payments, missing reports…"
           items={form.problems}
           onChange={(problems) => onPatch({ problems })}
           disabled={disabled}
-          addLabel="Thêm vấn đề"
+          addLabel="Add problem"
           addButtonInHeader
           showSubmitErrors={showSubmitErrors}
           errors={errors}

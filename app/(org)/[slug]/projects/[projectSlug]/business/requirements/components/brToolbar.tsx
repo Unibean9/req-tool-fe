@@ -21,9 +21,9 @@ import { BRFormDialog } from "./brFormDialog";
 export type BRPriorityFilter = BRPriority | "all";
 
 export const BR_PRIORITY_LABELS: Record<BRPriority, string> = {
-  low: "Thấp",
-  medium: "Trung bình",
-  high: "Cao",
+  low: "Low",
+  medium: "Medium",
+  high: "High",
 };
 
 type BRToolbarProps = {
@@ -61,7 +61,7 @@ export function BRToolbar({
                 Business Requirements
               </h1>
               <p className="text-sm text-pretty text-muted-foreground">
-                Ghi lại các yêu cầu nghiệp vụ cốt lõi của dự án
+                Document the core business requirements of the project
               </p>
             </div>
           </div>
@@ -74,7 +74,7 @@ export function BRToolbar({
             onClick={() => setCreateOpen(true)}
           >
             <Plus className="size-4" aria-hidden />
-            Thêm mới
+            Add
           </Button>
         </div>
 
@@ -88,9 +88,9 @@ export function BRToolbar({
               type="search"
               value={search}
               onChange={(e) => onSearchChange(e.target.value)}
-              placeholder="Tìm theo mô tả..."
+              placeholder="Search by description…"
               autoComplete="off"
-              aria-label="Tìm business requirement"
+              aria-label="Search business requirements"
               className="h-10 w-full border-border/80 bg-muted/40 pr-3 pl-10 text-sm shadow-none"
             />
           </div>
@@ -103,17 +103,17 @@ export function BRToolbar({
           >
             <SelectTrigger
               className="h-10 w-full shrink-0 border-border/80 bg-muted/40 sm:w-44"
-              aria-label="Lọc theo ưu tiên"
+              aria-label="Filter by priority"
             >
               <SelectValue>
                 {priorityFilter === "all"
-                  ? "Tất cả ưu tiên"
+                  ? "All priorities"
                   : BR_PRIORITY_LABELS[priorityFilter]}
               </SelectValue>
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all" label="Tất cả ưu tiên">
-                Tất cả ưu tiên
+              <SelectItem value="all" label="All priorities">
+                All priorities
               </SelectItem>
               {BR_PRIORITIES.map((p) => (
                 <SelectItem key={p} value={p} label={BR_PRIORITY_LABELS[p]}>

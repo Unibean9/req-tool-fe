@@ -290,11 +290,11 @@ export function useCreateProjectFlow(
     },
     onSuccess: (data, variables, onMutateResult, context) => {
       invalidateFlowMutationCaches(queryClient, variables.projectId);
-      toast.success("Đã tạo flow");
+      toast.success("Flow created");
       userOnSuccess?.(data, variables, onMutateResult, context);
     },
     onError: (error, variables, onMutateResult, context) => {
-      toast.error(getApiErrorMessage(error, "Tạo flow thất bại"));
+      toast.error(getApiErrorMessage(error, "Failed to create flow"));
       userOnError?.(error, variables, onMutateResult, context);
     },
   });
@@ -332,11 +332,11 @@ export function useUpdateProjectFlow(
         variables.projectId,
         variables.flowId
       );
-      toast.success("Đã cập nhật flow");
+      toast.success("Flow updated");
       userOnSuccess?.(data, variables, onMutateResult, context);
     },
     onError: (error, variables, onMutateResult, context) => {
-      toast.error(getApiErrorMessage(error, "Cập nhật flow thất bại"));
+      toast.error(getApiErrorMessage(error, "Failed to update flow"));
       userOnError?.(error, variables, onMutateResult, context);
     },
   });
@@ -372,11 +372,11 @@ export function useDeleteProjectFlow(
       void queryClient.removeQueries({
         queryKey: projectFlowQueryKey(variables.projectId, variables.flowId),
       });
-      toast.success("Đã xóa flow");
+      toast.success("Flow deleted");
       userOnSuccess?.(data, variables, onMutateResult, context);
     },
     onError: (error, variables, onMutateResult, context) => {
-      toast.error(getApiErrorMessage(error, "Xóa flow thất bại"));
+      toast.error(getApiErrorMessage(error, "Failed to delete flow"));
       userOnError?.(error, variables, onMutateResult, context);
     },
   });
@@ -417,11 +417,11 @@ export function useUpdateProjectFlowSwimlane(
       void queryClient.invalidateQueries({
         queryKey: projectSetupProgressQueryKey(variables.projectId),
       });
-      toast.success("Đã lưu layout");
+      toast.success("Layout saved");
       userOnSuccess?.(data, variables, onMutateResult, context);
     },
     onError: (error, variables, onMutateResult, context) => {
-      toast.error(getApiErrorMessage(error, "Lưu layout thất bại"));
+      toast.error(getApiErrorMessage(error, "Failed to save layout"));
       userOnError?.(error, variables, onMutateResult, context);
     },
   });
@@ -459,11 +459,11 @@ export function useCreateProjectFlowActions(
         variables.projectId,
         variables.flowId
       );
-      toast.success("Đã thêm actions");
+      toast.success("Actions added");
       userOnSuccess?.(data, variables, onMutateResult, context);
     },
     onError: (error, variables, onMutateResult, context) => {
-      toast.error(getApiErrorMessage(error, "Thêm actions thất bại"));
+      toast.error(getApiErrorMessage(error, "Failed to add actions"));
       userOnError?.(error, variables, onMutateResult, context);
     },
   });
@@ -501,11 +501,11 @@ export function usePatchProjectFlowActions(
         variables.projectId,
         variables.flowId
       );
-      toast.success("Đã cập nhật actions");
+      toast.success("Actions updated");
       userOnSuccess?.(data, variables, onMutateResult, context);
     },
     onError: (error, variables, onMutateResult, context) => {
-      toast.error(getApiErrorMessage(error, "Cập nhật actions thất bại"));
+      toast.error(getApiErrorMessage(error, "Failed to update actions"));
       userOnError?.(error, variables, onMutateResult, context);
     },
   });

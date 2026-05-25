@@ -74,7 +74,7 @@ function orgCardToneFromSeed(seed: string): string {
 function formatOrgCreatedAt(iso: string): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return "—";
-  return new Intl.DateTimeFormat("vi-VN", {
+  return new Intl.DateTimeFormat("en-US", {
     day: "numeric",
     month: "long",
     year: "numeric",
@@ -84,7 +84,7 @@ function formatOrgCreatedAt(iso: string): string {
 function orgInitial(name: string): string {
   const t = name.trim();
   if (!t) return "?";
-  return t.charAt(0).toLocaleUpperCase("vi-VN");
+  return t.charAt(0).toLocaleUpperCase("en-US");
 }
 
 type OrgHomeListProps = {
@@ -146,7 +146,7 @@ function OrgHomeOrgCard({ org }: { org: Org }) {
       <article
         className={cn(
           "relative flex h-full min-h-52 flex-col overflow-hidden rounded-2xl",
-          "border border-border/60 bg-card/55 shadow-sm ring-1 ring-white/[0.03]",
+          "border border-border/60 bg-card/55 shadow-sm ring-1 ring-white/3",
           "transition-[border-color,box-shadow,transform,background-color] duration-200 ease-out",
           "group-hover/card:-translate-y-0.5 group-hover/card:border-brand-jade/35 group-hover/card:bg-card/75 group-hover/card:shadow-lg group-hover/card:shadow-black/10"
         )}
@@ -188,7 +188,7 @@ function OrgHomeOrgCard({ org }: { org: Org }) {
               Workspace
             </span>
             <span className="inline-flex min-w-28 items-center justify-end gap-1 text-xs font-semibold text-brand-mint transition-[gap] duration-200 group-hover/card:gap-1.5">
-              {isOpening ? "Đang mở…" : "Mở workspace"}
+              {isOpening ? "Opening…" : "Open workspace"}
               <ArrowRight
                 className={cn(
                   "size-3.5 shrink-0 transition-transform duration-200",
@@ -216,9 +216,9 @@ function CreateOrgCard({
       type="button"
       onClick={onClick}
       className={cn(
-        "group/create flex h-full min-h-52 w-full flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-border/70 bg-muted/[0.08] px-4 py-8 text-center outline-none",
+        "group/create flex h-full min-h-52 w-full flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-border/70 bg-muted/8 px-4 py-8 text-center outline-none",
         "transition-[border-color,background-color,transform,box-shadow] duration-200",
-        "hover:-translate-y-0.5 hover:border-brand-jade/45 hover:bg-brand-jade/[0.06] hover:shadow-lg hover:shadow-black/10",
+        "hover:-translate-y-0.5 hover:border-brand-jade/45 hover:bg-brand-jade/6 hover:shadow-lg hover:shadow-black/10",
         "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
         className
       )}
@@ -227,7 +227,7 @@ function CreateOrgCard({
         <Plus className="size-5" aria-hidden />
       </span>
       <span className="font-heading text-base font-semibold tracking-tight text-muted-foreground transition-colors group-hover/create:text-foreground">
-        Tạo tổ chức mới
+        Create new organization
       </span>
     </button>
   );
@@ -260,7 +260,7 @@ export function OrgHomeList({ orgs }: OrgHomeListProps) {
 
   return (
     <div className="flex min-h-full w-full flex-1 flex-col gap-7 px-5 py-6 sm:px-8 sm:py-8 lg:px-10">
-      <header className="relative overflow-hidden rounded-3xl border border-border/60 bg-card/35 p-5 shadow-sm ring-1 ring-white/[0.03] sm:p-7">
+      <header className="relative overflow-hidden rounded-3xl border border-border/60 bg-card/35 p-5 shadow-sm ring-1 ring-white/3 sm:p-7">
         <div
           className="pointer-events-none absolute -top-28 left-1/2 size-72 -translate-x-1/2 rounded-full bg-brand-jade/10 blur-3xl"
           aria-hidden
@@ -271,15 +271,15 @@ export function OrgHomeList({ orgs }: OrgHomeListProps) {
               Workspace
             </p>
             <h1 className="font-heading text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-              Tổ chức của bạn
+              Your organizations
             </h1>
             <p className="max-w-2xl text-sm leading-relaxed text-muted-foreground sm:text-base">
-              Chọn nơi làm việc để tiếp tục với dự án, thành viên và mô hình yêu cầu.
+              Select a workspace to continue with projects, members, and requirement models.
             </p>
           </div>
 
-          <div className="flex w-full flex-col gap-3 sm:flex-row lg:w-auto lg:min-w-[30rem]">
-            {orgs.length > 0 ? (
+          {orgs.length > 0 ? (
+            <div className="flex w-full flex-col gap-3 sm:flex-row lg:w-auto lg:min-w-120">
               <div className="relative min-h-11 flex-1">
                 <Search
                   className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-muted-foreground"
@@ -289,23 +289,23 @@ export function OrgHomeList({ orgs }: OrgHomeListProps) {
                   type="search"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Tìm tổ chức..."
+                  placeholder="Search organizations..."
                   autoComplete="off"
-                  aria-label="Tìm tổ chức"
-                  className="h-11 rounded-2xl border-border/70 bg-background/45 pl-10 shadow-none ring-1 ring-white/[0.03] focus-visible:ring-brand-jade/30"
+                  aria-label="Search organizations"
+                  className="h-11 rounded-2xl border-border/70 bg-background/45 pl-10 shadow-none ring-1 ring-white/3 focus-visible:ring-brand-jade/30"
                 />
               </div>
-            ) : null}
-            <Button
-              type="button"
-              size="lg"
-              className="h-11 shrink-0 gap-2 rounded-2xl px-5 font-semibold shadow-none"
-              onClick={() => setCreateOpen(true)}
-            >
-              <Plus className="size-4" aria-hidden />
-              Tạo tổ chức
-            </Button>
-          </div>
+              <Button
+                type="button"
+                size="lg"
+                className="h-11 shrink-0 gap-2 rounded-2xl px-5 font-semibold shadow-none"
+                onClick={() => setCreateOpen(true)}
+              >
+                <Plus className="size-4" aria-hidden />
+                New organization
+              </Button>
+            </div>
+          ) : null}
         </div>
       </header>
 
@@ -318,14 +318,14 @@ export function OrgHomeList({ orgs }: OrgHomeListProps) {
       >
         <DialogContent className="sm:max-w-md" showCloseButton>
           <DialogHeader>
-            <DialogTitle className="font-heading text-lg">Tạo tổ chức mới</DialogTitle>
+            <DialogTitle className="font-heading text-lg">Create new organization</DialogTitle>
             <DialogDescription>
-              Nhập tên tổ chức. Sau khi tạo xong bạn sẽ được chuyển vào workspace.
+              Enter an organization name. You&apos;ll be redirected to the workspace once created.
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-3 px-1">
             <Label htmlFor="dialog-org-name" className="text-sm font-semibold">
-              Tên tổ chức
+              Organization name
             </Label>
             <div className="relative">
               <Building2
@@ -335,7 +335,7 @@ export function OrgHomeList({ orgs }: OrgHomeListProps) {
               <Input
                 id="dialog-org-name"
                 autoComplete="organization"
-                placeholder="Ví dụ: Team Platform"
+                placeholder="e.g. Team Platform"
                 value={newOrgName}
                 onChange={(e) => setNewOrgName(e.target.value)}
                 disabled={isCreating}
@@ -350,7 +350,7 @@ export function OrgHomeList({ orgs }: OrgHomeListProps) {
               onClick={() => setCreateOpen(false)}
               disabled={isCreating}
             >
-              Hủy
+              Cancel
             </Button>
             <Button
               type="button"
@@ -358,7 +358,7 @@ export function OrgHomeList({ orgs }: OrgHomeListProps) {
               disabled={!trimmedNew || isCreating}
               onClick={() => void createOrg({ name: trimmedNew })}
             >
-              {isCreating ? "Đang tạo…" : "Tạo"}
+              {isCreating ? "Creating…" : "Create"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -369,22 +369,22 @@ export function OrgHomeList({ orgs }: OrgHomeListProps) {
           <div className="flex items-end justify-between gap-3">
             <div className="space-y-1">
               <h2 className="font-heading text-lg font-semibold tracking-tight text-foreground">
-                Đã tham gia
+                Joined
               </h2>
               <p className="text-sm text-muted-foreground">
-                Các workspace bạn có thể truy cập.
+                Workspaces you have access to.
               </p>
             </div>
             <p className="rounded-full border border-border/55 bg-muted/20 px-3 py-1 text-sm tabular-nums text-muted-foreground">
               {listCount === joinedCount
-                ? `${joinedCount} tổ chức`
+                ? `${joinedCount} ${joinedCount === 1 ? "organization" : "organizations"}`
                 : `${listCount} / ${joinedCount}`}
             </p>
           </div>
 
           {filtered.length === 0 ? (
             <p className="rounded-2xl border border-border/55 bg-muted/15 px-4 py-8 text-center text-sm text-muted-foreground">
-              Không có tổ chức khớp với từ khóa &ldquo;{search.trim()}&rdquo;.
+              No organizations match &ldquo;{search.trim()}&rdquo;.
             </p>
           ) : null}
 
@@ -412,10 +412,10 @@ export function OrgHomeList({ orgs }: OrgHomeListProps) {
           </div>
           <div className="max-w-md space-y-2">
             <h2 className="font-heading text-xl font-semibold text-foreground">
-              Chưa có tổ chức nào
+              No organizations yet
             </h2>
             <p className="text-sm leading-relaxed text-muted-foreground">
-              Tạo tổ chức đầu tiên để bắt đầu quản lý dự án và yêu cầu phần mềm.
+              Create your first organization to start managing projects and software requirements.
             </p>
           </div>
           <CreateOrgCard

@@ -4,8 +4,8 @@ export type MemberHeaderProps = {
 };
 
 export function MemberHeader({
-  title = "Thành viên",
-  description = "Xem nhóm trưởng, thành viên và mối liên hệ trong tổ chức.",
+  title = "Members",
+  description = "View team leads, members, and their relationships within the organization.",
 }: MemberHeaderProps) {
   return (
     <header className="flex flex-col gap-2">

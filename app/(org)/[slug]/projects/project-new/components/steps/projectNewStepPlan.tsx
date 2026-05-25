@@ -51,19 +51,19 @@ export function ProjectNewStepPlan({
     <div className="flex flex-col gap-6">
       <div>
         <h2 className="font-heading text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
-          Kế hoạch & {PROJECT_BUSINESS_VALUE_LABEL}
+          Plan & {PROJECT_BUSINESS_VALUE_LABEL}
         </h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Ngày bắt đầu và kết thúc phải từ hôm nay trở đi; ngày kết thúc phải sau
-          ngày bắt đầu. {PROJECT_BUSINESS_VALUE_LABEL} tuỳ chọn (nếu nhập thì tối
-          thiểu {PROJECT_MIN_TEXT_CHARS} ký tự).
+          Start and end dates must be today or later; the end date must be after
+          the start date. {PROJECT_BUSINESS_VALUE_LABEL} is optional (if provided,
+          at least {PROJECT_MIN_TEXT_CHARS} characters).
         </p>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
         <ProjectPlanDateField
           id="pn-start"
-          label="Ngày bắt đầu"
+          label="Start date"
           value={form.startDate ?? ""}
           onChange={handleStartChange}
           disabled={disabled}
@@ -73,7 +73,7 @@ export function ProjectNewStepPlan({
 
         <ProjectPlanDateField
           id="pn-end"
-          label="Ngày kết thúc"
+          label="End date"
           value={form.endDate ?? ""}
           onChange={(endDate) => onPatch({ endDate })}
           minIso={
@@ -107,7 +107,7 @@ export function ProjectNewStepPlan({
           <Textarea
             id="pn-business-value"
             aria-invalid={Boolean(roiError)}
-            placeholder="Lợi ích kỳ vọng, tác động kinh doanh, rủi ro…"
+            placeholder="Expected benefits, business impact, risks…"
             value={form.roiNotes ?? ""}
             onChange={(e) =>
               onPatch({

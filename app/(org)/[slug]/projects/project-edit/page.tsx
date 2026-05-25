@@ -87,13 +87,13 @@ function OrgProjectEditPageContent() {
     return (
       <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-4 p-8 text-center">
         <p className="text-sm text-muted-foreground">
-          Thiếu tham số dự án. Mở chỉnh sửa từ trang tổng quan dự án.
+          Missing project parameter. Open edit mode from the project dashboard.
         </p>
         <Link
           href={`/${encSlug}/projects`}
           className={buttonVariants({ variant: "outline" })}
         >
-          Về danh sách dự án
+          Back to projects
         </Link>
       </div>
     );
@@ -108,7 +108,7 @@ function OrgProjectEditPageContent() {
     return (
       <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-4 p-8 text-center">
         <p className="text-sm text-destructive">
-          {err instanceof Error ? err.message : "Không tải được dự án."}
+          {err instanceof Error ? err.message : "Failed to load the project."}
         </p>
         <Button
           type="button"
@@ -118,7 +118,7 @@ function OrgProjectEditPageContent() {
             void refetchDetail();
           }}
         >
-          Thử lại
+          Try again
         </Button>
       </div>
     );
@@ -128,13 +128,13 @@ function OrgProjectEditPageContent() {
     return (
       <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-4 p-8 text-center">
         <p className="text-sm text-muted-foreground">
-          Không tìm thấy dự án trong tổ chức.
+          Project not found in this organization.
         </p>
         <Link
           href={dashboardHref}
           className={buttonVariants({ variant: "outline" })}
         >
-          Về tổng quan
+          Back to dashboard
         </Link>
       </div>
     );

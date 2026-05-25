@@ -22,10 +22,10 @@ export type NfrCategoryFilter = NfrCategory | "all";
 export type NfrPriorityFilter = NfrPriority | "all";
 
 export const NFR_PRIORITY_LABELS_VI: Record<NfrPriority, string> = {
-  low: "Thấp",
-  medium: "Trung bình",
-  high: "Cao",
-  critical: "Khẩn cấp",
+  low: "Low",
+  medium: "Medium",
+  high: "High",
+  critical: "Critical",
 };
 
 export const NFR_PRIORITY_PILL_CLASS: Record<NfrPriority, string> = {
@@ -144,7 +144,7 @@ export function NfrPriorityBadge({ priority }: { priority: NfrPriority }) {
 }
 
 export function nfrPriorityFilterLabel(value: NfrPriorityFilter): string {
-  if (value === "all") return "Tất cả";
+  if (value === "all") return "All Priorities";
   return NFR_PRIORITY_LABELS_VI[value];
 }
 
@@ -181,7 +181,7 @@ export function NfrCategoryFilterDisplay({
   className?: string;
 }) {
   if (value === "all") {
-    return <span className={cn("truncate", className)}>Tất cả</span>;
+    return <span className={cn("truncate", className)}>All Categories</span>;
   }
   return <NfrCategoryOptionContent category={value} className={className} />;
 }
@@ -190,7 +190,7 @@ export const NFR_CATEGORY_FILTER_OPTIONS: {
   value: NfrCategoryFilter;
   label: string;
 }[] = [
-  { value: "all", label: "Tất cả" },
+  { value: "all", label: "All Categories" },
   ...NFR_CATEGORIES.map((c) => ({
     value: c,
     label: NFR_CATEGORY_META[c].label,
@@ -201,7 +201,7 @@ export const NFR_PRIORITY_FILTER_OPTIONS: {
   value: NfrPriorityFilter;
   label: string;
 }[] = [
-  { value: "all", label: "Tất cả" },
+  { value: "all", label: "All Priorities" },
   ...ACTOR_EPIC_PRIORITIES.map((p) => ({
     value: p,
     label: NFR_PRIORITY_LABELS_VI[p],

@@ -43,7 +43,7 @@ export default function OrgProjectsPage() {
           <p className="text-destructive text-sm">
             {error instanceof Error
               ? error.message
-              : "Không tải được thông tin dự án."}
+              : "Failed to load project information."}
           </p>
           <Button
             type="button"
@@ -52,7 +52,7 @@ export default function OrgProjectsPage() {
             className="mt-4"
             onClick={() => void refetch()}
           >
-            Thử lại
+            Try again
           </Button>
         </div>
       </div>

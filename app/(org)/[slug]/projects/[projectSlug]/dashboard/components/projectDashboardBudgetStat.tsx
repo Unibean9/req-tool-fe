@@ -30,13 +30,13 @@ export function ProjectDashboardBudgetStat({
       </span>
       <div className="min-w-0">
         <p className="text-[10px] font-bold tracking-[0.14em] text-muted-foreground uppercase">
-          Ngân sách
+          Budget
         </p>
         <p className="mt-0.5 flex items-baseline gap-1.5 tabular-nums">
           <span className="text-base font-semibold tracking-tight text-foreground">
             {amount}
           </span>
-          <span className="text-xs font-medium text-muted-foreground">VNĐ</span>
+          <span className="text-xs font-medium text-muted-foreground">VND</span>
         </p>
       </div>
     </div>

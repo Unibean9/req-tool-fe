@@ -143,7 +143,7 @@ export function FlowTable({ projectId, search, className }: FlowTableProps) {
   if (!projectId) {
     return (
       <p className="rounded-xl border border-border/70 bg-card/50 px-5 py-8 text-center text-sm text-muted-foreground">
-        Không tìm thấy project trong workspace này.
+        No project found in this workspace.
       </p>
     );
   }
@@ -169,7 +169,7 @@ export function FlowTable({ projectId, search, className }: FlowTableProps) {
         <p className="text-sm text-destructive">
           {error instanceof Error
             ? error.message
-            : "Không tải được danh sách business flow."}
+            : "Failed to load business flows."}
         </p>
         <Button
           type="button"
@@ -178,7 +178,7 @@ export function FlowTable({ projectId, search, className }: FlowTableProps) {
           className="mt-4"
           onClick={() => void refetch()}
         >
-          Thử lại
+          Retry
         </Button>
       </div>
     );
@@ -197,10 +197,10 @@ export function FlowTable({ projectId, search, className }: FlowTableProps) {
         </span>
         <div className="space-y-1">
           <p className="text-sm font-medium text-foreground">
-            Chưa có business flow nào
+            No business flows yet
           </p>
           <p className="text-sm text-muted-foreground">
-            Dùng nút &quot;Thêm mới&quot; để định nghĩa quy trình đầu tiên.
+            Use the &quot;Add new&quot; button to define the first process.
           </p>
         </div>
       </div>
@@ -215,7 +215,7 @@ export function FlowTable({ projectId, search, className }: FlowTableProps) {
           className
         )}
       >
-        Không có kết quả cho &quot;{search.trim()}&quot;.
+        No results for &quot;{search.trim()}&quot;.
       </p>
     );
   }
@@ -234,7 +234,7 @@ export function FlowTable({ projectId, search, className }: FlowTableProps) {
             <TableRow className="border-border/70 bg-muted/30 hover:bg-muted/30">
               <TableHead className="w-12 pl-4 text-center">#</TableHead>
               <TableHead className="w-48">Flow</TableHead>
-              <TableHead className="min-w-60">Các bước</TableHead>
+              <TableHead className="min-w-60">Steps</TableHead>
               <TableHead className="w-44">Actions</TableHead>
               <TableHead className="w-40 pr-4 text-right" />
             </TableRow>
@@ -284,7 +284,7 @@ export function FlowTable({ projectId, search, className }: FlowTableProps) {
                       )}
                       {hasCatalogActions
                         ? `${actionCount} actions`
-                        : "Chưa có actions"}
+                        : "No actions"}
                     </span>
                   </TableCell>
 
@@ -311,7 +311,7 @@ export function FlowTable({ projectId, search, className }: FlowTableProps) {
                         <DropdownMenuTrigger
                           disabled={rowBusy}
                           className="flex size-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50"
-                          aria-label={`Tùy chọn ${row.name}`}
+                          aria-label={`Options for ${row.name}`}
                         >
                           <MoreVertical className="size-4" aria-hidden />
                         </DropdownMenuTrigger>
@@ -320,7 +320,7 @@ export function FlowTable({ projectId, search, className }: FlowTableProps) {
                             onClick={() => setEditFlowTarget(row)}
                           >
                             <Pencil className="size-4" aria-hidden />
-                            Chỉnh sửa
+                            Edit
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             onClick={() =>
@@ -332,8 +332,8 @@ export function FlowTable({ projectId, search, className }: FlowTableProps) {
                           >
                             <ListOrdered className="size-4" aria-hidden />
                             {hasCatalogActions
-                              ? "Cập nhật actions"
-                              : "Thêm actions"}
+                              ? "Update actions"
+                              : "Add actions"}
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem
@@ -346,7 +346,7 @@ export function FlowTable({ projectId, search, className }: FlowTableProps) {
                             }
                           >
                             <Trash2 className="size-4" aria-hidden />
-                            Xóa
+                            Delete
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>

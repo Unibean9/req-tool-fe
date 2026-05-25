@@ -45,7 +45,7 @@ export function ProjectEditFooter({
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0 flex-1 sm:max-w-xs">
           <p className="text-sm font-medium text-foreground">
-            Bước {currentStepIndex + 1} / {totalSteps}
+            Step {currentStepIndex + 1} / {totalSteps}
           </p>
           <div
             className="mt-2 h-1 w-full overflow-hidden rounded-full bg-muted"
@@ -53,7 +53,7 @@ export function ProjectEditFooter({
             aria-valuemin={0}
             aria-valuemax={100}
             aria-valuenow={progress}
-            aria-label="Tiến độ chỉnh sửa dự án"
+            aria-label="Project edit progress"
           >
             <div
               className="h-full rounded-full bg-primary transition-[width] duration-300 ease-out"
@@ -70,7 +70,7 @@ export function ProjectEditFooter({
             onClick={onCancel}
             disabled={nextLoading}
           >
-            Hủy
+            Cancel
           </Button>
           {canGoBack ? (
             <Button
@@ -81,7 +81,7 @@ export function ProjectEditFooter({
               disabled={nextLoading}
             >
               <ArrowLeft className="size-4" aria-hidden />
-              Quay lại
+              Back
             </Button>
           ) : null}
           <Button
@@ -92,12 +92,12 @@ export function ProjectEditFooter({
             className="gap-2 font-semibold"
           >
             {nextLoading ? (
-              "Đang lưu…"
+              "Saving…"
             ) : isLastStep ? (
-              "Lưu thay đổi"
+              "Save changes"
             ) : (
               <>
-                Tiếp theo
+                Next
                 <ArrowRight className="size-4" aria-hidden />
               </>
             )}

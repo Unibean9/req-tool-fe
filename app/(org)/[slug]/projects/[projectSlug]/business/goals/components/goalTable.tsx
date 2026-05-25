@@ -61,9 +61,9 @@ import {
 } from "./goalReorder";
 
 const PRIORITY_LABEL: Record<ProjectGoalPriority, string> = {
-  high: "Cao",
-  medium: "Trung bình",
-  low: "Thấp",
+  high: "High",
+  medium: "Medium",
+  low: "Low",
 };
 
 function priorityBadgeClassName(priority: ProjectGoalPriority): string {
@@ -107,7 +107,7 @@ function goalPreview(description: string, max = 48): string {
 function formatDate(dateStr: string): string {
   if (!dateStr) return "—";
   try {
-    return new Date(dateStr).toLocaleDateString("vi-VN", {
+    return new Date(dateStr).toLocaleDateString("en-US", {
       day: "2-digit",
       month: "2-digit",
       year: "numeric",
@@ -127,7 +127,7 @@ function ObjectivesDialog({ goal, onOpenChange }: ObjectivesDialogProps) {
     <Dialog open={goal != null} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md" showCloseButton>
         <DialogHeader>
-          <DialogTitle>Mục tiêu</DialogTitle>
+          <DialogTitle>Objectives</DialogTitle>
           {goal?.description && (
             <DialogDescription className="line-clamp-2">
               {goal.description}
@@ -224,9 +224,9 @@ export function GoalTable({ projectId, search, className }: GoalTableProps) {
     setReorderingGoalId(row.id);
     try {
       await applyOrderPatches(patches);
-      toast.success("Đã cập nhật thứ tự goal");
+      toast.success("Goal order updated");
     } catch (err) {
-      toast.error(getApiErrorMessage(err, "Không thể đổi thứ tự goal"));
+      toast.error(getApiErrorMessage(err, "Could not reorder goal"));
     } finally {
       setReorderingGoalId(null);
     }
@@ -239,9 +239,9 @@ export function GoalTable({ projectId, search, className }: GoalTableProps) {
     setReorderingGoalId(row.id);
     try {
       await applyOrderPatches(patches);
-      toast.success("Đã cập nhật thứ tự goal");
+      toast.success("Goal order updated");
     } catch (err) {
-      toast.error(getApiErrorMessage(err, "Không thể đổi thứ tự goal"));
+      toast.error(getApiErrorMessage(err, "Could not reorder goal"));
     } finally {
       setReorderingGoalId(null);
     }
@@ -258,7 +258,7 @@ export function GoalTable({ projectId, search, className }: GoalTableProps) {
   if (!projectId) {
     return (
       <p className="rounded-xl border border-border/70 bg-card/50 px-5 py-8 text-center text-sm text-muted-foreground">
-        Không tìm thấy dự án trong workspace này.
+        No project found in this workspace.
       </p>
     );
   }
@@ -284,7 +284,7 @@ export function GoalTable({ projectId, search, className }: GoalTableProps) {
         <p className="text-sm text-destructive">
           {error instanceof Error
             ? error.message
-            : "Không tải được danh sách goals."}
+            : "Failed to load goals."}
         </p>
         <Button
           type="button"
@@ -293,7 +293,7 @@ export function GoalTable({ projectId, search, className }: GoalTableProps) {
           className="mt-4"
           onClick={() => void refetch()}
         >
-          Thử lại
+          Retry
         </Button>
       </div>
     );
@@ -311,9 +311,9 @@ export function GoalTable({ projectId, search, className }: GoalTableProps) {
           <Target className="size-6" aria-hidden />
         </span>
         <div className="space-y-1">
-          <p className="text-sm font-medium text-foreground">Chưa có goal</p>
+          <p className="text-sm font-medium text-foreground">No goal</p>
           <p className="text-sm text-muted-foreground">
-            Dùng nút &quot;Thêm mới&quot; để bắt đầu.
+            Use the &quot;Add new&quot; button to start.
           </p>
         </div>
       </div>
@@ -328,7 +328,7 @@ export function GoalTable({ projectId, search, className }: GoalTableProps) {
           className
         )}
       >
-        Không có kết quả cho &quot;{search.trim()}&quot;.
+        No results for &quot;{search.trim()}&quot;.
       </p>
     );
   }
@@ -346,11 +346,11 @@ export function GoalTable({ projectId, search, className }: GoalTableProps) {
             <TableHeader>
               <TableRow className="border-border/70 bg-muted/30 hover:bg-muted/30">
                 <TableHead className="w-12 pl-4 text-center">#</TableHead>
-                <TableHead className="min-w-60">Mô tả</TableHead>
-                <TableHead className="w-28">Ưu tiên</TableHead>
-                <TableHead className="min-w-40">Tiêu chí thành công</TableHead>
-                <TableHead className="w-32">Ngày mục tiêu</TableHead>
-                <TableHead className="w-28">Mục tiêu</TableHead>
+                <TableHead className="min-w-60">Description</TableHead>
+                <TableHead className="w-28">Priority</TableHead>
+                <TableHead className="min-w-40">Success metric</TableHead>
+                <TableHead className="w-32">Target date</TableHead>
+                <TableHead className="w-28">Objectives</TableHead>
                 <TableHead className="w-12 pr-4 text-right" />
               </TableRow>
             </TableHeader>
@@ -369,7 +369,7 @@ export function GoalTable({ projectId, search, className }: GoalTableProps) {
                       <p className="text-sm leading-relaxed text-foreground">
                         {row.description.trim() || (
                           <span className="italic text-muted-foreground">
-                            Chưa có mô tả.
+                            No description.
                           </span>
                         )}
                       </p>
@@ -396,7 +396,7 @@ export function GoalTable({ projectId, search, className }: GoalTableProps) {
                           onClick={() => setObjectivesTarget(row)}
                           className="text-sm text-primary underline-offset-2 hover:underline"
                         >
-                          {row.objectives.length} mục tiêu
+                          {row.objectives.length} objectives
                         </button>
                       ) : (
                         <span className="text-sm text-muted-foreground">—</span>
@@ -408,7 +408,7 @@ export function GoalTable({ projectId, search, className }: GoalTableProps) {
                         <DropdownMenuTrigger
                           disabled={rowBusy}
                           className="flex size-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50"
-                          aria-label="Tùy chọn"
+                          aria-label="Options"
                         >
                           <MoreVertical className="size-4" aria-hidden />
                         </DropdownMenuTrigger>
@@ -418,19 +418,19 @@ export function GoalTable({ projectId, search, className }: GoalTableProps) {
                             onClick={() => void handleMoveUp(row)}
                           >
                             <ArrowUp className="size-4" aria-hidden />
-                            Lên đầu
+                            Move to top
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             disabled={!canMoveGoalDown(allSorted, row)}
                             onClick={() => void handleMoveDown(row)}
                           >
                             <ArrowDown className="size-4" aria-hidden />
-                            Xuống
+                            Move down
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem onClick={() => setEditTarget(row)}>
                             <Pencil className="size-4" aria-hidden />
-                            Chỉnh sửa
+                            Edit
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem
@@ -443,7 +443,7 @@ export function GoalTable({ projectId, search, className }: GoalTableProps) {
                             }
                           >
                             <Trash2 className="size-4" aria-hidden />
-                            Xóa
+                            Delete
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>

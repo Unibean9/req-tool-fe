@@ -31,12 +31,12 @@ export function useAuth() {
     },
     onSuccess: () => {
       void queryClient.clear();
-      toast.success("Đăng xuất thành công");
+      toast.success("Logged out successfully");
       router.push("/login");
     },
     onError: (error) => {
       toast.error(
-        getApiErrorMessage(error, "Có lỗi xảy ra khi đăng xuất")
+        getApiErrorMessage(error, "Failed to logout")
       );
     },
   });

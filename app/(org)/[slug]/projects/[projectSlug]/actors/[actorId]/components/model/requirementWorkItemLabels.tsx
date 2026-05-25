@@ -15,22 +15,22 @@ export function isPanelEditableStatus(
 }
 
 export const WORK_ITEM_STATUS_LABELS_VI: Record<string, string> = {
-  draft: "Nháp",
-  active: "Đang làm",
-  in_progress: "Đang xử lý",
-  done: "Hoàn thành",
-  archived: "Lưu trữ",
-  rejected: "Từ chối",
-  duplicate: "Trùng lặp",
-  wont_fix: "Không sửa",
-  deferred: "Hoãn",
+  draft: "Draft",
+  active: "Active",
+  in_progress: "In Progress",
+  done: "Done",
+  archived: "Archived",
+  rejected: "Rejected",
+  duplicate: "Duplicate",
+  wont_fix: "Won't Fix",
+  deferred: "Deferred",
 };
 
 export const WORK_ITEM_PRIORITY_LABELS_VI: Record<string, string> = {
-  low: "Thấp",
-  medium: "Trung bình",
-  high: "Cao",
-  critical: "Khẩn cấp",
+  low: "Low",
+  medium: "Medium",
+  high: "High",
+  critical: "Critical",
 };
 
 export function workItemStatusLabel(status: string): string {

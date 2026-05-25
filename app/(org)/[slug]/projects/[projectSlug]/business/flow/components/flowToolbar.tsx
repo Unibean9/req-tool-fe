@@ -40,7 +40,7 @@ export function FlowToolbar({
                 Business Flows
               </h1>
               <p className="text-sm text-muted-foreground text-pretty">
-                Định nghĩa các bước trong quy trình business
+                Define the steps in your business process
               </p>
             </div>
           </div>
@@ -52,7 +52,7 @@ export function FlowToolbar({
             onClick={() => setCreateOpen(true)}
           >
             <Plus className="size-4" aria-hidden />
-            Thêm mới
+            Add
           </Button>
         </div>
 
@@ -65,7 +65,7 @@ export function FlowToolbar({
             type="search"
             value={search}
             onChange={(e) => onSearchChange(e.target.value)}
-            placeholder="Tìm theo tên business flow hoặc bước…"
+            placeholder="Search by flow name or step…"
             autoComplete="off"
             aria-label="Search business flows"
             className="h-10 w-full border-border/80 bg-muted/40 pr-3 pl-10 text-sm shadow-none"

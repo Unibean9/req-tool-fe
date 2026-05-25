@@ -29,12 +29,12 @@ export type ConstraintTypeFilter = ConstraintType | "all";
 export type ConstraintSeverityFilter = ConstraintSeverity | "all";
 
 function typeFilterLabel(value: ConstraintTypeFilter): string {
-  if (value === "all") return "Tất cả loại";
+  if (value === "all") return "All types";
   return CONSTRAINT_TYPE_LABELS[value];
 }
 
 function severityFilterLabel(value: ConstraintSeverityFilter): string {
-  if (value === "all") return "Tất cả mức độ";
+  if (value === "all") return "All severities";
   return CONSTRAINT_SEVERITY_LABELS[value];
 }
 
@@ -77,7 +77,7 @@ export function ConstraintToolbar({
                 Constraints
               </h1>
               <p className="text-sm text-pretty text-muted-foreground">
-                Theo dõi giới hạn về ngân sách, timeline, kỹ thuật và nguồn lực
+                Track limits on budget, timeline, technical capacity, and resources
               </p>
             </div>
           </div>
@@ -90,7 +90,7 @@ export function ConstraintToolbar({
             onClick={() => setCreateOpen(true)}
           >
             <Plus className="size-4" aria-hidden />
-            Thêm mới
+            Add
           </Button>
         </div>
 
@@ -104,9 +104,9 @@ export function ConstraintToolbar({
               type="search"
               value={search}
               onChange={(e) => onSearchChange(e.target.value)}
-              placeholder="Tìm theo mô tả, loại hoặc mức độ..."
+              placeholder="Search by description, type, or severity…"
               autoComplete="off"
-              aria-label="Tìm constraint"
+              aria-label="Search constraints"
               className="h-10 w-full border-border/80 bg-muted/40 pr-3 pl-10 text-sm shadow-none"
             />
           </div>
@@ -119,13 +119,13 @@ export function ConstraintToolbar({
           >
             <SelectTrigger
               className="h-10 w-full shrink-0 border-border/80 bg-muted/40 sm:w-44"
-              aria-label="Lọc constraint theo loại"
+              aria-label="Filter by type"
             >
               <SelectValue>{typeFilterLabel(typeFilter)}</SelectValue>
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all" label="Tất cả loại">
-                Tất cả loại
+              <SelectItem value="all" label="All types">
+                All types
               </SelectItem>
               {CONSTRAINT_TYPES.map((type) => (
                 <SelectItem
@@ -147,13 +147,13 @@ export function ConstraintToolbar({
           >
             <SelectTrigger
               className="h-10 w-full shrink-0 border-border/80 bg-muted/40 sm:w-44"
-              aria-label="Lọc constraint theo mức độ"
+              aria-label="Filter by severity"
             >
               <SelectValue>{severityFilterLabel(severityFilter)}</SelectValue>
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all" label="Tất cả mức độ">
-                Tất cả mức độ
+              <SelectItem value="all" label="All severities">
+                All severitie
               </SelectItem>
               {CONSTRAINT_SEVERITIES.map((severity) => (
                 <SelectItem

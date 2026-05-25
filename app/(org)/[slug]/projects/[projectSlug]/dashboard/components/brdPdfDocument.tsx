@@ -10,7 +10,7 @@ import {
 } from "@react-pdf/renderer";
 
 // ── Font registration ─────────────────────────────────────────────────────────
-// Full NotoSans TTF (not a subset) — covers all Latin + Vietnamese diacritics.
+// Full NotoSans TTF (not a subset) — covers all Latin + extended diacritics.
 
 Font.register({
   family: "NotoSans",
@@ -25,7 +25,7 @@ Font.register({
 // Symbols font for characters not in NotoSans (✓ ✔ etc.)
 Font.register({ family: "NotoSansSymbols2", src: "/fonts/NotoSansSymbols2-Regular.ttf" });
 
-// Prevent hyphenation breaking Vietnamese diacritics
+// Prevent hyphenation from breaking diacritical characters
 Font.registerHyphenationCallback((word) => [word]);
 
 // ── Brand palette (matches system --brand-*) ──────────────────────────────────
@@ -116,7 +116,7 @@ function isSeparatorRow(line: string): boolean {
 }
 
 function parseMarkdown(md: string): Block[] {
-  // NFC normalization: API text may arrive NFD-decomposed, breaking Vietnamese glyph lookup
+  // NFC normalization: API text may arrive NFD-decomposed, breaking glyph lookup
   md = md.normalize("NFC");
   // Replace glyphs not present in NotoSans with ASCII equivalents
   md = md
@@ -696,7 +696,7 @@ export type BrdDocumentProps = {
 
 export function BrdDocument({ markdown, projectName }: BrdDocumentProps) {
   const blocks = parseMarkdown(markdown);
-  const today = new Date().toLocaleDateString("vi-VN", {
+  const today = new Date().toLocaleDateString("en-US", {
     year: "numeric",
     month: "long",
     day: "numeric",
@@ -715,8 +715,8 @@ export function BrdDocument({ markdown, projectName }: BrdDocumentProps) {
           <Text style={s.coverLabel}>BUSINESS REQUIREMENTS DOCUMENT</Text>
           <Text style={s.coverTitle}>{projectName}</Text>
           <View style={s.coverMeta}>
-            <Text style={s.coverMetaItem}>Ngày tạo: {today}</Text>
-            <Text style={s.coverMetaItem}>Phiên bản: 1.0</Text>
+            <Text style={s.coverMetaItem}>Created: {today}</Text>
+            <Text style={s.coverMetaItem}>Version: 1.0</Text>
           </View>
         </View>
       </Page>

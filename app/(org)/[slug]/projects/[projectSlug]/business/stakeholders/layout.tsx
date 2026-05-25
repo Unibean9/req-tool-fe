@@ -16,7 +16,7 @@ export async function generateMetadata({
   const title = projectName ? `${projectName} | Stakeholders` : "Stakeholders";
   return buildPageMetadata({
     title,
-    description: "Danh sách stakeholders của dự án.",
+    description: "Stakeholders for the project.",
     path: `/${segmentForMetadataPath(slug)}/projects/${segmentForMetadataPath(projectSlug)}/business/stakeholders`,
     noindex: true,
   });

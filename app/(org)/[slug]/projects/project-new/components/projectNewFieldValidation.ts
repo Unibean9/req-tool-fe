@@ -3,7 +3,7 @@ import {
   PROJECT_MIN_TEXT_MESSAGE,
 } from "./projectFormLimits";
 
-/** Hiện lỗi sau khi bấm Tiếp/Tạo, hoặc ngay khi đã gõ nhưng chưa đủ ký tự tối thiểu. */
+/** Show error after clicking Next/Create, or immediately while typing if below the minimum character count. */
 export function resolveProjectNewTextFieldError(
   value: string,
   schemaError: string | undefined,
@@ -17,7 +17,7 @@ export function resolveProjectNewTextFieldError(
   return undefined;
 }
 
-/** Lỗi cấp danh sách (vd. chưa có mục nào) — chỉ sau khi cố gắng submit bước. */
+/** List-level error (e.g. no items added) — only shown after attempting to submit the step. */
 export function resolveProjectNewListRootError(
   schemaError: string | undefined,
   showSubmitErrors: boolean

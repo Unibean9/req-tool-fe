@@ -17,7 +17,7 @@ export async function generateMetadata({
   const title = projectName ? `${projectName} | GitHub` : "GitHub";
   return buildPageMetadata({
     title,
-    description: "Liên kết repository GitHub với dự án.",
+    description: "Link a GitHub repository to the project.",
     path: `/${segmentForMetadataPath(slug)}/projects/${segmentForMetadataPath(projectSlug)}/github`,
     noindex: true,
   });
@@ -26,18 +26,18 @@ export async function generateMetadata({
 const UPCOMING_FEATURES = [
   {
     icon: GitBranch,
-    label: "Đồng bộ branch & commit",
-    description: "Tự động trace requirements tới code changes.",
+    label: "Branch & commit sync",
+    description: "Automatically trace requirements to code changes.",
   },
   {
     icon: GitPullRequest,
-    label: "Liên kết Pull Request",
-    description: "Kết nối PR với user stories và acceptance criteria.",
+    label: "Pull Request linking",
+    description: "Connect PRs to user stories and acceptance criteria.",
   },
   {
     icon: Zap,
     label: "CI/CD Status",
-    description: "Theo dõi trạng thái pipeline ngay trong workspace.",
+    description: "Monitor pipeline status directly within the workspace.",
   },
 ];
 
@@ -62,15 +62,15 @@ export default function ProjectGithubLinkPage() {
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-75" />
               <span className="relative inline-flex size-1.5 rounded-full bg-primary" />
             </span>
-            Sắp ra mắt
+            Coming Soon
           </div>
           <h1 className="font-heading text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
-            Liên kết với GitHub
+            Connect to GitHub
           </h1>
           <p className="text-sm leading-relaxed text-muted-foreground">
-            Tính năng kết nối repository GitHub đang được phát triển. Bạn sẽ
-            sớm có thể đồng bộ requirements với code và theo dõi tiến độ
-            trực tiếp trong workspace.
+            GitHub repository integration is currently under development. You
+            will soon be able to sync requirements with code and track progress
+            directly within the workspace.
           </p>
         </div>
 

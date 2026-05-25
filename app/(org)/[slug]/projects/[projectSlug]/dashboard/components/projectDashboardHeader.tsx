@@ -29,7 +29,7 @@ export type ProjectDashboardHeaderProps = {
 };
 
 const TABS: { value: DashboardTab; label: string }[] = [
-  { value: "overview", label: "Tổng quan dự án" },
+  { value: "overview", label: "Project Overview" },
   { value: "context-diagram", label: "Context Diagram" },
 ];
 
@@ -64,7 +64,7 @@ export function ProjectDashboardHeader({
     if (!brdMarkdown) {
       const result = await brdQuery.refetch();
       if (result.isError) {
-        toast.error(getApiErrorMessage(result.error, "Không tải được nội dung BRD"));
+        toast.error(getApiErrorMessage(result.error, "Failed to load BRD content"));
       }
     }
   }
@@ -82,7 +82,7 @@ export function ProjectDashboardHeader({
                 {executiveSummary}
               </p>
             ) : (
-              <p className="text-sm italic text-muted-foreground">Chưa có tóm tắt.</p>
+              <p className="text-sm italic text-muted-foreground">No summary provided.</p>
             )}
           </div>
 
@@ -100,7 +100,7 @@ export function ProjectDashboardHeader({
                 className={cn("size-3.5", brdQuery.isFetching && "animate-pulse opacity-70")}
                 aria-hidden
               />
-              {brdQuery.isFetching ? "Đang tải…" : "Tải BRD Template"}
+              {brdQuery.isFetching ? "Loading…" : "Download BRD Template"}
             </Button>
 
             <Link
@@ -108,7 +108,7 @@ export function ProjectDashboardHeader({
               className={buttonVariants({ variant: "outline", size: "sm", className: "gap-1.5 border-border/80" })}
             >
               <Pencil className="size-3.5" aria-hidden />
-              Chỉnh sửa
+              Edit
             </Link>
 
             <Button
@@ -120,7 +120,7 @@ export function ProjectDashboardHeader({
               disabled={deleteMutation.isPending}
             >
               <Trash2 className="size-3.5" aria-hidden />
-              Xóa dự án
+              Delete Project
             </Button>
           </div>
         </div>

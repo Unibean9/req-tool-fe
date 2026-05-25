@@ -97,7 +97,7 @@ function EditFlowFormDialogBody({
           Hủy
         </Button>
         <Button type="submit" disabled={!canSubmit}>
-          {pending ? "Đang lưu…" : "Lưu thay đổi"}
+          {pending ? "Saving…" : "Save changes"}
         </Button>
       </DialogFooter>
     </form>

@@ -75,8 +75,7 @@ export function NfrToolbar({
                 Non-Functional Requirements
               </h1>
               <p className="text-sm text-pretty text-muted-foreground">
-                Yêu cầu phi chức năng: hiệu năng, bảo mật, khả dụng và hơn thế
-                nữa
+                Non-functional requirements: performance, security, availability, and more
               </p>
             </div>
           </div>
@@ -88,7 +87,7 @@ export function NfrToolbar({
             onClick={() => setCreateOpen(true)}
           >
             <Plus className="size-4" aria-hidden />
-            Thêm NFR
+            Add
           </Button>
         </div>
 
@@ -102,9 +101,9 @@ export function NfrToolbar({
               type="search"
               value={search}
               onChange={(e) => onSearchChange(e.target.value)}
-              placeholder="Tìm theo mô tả NFR…"
+              placeholder="Search by NFR description…"
               autoComplete="off"
-              aria-label="Tìm NFR"
+              aria-label="Search NFRs"
               className="h-10 w-full border-border/80 bg-muted/40 pr-3 pl-10 text-sm shadow-none"
             />
           </div>
@@ -116,8 +115,8 @@ export function NfrToolbar({
             }
           >
             <SelectTrigger
-              className="h-10 w-full shrink-0 border-border/80 bg-muted/40 sm:w-[200px]"
-              aria-label="Lọc theo category"
+              className="h-10 w-full shrink-0 border-border/80 bg-muted/40 sm:w-50"
+              aria-label="Filter by category"
             >
               <SelectValue>
                 <NfrCategoryFilterDisplay value={categoryFilter} />
@@ -128,7 +127,7 @@ export function NfrToolbar({
                 if (opt.value === "all") {
                   return (
                     <SelectItem key={opt.value} value={opt.value}>
-                      Tất cả
+                      All Categories
                     </SelectItem>
                   );
                 }
@@ -148,8 +147,8 @@ export function NfrToolbar({
             }
           >
             <SelectTrigger
-              className="h-10 w-full shrink-0 border-border/80 bg-muted/40 sm:w-[160px]"
-              aria-label="Lọc theo priority"
+              className="h-10 w-full shrink-0 border-border/80 bg-muted/40 sm:w-40"
+              aria-label="Filter by priority"
             >
               <SelectValue>
                 {nfrPriorityFilterLabel(priorityFilter)}

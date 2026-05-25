@@ -113,7 +113,7 @@ export function FlowFormFields({
           onChange={(e) => onChange({ code: e.target.value })}
           disabled={disabled}
           maxLength={FLOW_CODE_MAX_CHARS}
-          placeholder="VD: REQ-VAL, ONBOARD-01…"
+          placeholder="E.g.: REQ-VAL, ONBOARD-01…"
           autoComplete="off"
           className="h-10 min-w-0 border-border/80 bg-muted/30 font-mono text-sm"
         />
@@ -122,7 +122,7 @@ export function FlowFormFields({
       <div className="grid min-w-0 gap-2">
         <div className="flex items-baseline justify-between gap-3">
           <Label htmlFor={`${idPrefix}-name`} className="text-sm font-semibold">
-            Tên flow (name)
+            Name
           </Label>
           <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
             {values.name.length} / {FLOW_TITLE_MAX_CHARS}
@@ -134,14 +134,14 @@ export function FlowFormFields({
           onChange={(e) => onChange({ name: e.target.value })}
           disabled={disabled}
           maxLength={FLOW_TITLE_MAX_CHARS}
-          placeholder="VD: User checkout, Onboarding…"
+          placeholder="E.g.: User checkout, Onboarding…"
           className="h-10 min-w-0 border-border/80 bg-muted/30"
         />
       </div>
 
       <fieldset className="grid w-full min-w-0 gap-3 rounded-xl border border-border/70 bg-muted/15 p-4">
         <legend className="px-1 text-sm font-semibold text-foreground">
-          Các bước
+          Steps
         </legend>
         <div
           ref={stepsScrollRef}
@@ -167,8 +167,8 @@ export function FlowFormFields({
                       onChange={(e) => updateStep(index, e.target.value)}
                       disabled={disabled}
                       maxLength={FLOW_STEP_MAX_CHARS}
-                      placeholder="Tên bước…"
-                      aria-label={`Bước ${index + 1}`}
+                      placeholder="Step name…"
+                      aria-label={`Step ${index + 1}`}
                       className="h-10 min-w-0 flex-1 border-border/80 bg-background/70 text-sm shadow-none"
                     />
                     <Button
@@ -177,7 +177,7 @@ export function FlowFormFields({
                       size="icon"
                       className="size-10 shrink-0 text-muted-foreground"
                       disabled={disabled || values.steps.length <= 1}
-                      aria-label={`Xóa bước ${index + 1}`}
+                      aria-label={`Remove step ${index + 1}`}
                       onClick={() => removeStep(index)}
                     >
                       <X className="size-4" aria-hidden />
@@ -208,7 +208,7 @@ export function FlowFormFields({
           onClick={addStep}
         >
           <Plus className="size-4" aria-hidden />
-          Thêm bước
+          Add step
         </Button>
       </fieldset>
     </div>

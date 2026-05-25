@@ -113,12 +113,12 @@ export function useCreateProjectBR(
     },
     onSuccess: (data, variables, onMutateResult, context) => {
       invalidateBRMutationCaches(queryClient, variables.projectId);
-      toast.success("Đã tạo business requirement");
+      toast.success("Business requirement created");
       userOnSuccess?.(data, variables, onMutateResult, context);
     },
     onError: (error, variables, onMutateResult, context) => {
       toast.error(
-        getApiErrorMessage(error, "Tạo business requirement thất bại")
+        getApiErrorMessage(error, "Failed to create business requirement")
       );
       userOnError?.(error, variables, onMutateResult, context);
     },
@@ -154,12 +154,12 @@ export function useUpdateProjectBR(
     },
     onSuccess: (data, variables, onMutateResult, context) => {
       invalidateBRMutationCaches(queryClient, variables.projectId);
-      toast.success("Đã cập nhật business requirement");
+      toast.success("Business requirement updated");
       userOnSuccess?.(data, variables, onMutateResult, context);
     },
     onError: (error, variables, onMutateResult, context) => {
       toast.error(
-        getApiErrorMessage(error, "Cập nhật business requirement thất bại")
+        getApiErrorMessage(error, "Failed to update business requirement")
       );
       userOnError?.(error, variables, onMutateResult, context);
     },
@@ -190,12 +190,12 @@ export function useDeleteProjectBR(
     },
     onSuccess: (data, variables, onMutateResult, context) => {
       invalidateBRMutationCaches(queryClient, variables.projectId);
-      toast.success("Đã xóa business requirement");
+      toast.success("Business requirement deleted");
       userOnSuccess?.(data, variables, onMutateResult, context);
     },
     onError: (error, variables, onMutateResult, context) => {
       toast.error(
-        getApiErrorMessage(error, "Xóa business requirement thất bại")
+        getApiErrorMessage(error, "Failed to delete business requirement")
       );
       userOnError?.(error, variables, onMutateResult, context);
     },

@@ -65,7 +65,7 @@ export function RuleFormFields({
     <div className="grid gap-4">
       <div className="grid gap-2">
         <div className="flex items-baseline justify-between gap-2">
-          <Label htmlFor="rule-def">Định nghĩa</Label>
+          <Label htmlFor="rule-def">Definition</Label>
           <span className="text-[11px] tabular-nums text-muted-foreground">
             {values.ruleDef.length} / {RULE_DEF_MAX_CHARS}
           </span>
@@ -75,7 +75,7 @@ export function RuleFormFields({
           value={values.ruleDef}
           maxLength={RULE_DEF_MAX_CHARS}
           disabled={disabled}
-          placeholder="VD: Không cho phép tạo yêu cầu nếu thiếu actor chính"
+          placeholder="E.g.: Requests cannot be created without a primary actor"
           rows={4}
           className="min-h-24 text-sm"
           onChange={(e) =>
@@ -88,14 +88,14 @@ export function RuleFormFields({
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="grid gap-2">
-          <Label htmlFor="rule-type">Loại</Label>
+          <Label htmlFor="rule-type">Type</Label>
           <Select
             value={values.type}
             disabled={disabled}
             onValueChange={(type) => onChange({ type: type as ProjectRuleType })}
           >
             <SelectTrigger id="rule-type" className="w-full">
-              <SelectValue placeholder="Chọn loại rule">
+              <SelectValue placeholder="Select rule type">
                 {RULE_TYPE_LABELS[values.type]}
               </SelectValue>
             </SelectTrigger>
@@ -110,14 +110,14 @@ export function RuleFormFields({
         </div>
 
         <div className="grid gap-2">
-          <Label htmlFor="rule-dynamic">Trạng thái</Label>
+          <Label htmlFor="rule-dynamic">Status</Label>
           <Select
             value={values.isDynamic ? "true" : "false"}
             disabled={disabled}
             onValueChange={(value) => onChange({ isDynamic: value === "true" })}
           >
             <SelectTrigger id="rule-dynamic" className="w-full">
-              <SelectValue placeholder="Chọn dynamic">
+              <SelectValue placeholder="Select status">
                 {values.isDynamic ? "Dynamic" : "Static"}
               </SelectValue>
             </SelectTrigger>
@@ -135,7 +135,7 @@ export function RuleFormFields({
 
       <div className="grid gap-2">
         <div className="flex items-baseline justify-between gap-2">
-          <Label htmlFor="rule-source">Nguồn</Label>
+          <Label htmlFor="rule-source">Source</Label>
           <span className="text-[11px] tabular-nums text-muted-foreground">
             {values.source.length} / {RULE_SOURCE_MAX_CHARS}
           </span>
@@ -145,7 +145,7 @@ export function RuleFormFields({
           value={values.source}
           maxLength={RULE_SOURCE_MAX_CHARS}
           disabled={disabled}
-          placeholder="VD: Product owner, compliance, stakeholder…"
+          placeholder="E.g.: Product owner, compliance, stakeholder…"
           className="text-sm"
           onChange={(e) =>
             onChange({

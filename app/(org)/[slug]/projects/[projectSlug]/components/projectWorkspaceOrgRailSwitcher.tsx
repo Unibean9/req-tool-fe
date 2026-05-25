@@ -183,7 +183,7 @@ export function ProjectWorkspaceOrgRailSwitcher() {
                     "hover:scale-[1.04] active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar",
                     "data-popup-open:scale-[1.02]"
                   )}
-                  aria-label={`Tổ chức: ${orgFromList.name}`}
+                  aria-label={`Organization: ${orgFromList.name}`}
                 >
                   <OrgMiniAvatar
                     name={orgFromList.name}
@@ -221,7 +221,7 @@ export function ProjectWorkspaceOrgRailSwitcher() {
                   type="text"
                   inputMode="search"
                   autoComplete="off"
-                  placeholder="Tìm tổ chức…"
+                  placeholder="Search organizations…"
                   value={orgSearch}
                   onChange={(e) => setOrgSearch(e.target.value)}
                   onKeyDown={(e) => e.stopPropagation()}
@@ -234,8 +234,8 @@ export function ProjectWorkspaceOrgRailSwitcher() {
               {filteredOrgs.length === 0 ? (
                 <p className="px-3 py-3 text-center text-xs text-muted-foreground">
                   {orgSearch.trim()
-                    ? "Không tìm thấy tổ chức."
-                    : "Chưa có tổ chức nào."}
+                    ? "No organizations found."
+                    : "No organizations yet."}
                 </p>
               ) : (
                 filteredOrgs.map((org) => {

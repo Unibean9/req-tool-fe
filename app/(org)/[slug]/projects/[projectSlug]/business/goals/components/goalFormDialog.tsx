@@ -116,12 +116,12 @@ function GoalFormDialogBody({
     >
       <DialogHeader>
         <DialogTitle className="text-lg">
-          {isEdit ? "Chỉnh sửa goal" : "Thêm goal"}
+          {isEdit ? "Edit goal" : "Add goal"}
         </DialogTitle>
         <DialogDescription>
           {isEdit
-            ? "Cập nhật mô tả goal."
-            : "Mô tả mục tiêu kinh doanh hoặc tiêu chí thành công."}
+            ? "Update the goal description."
+            : "Describe a business goal or success criteria."}
         </DialogDescription>
       </DialogHeader>
 
@@ -140,10 +140,10 @@ function GoalFormDialogBody({
           disabled={pending}
           onClick={() => onOpenChange(false)}
         >
-          Hủy
+          Cancel
         </Button>
         <Button type="submit" className="font-semibold" disabled={!canSubmit}>
-          {pending ? "Đang lưu…" : isEdit ? "Lưu" : "Tạo goal"}
+          {pending ? "Saving…" : isEdit ? "Save" : "Create goal"}
         </Button>
       </DialogFooter>
     </form>

@@ -33,9 +33,9 @@ const IMPACT_AREA_TAG_SEPARATOR = " · ";
 const IMPACT_AREA_SPLIT = /\s*(?:·|,|;)\s*/;
 
 const INFLUENCE_LEVEL_LABELS: Record<StakeholderInfluenceLevel, string> = {
-  high: "Cao",
-  medium: "Trung bình",
-  low: "Thấp",
+  high: "High",
+  medium: "Medium",
+  low: "Low",
 };
 
 export function parseImpactAreaTags(raw: string): string[] {
@@ -110,20 +110,20 @@ export function StakeHolderFormFields({
     <div className="grid gap-3 px-1 py-2">
       <StakeholderField
         id={`${idPrefix}-name`}
-        label="Tên"
+        label="Name"
         max={STAKEHOLDER_NAME_MAX_CHARS}
         value={values.name}
         onChange={(name) => onChange({ name })}
-        placeholder="VD: Product Owner"
+        placeholder="E.g.: Product Owner"
         disabled={disabled}
       />
       <StakeholderField
         id={`${idPrefix}-role`}
-        label="Vai trò"
+        label="Role"
         max={STAKEHOLDER_ROLE_MAX_CHARS}
         value={values.role}
         onChange={(role) => onChange({ role })}
-        placeholder="VD: Quyết định ưu tiên backlog"
+        placeholder="E.g.: Decides backlog prioritization"
         disabled={disabled}
       />
       <ImpactAreaTagInput
@@ -133,7 +133,6 @@ export function StakeHolderFormFields({
         disabled={disabled}
       />
 
-      {/* Mức ảnh hưởng + Vai trò mô hình — cùng hàng */}
       <div className="grid grid-cols-2 gap-3">
         <InfluenceLevelField
           id={`${idPrefix}-influence`}
@@ -156,7 +155,7 @@ export function StakeHolderFormFields({
             htmlFor={`${idPrefix}-system-desc`}
             className="text-sm font-semibold"
           >
-            Mô tả hệ thống
+            System description
           </Label>
           <span className="text-[10px] tabular-nums text-muted-foreground">
             {values.systemDescription.length}/{STAKEHOLDER_SYSTEM_DESCRIPTION_MAX_CHARS}
@@ -173,21 +172,20 @@ export function StakeHolderFormFields({
               ),
             })
           }
-          placeholder="VD: Hệ thống CRM nội bộ quản lý khách hàng."
+          placeholder="E.g.: Internal CRM system for managing customers."
           disabled={disabled}
           rows={3}
           className="resize-none"
         />
       </div>
 
-      {/* Ghi chú */}
       <div className="grid gap-1.5">
         <div className="flex items-center justify-between gap-2">
           <Label
             htmlFor={`${idPrefix}-notes`}
             className="text-sm font-semibold"
           >
-            Ghi chú
+            Notes
           </Label>
           <span className="text-[10px] tabular-nums text-muted-foreground">
             {values.notes.length}/{STAKEHOLDER_NOTES_MAX_CHARS}
@@ -201,7 +199,7 @@ export function StakeHolderFormFields({
               notes: e.target.value.slice(0, STAKEHOLDER_NOTES_MAX_CHARS),
             })
           }
-          placeholder="VD: Xác nhận yêu cầu và ký off từng sprint."
+          placeholder="E.g.: Confirms requirements and signs off each sprint."
           disabled={disabled}
           rows={4}
           className="resize-none"
@@ -248,7 +246,7 @@ function ImpactAreaTagInput({
     <div className="grid gap-1.5">
       <div className="flex items-center justify-between gap-2">
         <Label htmlFor={id} className="text-sm font-semibold">
-          Vùng tác động (Impact area)
+          Impact area
         </Label>
         <span className="text-[10px] tabular-nums text-muted-foreground">
           {value.length}/{STAKEHOLDER_IMPACT_AREA_MAX_CHARS}
@@ -270,7 +268,7 @@ function ImpactAreaTagInput({
                   <button
                     type="button"
                     className="inline-flex size-5 shrink-0 items-center justify-center rounded-sm text-muted-foreground hover:bg-muted hover:text-foreground"
-                    aria-label={`Xóa tag ${tag}`}
+                    aria-label={`Remove tag ${tag}`}
                     disabled={disabled}
                     onClick={() => removeTag(index)}
                   >
@@ -296,7 +294,7 @@ function ImpactAreaTagInput({
           }}
           onBlur={() => addFromDraft()}
           disabled={disabled || atMaxLength}
-          placeholder="VD: Backlog, Sprint planning — Enter để thêm"
+          placeholder="E.g.: Backlog, Sprint planning — press Enter to add"
           className="h-8 border-0 bg-transparent px-0 shadow-none focus-visible:ring-0"
         />
       </div>
@@ -318,7 +316,7 @@ function InfluenceLevelField({
   return (
     <div className="grid gap-1.5">
       <Label htmlFor={id} className="text-sm font-semibold">
-        Mức ảnh hưởng
+        Influence level
       </Label>
       <Select
         value={value}
@@ -333,7 +331,7 @@ function InfluenceLevelField({
         disabled={disabled}
       >
         <SelectTrigger id={id} className="h-10 w-full text-sm">
-          <SelectValue placeholder="Chọn mức ảnh hưởng">
+          <SelectValue placeholder="Select influence level">
             {INFLUENCE_LEVEL_LABELS[value]}
           </SelectValue>
         </SelectTrigger>

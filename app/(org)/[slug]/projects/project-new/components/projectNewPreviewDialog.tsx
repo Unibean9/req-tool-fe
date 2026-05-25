@@ -23,7 +23,7 @@ export function ProjectNewPreviewDialog({
   open,
   onOpenChange,
   form,
-  description = "Tóm tắt thông tin bạn đã nhập — bố cục giống trang tổng quan dự án.",
+  description = "A summary of the information you've entered — laid out like the project dashboard.",
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -39,7 +39,7 @@ export function ProjectNewPreviewDialog({
       >
         <DialogHeader className="shrink-0 space-y-1 border-b border-border/60 px-5 py-4 pr-14 text-left sm:px-8 sm:py-5">
           <DialogTitle className="font-heading text-xl font-semibold tracking-tight sm:text-2xl">
-            Xem trước
+            Preview
           </DialogTitle>
           <DialogDescription className="text-sm text-muted-foreground">
             {description}

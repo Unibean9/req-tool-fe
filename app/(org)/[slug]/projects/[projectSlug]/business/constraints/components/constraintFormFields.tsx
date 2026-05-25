@@ -28,9 +28,9 @@ export const CONSTRAINT_TYPE_LABELS: Record<ConstraintType, string> = {
 };
 
 export const CONSTRAINT_SEVERITY_LABELS: Record<ConstraintSeverity, string> = {
-  high: "Cao",
-  medium: "Trung bình",
-  low: "Thấp",
+  high: "High",
+  medium: "Medium",
+  low: "Low",
 };
 
 export type ConstraintFormValues = {
@@ -80,7 +80,7 @@ export function ConstraintFormFields({
     <>
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="grid gap-2">
-          <Label htmlFor={typeId}>Loại</Label>
+          <Label htmlFor={typeId}>Type</Label>
           <Select
             value={values.type}
             onValueChange={(type) => onChange({ type: type as ConstraintType })}
@@ -104,7 +104,7 @@ export function ConstraintFormFields({
         </div>
 
         <div className="grid gap-2">
-          <Label htmlFor={severityId}>Mức độ</Label>
+          <Label htmlFor={severityId}>Severity</Label>
           <Select
             value={values.severity}
             onValueChange={(severity) =>
@@ -133,13 +133,13 @@ export function ConstraintFormFields({
       </div>
 
       <div className="grid gap-2">
-        <Label htmlFor={descriptionId}>Đặc điểm</Label>
+        <Label htmlFor={descriptionId}>Description</Label>
         <Textarea
           id={descriptionId}
           value={values.description}
           onChange={(e) => onChange({ description: e.target.value })}
           disabled={disabled}
-          placeholder="Ví dụ: Ngân sách triển khai không vượt quá 200 triệu..."
+          placeholder="e.g. Deployment budget must not exceed $200,000..."
           className="min-h-28"
         />
       </div>

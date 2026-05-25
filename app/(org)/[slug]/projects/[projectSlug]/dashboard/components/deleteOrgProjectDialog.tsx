@@ -30,22 +30,22 @@ export function DeleteOrgProjectDialog({
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent className="sm:max-w-sm">
         <AlertDialogHeader>
-          <AlertDialogTitle>Xóa dự án?</AlertDialogTitle>
+          <AlertDialogTitle>Delete project?</AlertDialogTitle>
           <AlertDialogDescription>
-            Dự án{" "}
+            The project{" "}
             <span className="font-medium text-foreground">«{projectName}»</span>{" "}
-            và toàn bộ dữ liệu liên quan sẽ bị xóa vĩnh viễn. Bạn không thể hoàn
-            tác thao tác này.
+            and all related data will be permanently deleted. This action cannot
+            be undone.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={deletePending}>Hủy</AlertDialogCancel>
+          <AlertDialogCancel disabled={deletePending}>Cancel</AlertDialogCancel>
           <AlertDialogAction
             variant="destructive"
             disabled={deletePending}
             onClick={() => void onConfirmDelete()}
           >
-            {deletePending ? "Đang xóa…" : "Xóa dự án"}
+            {deletePending ? "Deleting…" : "Delete Project"}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

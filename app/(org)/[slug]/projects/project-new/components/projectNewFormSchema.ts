@@ -58,18 +58,18 @@ export const projectNewStep0Schema = z.object({
 
 export const projectNewStep1Schema = z.object({
   context: projectTextSchema,
-  problems: projectListSchema("vấn đề"),
+  problems: projectListSchema("problems"),
 });
 
 export const projectNewStep2Schema = z.object({
-  budget: z.coerce.number().min(0, "Ngân sách không được âm"),
-  proposedSolutions: projectListSchema("đề xuất giải pháp"),
+  budget: z.coerce.number().min(0, "Budget cannot be negative"),
+  proposedSolutions: projectListSchema("proposed solutions"),
 });
 
 export const projectNewStep3Schema = z
   .object({
-    startDate: z.string().trim().min(1, "Chọn ngày bắt đầu"),
-    endDate: z.string().trim().min(1, "Chọn ngày kết thúc"),
+    startDate: z.string().trim().min(1, "Select a start date"),
+    endDate: z.string().trim().min(1, "Select an end date"),
     roiNotes: z
       .string()
       .trim()
@@ -87,19 +87,19 @@ export const projectNewStep3Schema = z
     if (!data.startDate.trim()) {
       ctx.addIssue({
         code: "custom",
-        message: "Chọn ngày bắt đầu",
+        message: "Select a start date",
         path: ["startDate"],
       });
     } else if (!parseProjectIsoDate(data.startDate)) {
       ctx.addIssue({
         code: "custom",
-        message: "Ngày bắt đầu không hợp lệ",
+        message: "Invalid start date",
         path: ["startDate"],
       });
     } else if (isProjectIsoDateBeforeToday(data.startDate)) {
       ctx.addIssue({
         code: "custom",
-        message: "Ngày bắt đầu không được ở quá khứ",
+        message: "Start date cannot be in the past",
         path: ["startDate"],
       });
     }
@@ -107,25 +107,25 @@ export const projectNewStep3Schema = z
     if (!data.endDate.trim()) {
       ctx.addIssue({
         code: "custom",
-        message: "Chọn ngày kết thúc",
+        message: "Select an end date",
         path: ["endDate"],
       });
     } else if (!parseProjectIsoDate(data.endDate)) {
       ctx.addIssue({
         code: "custom",
-        message: "Ngày kết thúc không hợp lệ",
+        message: "Invalid end date",
         path: ["endDate"],
       });
     } else if (isProjectIsoDateBeforeToday(data.endDate)) {
       ctx.addIssue({
         code: "custom",
-        message: "Ngày kết thúc không được ở quá khứ",
+        message: "End date cannot be in the past",
         path: ["endDate"],
       });
     } else if (isProjectEndIsoInvalid(data.startDate, data.endDate)) {
       ctx.addIssue({
         code: "custom",
-        message: "Ngày kết thúc phải sau ngày bắt đầu",
+        message: "End date must be after start date",
         path: ["endDate"],
       });
     }

@@ -60,9 +60,9 @@ export function trimGoalFormValues(
 }
 
 const PRIORITY_OPTIONS: { value: ProjectGoalPriority; label: string }[] = [
-  { value: "high", label: "Cao" },
-  { value: "medium", label: "Trung bình" },
-  { value: "low", label: "Thấp" },
+  { value: "high", label: "High" },
+  { value: "medium", label: "Medium" },
+  { value: "low", label: "Low" },
 ];
 
 const SUCCESS_METRIC_MAX_CHARS = 300;
@@ -99,7 +99,7 @@ export function GoalFormFields({
       <div className="flex min-h-0 flex-col gap-4">
         <div className="grid gap-2">
           <div className="flex items-baseline justify-between gap-2">
-            <Label htmlFor="goal-description">Mô tả</Label>
+            <Label htmlFor="goal-description">Description</Label>
             <span className="text-[11px] tabular-nums text-muted-foreground">
               {values.description.length} / {GOAL_DESCRIPTION_MAX_CHARS}
             </span>
@@ -109,7 +109,7 @@ export function GoalFormFields({
             value={values.description}
             maxLength={GOAL_DESCRIPTION_MAX_CHARS}
             disabled={disabled}
-            placeholder="Mục tiêu kinh doanh hoặc tiêu chí thành công…"
+            placeholder="Business goal or success criteria…"
             rows={4}
             className="min-h-24 text-sm"
             onChange={(e) =>
@@ -122,7 +122,7 @@ export function GoalFormFields({
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <div className="grid gap-2">
-            <Label htmlFor="goal-priority">Mức ưu tiên</Label>
+            <Label htmlFor="goal-priority">Priority</Label>
             <Select
               value={values.priority}
               onValueChange={(v) =>
@@ -131,7 +131,7 @@ export function GoalFormFields({
               disabled={disabled}
             >
               <SelectTrigger id="goal-priority" className="text-sm">
-                <SelectValue placeholder="Chọn mức ưu tiên">
+                <SelectValue placeholder="Select priority">
                   {PRIORITY_OPTIONS.find((o) => o.value === values.priority)?.label}
                 </SelectValue>
               </SelectTrigger>
@@ -146,12 +146,12 @@ export function GoalFormFields({
           </div>
 
           <div className="grid gap-2">
-            <Label htmlFor="goal-target-date">Ngày mục tiêu</Label>
+            <Label htmlFor="goal-target-date">Target date</Label>
             <IsoDatePicker
               id="goal-target-date"
               value={values.targetDate}
               disabled={disabled}
-              placeholder="Chọn ngày"
+              placeholder="Select date"
               onChange={(iso) => onChange({ targetDate: iso })}
             />
           </div>
@@ -159,7 +159,7 @@ export function GoalFormFields({
 
         <div className="grid gap-2">
           <div className="flex items-baseline justify-between gap-2">
-            <Label htmlFor="goal-success-metric">Tiêu chí thành công</Label>
+            <Label htmlFor="goal-success-metric">Success metric</Label>
             <span className="text-[11px] tabular-nums text-muted-foreground">
               {values.successMetric.length} / {SUCCESS_METRIC_MAX_CHARS}
             </span>
@@ -169,7 +169,7 @@ export function GoalFormFields({
             value={values.successMetric}
             maxLength={SUCCESS_METRIC_MAX_CHARS}
             disabled={disabled}
-            placeholder="Làm thế nào để biết goal này đạt được?…"
+            placeholder="How will you know this goal has been achieved?…"
             rows={3}
             className="min-h-20 text-sm"
             onChange={(e) =>
@@ -184,7 +184,7 @@ export function GoalFormFields({
       {/* ── Right column (top) — Mục tiêu list ── */}
       <div className="grid min-h-0 self-stretch grid-rows-[auto_minmax(0,1fr)] gap-2">
         <div className="flex items-center justify-between gap-3">
-          <Label>Mục tiêu</Label>
+          <Label>Objectives</Label>
           <Button
             type="button"
             variant="outline"
@@ -194,14 +194,14 @@ export function GoalFormFields({
             onClick={addObjective}
           >
             <Plus className="size-3.5" aria-hidden />
-            Thêm mục tiêu
+            Add objective
           </Button>
         </div>
 
-        <div className="flex min-h-0 max-h-[18rem] flex-col gap-2 overflow-y-auto overscroll-contain pr-1">
+        <div className="flex min-h-0 max-h-72 flex-col gap-2 overflow-y-auto overscroll-contain pr-1">
           {values.objectives.length === 0 && (
             <p className="rounded-lg border border-dashed border-border/70 px-3 py-4 text-center text-xs text-muted-foreground">
-              Chưa có mục tiêu nào.
+              No objectives yet.
             </p>
           )}
 
@@ -211,14 +211,14 @@ export function GoalFormFields({
                 value={obj}
                 maxLength={OBJECTIVE_MAX_CHARS}
                 disabled={disabled}
-                placeholder={`Mục tiêu ${i + 1}…`}
+                placeholder={`Objective ${i + 1}…`}
                 className="h-10 text-sm"
                 onChange={(e) => updateObjective(i, e.target.value)}
               />
               <button
                 type="button"
                 disabled={disabled}
-                aria-label="Xóa mục tiêu"
+                aria-label="Remove objective"
                 onClick={() => removeObjective(i)}
                 className="mt-1 flex size-6 shrink-0 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive disabled:pointer-events-none disabled:opacity-50"
               >

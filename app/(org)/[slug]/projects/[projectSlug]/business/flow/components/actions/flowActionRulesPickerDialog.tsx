@@ -115,16 +115,16 @@ function FlowActionRulesPickerBody({
   return (
     <>
       <DialogHeader className="shrink-0 border-b border-border/60 px-5 py-4 pr-12">
-        <DialogTitle className="text-lg">Chọn rule(s)</DialogTitle>
+        <DialogTitle className="text-lg">Select rule(s)</DialogTitle>
         <DialogDescription>
           {actionLabel ? (
             <>
-              Gán rule(s) cho{" "}
+              Assign rule(s) to{" "}
               <span className="font-medium text-foreground">{actionLabel}</span>.
-              Có thể chọn nhiều rule(s).
+              You can select multiple rules.
             </>
           ) : (
-            "Chọn một hoặc nhiều rule cho action này."
+            "Select one or more rules for this action."
           )}
         </DialogDescription>
       </DialogHeader>
@@ -138,9 +138,9 @@ function FlowActionRulesPickerBody({
           <Input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Tìm rule theo mô tả, loại, nguồn…"
+            placeholder="Search rules by description, type, or source…"
             className="h-10 border-border/80 bg-background/70 pl-9"
-            aria-label="Tìm rule"
+            aria-label="Search rules"
           />
         </div>
       </div>
@@ -148,11 +148,11 @@ function FlowActionRulesPickerBody({
       <div className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain px-5 py-4">
         {rules.length === 0 ? (
           <p className="py-8 text-center text-sm text-muted-foreground">
-            Chưa có rule nào trong project.
+            No rules in project.
           </p>
         ) : filtered.length === 0 ? (
           <p className="py-8 text-center text-sm text-muted-foreground">
-            Không có rule khớp &quot;{search.trim()}&quot;.
+            No rules match &quot;{search.trim()}&quot;.
           </p>
         ) : (
           <ul className="grid list-none gap-2">
@@ -176,7 +176,7 @@ function FlowActionRulesPickerBody({
                       checked={checked}
                       onCheckedChange={() => toggleRule(rule.id)}
                       className="mt-0.5 size-4.5 shrink-0"
-                      aria-label={`Chọn rule ${text}`}
+                      aria-label={`Select rule ${text}`}
                     />
                     <span className="min-w-0 flex-1 space-y-1.5">
                       <span className="block text-sm leading-relaxed text-foreground">
@@ -204,7 +204,7 @@ function FlowActionRulesPickerBody({
       <div
         className="shrink-0 border-t border-border/80 bg-muted/20 px-5 py-4 backdrop-blur-sm"
         role="group"
-        aria-label="Thao tác chọn rule"
+        aria-label="Rule selection actions"
       >
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex min-w-0 flex-wrap items-center gap-2">
@@ -217,7 +217,7 @@ function FlowActionRulesPickerBody({
               )}
             >
               <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                Đã chọn
+                Selected
               </span>
               <span className="font-semibold tabular-nums">{count}</span>
               <span className="text-muted-foreground">rule(s)</span>
@@ -230,16 +230,16 @@ function FlowActionRulesPickerBody({
                 className="h-8 px-2.5 text-muted-foreground hover:text-foreground"
                 onClick={() => setDraftIds([])}
               >
-                Bỏ chọn hết
+                Clear selection
               </Button>
             ) : null}
           </div>
           <div className="flex shrink-0 items-center justify-end gap-2.5">
             <Button type="button" variant="outline" className="min-w-20" onClick={onCancel}>
-              Hủy
+              Cancel
             </Button>
             <Button type="button" className="min-w-24" onClick={handleConfirm}>
-              Áp dụng
+              Apply
             </Button>
           </div>
         </div>

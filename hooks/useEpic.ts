@@ -77,7 +77,7 @@ export function useUpdateEpic(options?: UseUpdateEpicOptions) {
     }: UpdateEpicVariables): Promise<UpdateEpicResponse> => {
       const result = await fetchEpic.update(projectId, epicId, body);
       if (!result.success) {
-        throw new Error(result.message ?? "Cập nhật epic thất bại");
+        throw new Error(result.message ?? "Failed to update epic");
       }
       return result;
     },
@@ -101,12 +101,12 @@ export function useUpdateEpic(options?: UseUpdateEpicOptions) {
         );
       }
       if (showSuccessToast) {
-        toast.success("Đã cập nhật epic");
+        toast.success("Epic updated");
       }
       userOnSuccess?.(data, variables, onMutateResult, context);
     },
     onError: (error, variables, onMutateResult, context) => {
-      toast.error(getApiErrorMessage(error, "Cập nhật epic thất bại"));
+      toast.error(getApiErrorMessage(error, "Failed to update epic"));
       userOnError?.(error, variables, onMutateResult, context);
     },
   });
@@ -153,12 +153,12 @@ export function useDeleteEpic(options?: UseDeleteEpicOptions) {
         );
       }
       if (showSuccessToast) {
-        toast.success("Đã xóa epic");
+        toast.success("Epic deleted");
       }
       userOnSuccess?.(data, variables, onMutateResult, context);
     },
     onError: (error, variables, onMutateResult, context) => {
-      toast.error(getApiErrorMessage(error, "Xóa epic thất bại"));
+      toast.error(getApiErrorMessage(error, "Failed to delete epic"));
       userOnError?.(error, variables, onMutateResult, context);
     },
   });
@@ -197,7 +197,7 @@ export function useCreateEpicFeature(options?: UseCreateEpicFeatureOptions) {
     }: CreateEpicFeatureVariables): Promise<CreateEpicFeatureResponse> => {
       const result = await fetchEpic.createFeature(projectId, epicId, body);
       if (!result.success) {
-        throw new Error(result.message ?? "Tạo feature thất bại");
+        throw new Error(result.message ?? "Failed to create feature");
       }
       return result;
     },
@@ -222,12 +222,12 @@ export function useCreateEpicFeature(options?: UseCreateEpicFeatureOptions) {
         );
       }
       if (showSuccessToast) {
-        toast.success("Đã tạo feature");
+        toast.success("Feature created");
       }
       userOnSuccess?.(data, variables, onMutateResult, context);
     },
     onError: (error, variables, onMutateResult, context) => {
-      toast.error(getApiErrorMessage(error, "Tạo feature thất bại"));
+      toast.error(getApiErrorMessage(error, "Failed to create feature"));
       userOnError?.(error, variables, onMutateResult, context);
     },
   });
