@@ -12,11 +12,8 @@ import { getApiErrorMessage } from "@/lib/api/getApiErrorMessage";
 import { fetchProject } from "@/lib/api/services/fetchProject";
 import { getNextProjectSlugAfterDelete } from "@/lib/project/projectListNav";
 import {
-  projectBrdExportQueryKey,
   orgProjectQueryKey,
   orgProjectsQueryKey,
-  projectContextDiagramQueryKey,
-  projectSetupProgressQueryKey,
 } from "@/lib/query/query-keys";
 
 import type {
@@ -26,9 +23,6 @@ import type {
   OrgProject,
   OrgProjectDetailResponse,
   OrgProjectsListResponse,
-  ProjectBrdExportResponse,
-  ProjectSetupProgress,
-  ProjectSetupProgressResponse,
   UpdateOrgProjectRequest,
   UpdateOrgProjectResponse,
 } from "@/lib/api/services/fetchProject";
@@ -51,10 +45,7 @@ export type DeleteOrgProjectMutationContext = {
   nextSlug: string | null;
 };
 
-/**
- * GET /api/v1/orgs/{org_id}/projects — danh sách dự án.
- * `orgId` rỗng thì `enabled: false`.
- */
+/** GET /api/v1/orgs/{org_id}/projects */
 export function useOrgProjects(
   orgId: string | null | undefined,
   options?: { enabled?: boolean }
@@ -111,9 +102,7 @@ function resolveUseOrgProjectIds(
   return { orgId, projectId };
 }
 
-/**
- * GET /api/v1/orgs/{org_id}/projects/{project_id} — thiếu `org_id` / `project_id` thì `enabled: false`.
- */
+/** GET /api/v1/orgs/{org_id}/projects/{project_id} */
 export function useOrgProject(
   orgIdOrParams: UseOrgProjectArg,
   projectId?: string | null | undefined,
@@ -134,62 +123,7 @@ export function useOrgProject(
   });
 }
 
-/**
- * GET /api/v1/projects/{project_id}/setup-progress — thiếu `projectId` thì `enabled: false`.
- */
-export function useProjectSetupProgress(
-  projectId: string | null | undefined,
-  options?: { enabled?: boolean }
-) {
-  const pid = projectId?.trim() ?? "";
-  const enabled = Boolean(pid) && (options?.enabled ?? true);
-
-  return useCachedGet<ProjectSetupProgressResponse, Error, ProjectSetupProgress>(
-    {
-      queryKey: projectSetupProgressQueryKey(pid),
-      queryFn: async () => fetchProject.getSetupProgress(pid),
-      select: (res) => res.data,
-      enabled,
-    }
-  );
-}
-
-/** Cùng GET setup-progress; trả full envelope `{ success, data, message }`. */
-export function useProjectSetupProgressFull(
-  projectId: string | null | undefined,
-  options?: { enabled?: boolean }
-) {
-  const pid = projectId?.trim() ?? "";
-  const enabled = Boolean(pid) && (options?.enabled ?? true);
-
-  return useCachedGet({
-    queryKey: projectSetupProgressQueryKey(pid),
-    queryFn: () => fetchProject.getSetupProgress(pid),
-    enabled,
-  });
-}
-
-/**
- * GET /api/v1/projects/{project_id}/brd/export — trả nội dung BRD dạng string.
- * Thiếu `projectId` thì `enabled: false`.
- */
-export function useProjectBrdExport(
-  projectId: string | null | undefined,
-  options?: { enabled?: boolean }
-) {
-  const pid = projectId?.trim() ?? "";
-  const enabled = Boolean(pid) && (options?.enabled ?? true);
-
-  return useCachedGet<ProjectBrdExportResponse, Error, ProjectBrdExportResponse>(
-    {
-      queryKey: projectBrdExportQueryKey(pid),
-      queryFn: async () => fetchProject.getBrdExport(pid),
-      enabled,
-    }
-  );
-}
-
-/** Cùng GET detail; trả full envelope `{ success, data, message }`. */
+/** Cùng GET detail; trả full envelope. */
 export function useOrgProjectFull(
   orgIdOrParams: UseOrgProjectArg,
   projectId?: string | null | undefined,
@@ -209,12 +143,7 @@ export function useOrgProjectFull(
   });
 }
 
-/**
- * POST /api/v1/orgs/{org_id}/projects
- * Body: name, description, context, problems, proposed_solutions, start_date, end_date,
- * budget, executive_summary, roi_notes.
- * Invalidate danh sách dự án theo org sau khi tạo.
- */
+/** POST /api/v1/orgs/{org_id}/projects */
 export function useCreateOrgProject(
   options?: Omit<
     UseMutationOptions<
@@ -235,7 +164,7 @@ export function useCreateOrgProject(
       orgId,
       body,
     }: CreateOrgProjectVariables): Promise<CreateOrgProjectResponse> => {
-      const result = await fetchProject.createProject(orgId, body);
+      const result = await fetchProject.createOrgProject(orgId, body);
       if (!result.success) {
         throw new Error(result.message ?? "Failed to create project");
       }
@@ -258,21 +187,17 @@ export function useCreateOrgProject(
         return { ...old, data: [...old.data, created] };
       });
       void queryClient.invalidateQueries({ queryKey: key });
-      toast.success("Project created");
+      toast.success("Dự án đã được tạo");
       userOnSuccess?.(data, variables, onMutateResult, context);
     },
     onError: (error, variables, onMutateResult, context) => {
-      toast.error(getApiErrorMessage(error, "Failed to create project"));
+      toast.error(getApiErrorMessage(error, "Tạo dự án thất bại"));
       userOnError?.(error, variables, onMutateResult, context);
     },
   });
 }
 
-/**
- * PATCH /api/v1/orgs/{org_id}/projects/{project_id}
- * Body: name, description, context, problems, proposed_solutions, start_date, end_date,
- * budget, executive_summary, roi_notes — invalidate list + detail.
- */
+/** PATCH /api/v1/orgs/{org_id}/projects/{project_id} */
 export function useUpdateOrgProject(
   options?: Omit<
     UseMutationOptions<
@@ -294,11 +219,7 @@ export function useUpdateOrgProject(
       projectId,
       body,
     }: UpdateOrgProjectVariables): Promise<UpdateOrgProjectResponse> => {
-      const result = await fetchProject.updateOrgProject(
-        orgId,
-        projectId,
-        body
-      );
+      const result = await fetchProject.updateOrgProject(orgId, projectId, body);
       if (!result.success) {
         throw new Error(result.message ?? "Failed to update project");
       }
@@ -316,9 +237,7 @@ export function useUpdateOrgProject(
           if (!old?.data) return old;
           return {
             ...old,
-            data: old.data.map((p) =>
-              p.id === updated.id ? updated : p
-            ),
+            data: old.data.map((p) => (p.id === updated.id ? updated : p)),
           };
         }
       );
@@ -328,23 +247,17 @@ export function useUpdateOrgProject(
       void queryClient.invalidateQueries({
         queryKey: orgProjectQueryKey(variables.orgId, variables.projectId),
       });
-      void queryClient.invalidateQueries({
-        queryKey: projectContextDiagramQueryKey(variables.projectId),
-      });
-      toast.success("Project updated");
+      toast.success("Dự án đã được cập nhật");
       userOnSuccess?.(data, variables, onMutateResult, context);
     },
     onError: (error, variables, onMutateResult, context) => {
-      toast.error(getApiErrorMessage(error, "Failed to update project"));
+      toast.error(getApiErrorMessage(error, "Cập nhật dự án thất bại"));
       userOnError?.(error, variables, onMutateResult, context);
     },
   });
 }
 
-/**
- * DELETE /api/v1/orgs/{org_id}/projects/{project_id} — `{ success, message }`;
- * invalidate list, xóa cache detail.
- */
+/** DELETE /api/v1/orgs/{org_id}/projects/{project_id} */
 export function useDeleteOrgProject(
   options?: Omit<
     UseMutationOptions<
@@ -357,8 +270,12 @@ export function useDeleteOrgProject(
   >
 ) {
   const queryClient = useQueryClient();
-  const { onSuccess: userOnSuccess, onError: userOnError, onMutate: userOnMutate, ...rest } =
-    options ?? {};
+  const {
+    onSuccess: userOnSuccess,
+    onError: userOnError,
+    onMutate: userOnMutate,
+    ...rest
+  } = options ?? {};
 
   return useMutation({
     ...rest,
@@ -375,17 +292,12 @@ export function useDeleteOrgProject(
       const previousList =
         queryClient.getQueryData<OrgProjectsListResponse>(listKey);
       const list = previousList?.data ?? [];
-      const nextSlug = getNextProjectSlugAfterDelete(
-        list,
-        variables.projectId
-      );
+      const nextSlug = getNextProjectSlugAfterDelete(list, variables.projectId);
 
       if (previousList?.data) {
         queryClient.setQueryData<OrgProjectsListResponse>(listKey, {
           ...previousList,
-          data: previousList.data.filter(
-            (p) => p.id !== variables.projectId
-          ),
+          data: previousList.data.filter((p) => p.id !== variables.projectId),
         });
       }
 
@@ -400,7 +312,7 @@ export function useDeleteOrgProject(
       void queryClient.invalidateQueries({
         queryKey: orgProjectsQueryKey(variables.orgId),
       });
-      toast.success("Project deleted");
+      toast.success("Dự án đã được xóa");
     },
     onError: (error, variables, mutateContext, mutationContext) => {
       if (mutateContext?.previousList) {
@@ -409,7 +321,7 @@ export function useDeleteOrgProject(
           mutateContext.previousList
         );
       }
-      toast.error(getApiErrorMessage(error, "Failed to delete project"));
+      toast.error(getApiErrorMessage(error, "Xóa dự án thất bại"));
       userOnError?.(error, variables, mutateContext, mutationContext);
     },
   });
@@ -421,12 +333,8 @@ export type {
   GetOrgProjectParams,
   ListOrgProjectsParams,
   OrgProject,
-  OrgProjectApiRow,
   OrgProjectDetailResponse,
   OrgProjectsListResponse,
-  ProjectBrdExportResponse,
-  ProjectSetupProgress,
-  ProjectSetupProgressResponse,
   UpdateOrgProjectRequest,
   UpdateOrgProjectResponse,
 } from "@/lib/api/services/fetchProject";

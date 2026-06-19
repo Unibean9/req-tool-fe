@@ -10,6 +10,11 @@ export interface ApiValidationItem {
   ctx?: Record<string, unknown>;
 }
 
+interface ApiProblemValidationItem {
+  field?: string;
+  message?: string;
+}
+
 function formatValidationDetail(detail: unknown): string | null {
   if (typeof detail === "string") {
     const t = detail.trim();
@@ -28,10 +33,33 @@ function formatValidationDetail(detail: unknown): string | null {
   return messages.length ? messages.join("\n") : null;
 }
 
+function formatProblemErrors(errors: unknown): string | null {
+  if (!Array.isArray(errors)) return null;
+
+  const messages: string[] = [];
+  for (const item of errors) {
+    if (!item || typeof item !== "object") continue;
+    const { field, message } = item as ApiProblemValidationItem;
+    const text = typeof message === "string" ? message.trim() : "";
+    if (!text) continue;
+    messages.push(
+      typeof field === "string" && field.trim()
+        ? `${field.trim()}: ${text}`
+        : text
+    );
+  }
+
+  return messages.length ? messages.join("\n") : null;
+}
+
 /** Gộp `detail` từ body JSON response thành một chuỗi hiển thị (hoặc null). */
 export function formatMessageFromValidationBody(body: unknown): string | null {
   if (!body || typeof body !== "object") return null;
-  return formatValidationDetail((body as { detail?: unknown }).detail);
+  const value = body as { detail?: unknown; errors?: unknown };
+  return (
+    formatProblemErrors(value.errors) ??
+    formatValidationDetail(value.detail)
+  );
 }
 
 /**

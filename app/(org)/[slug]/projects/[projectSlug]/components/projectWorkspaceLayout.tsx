@@ -1,9 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { buildProjectNewPath } from "@/app/(org)/components/orgWorkspacePaths";
-import { useCallback, useEffect, useState } from "react";
+import { useParams, usePathname, useRouter } from "next/navigation";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { Plus } from "lucide-react";
 
@@ -13,10 +12,12 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { ARTIFACT_TYPES, type ArtifactType } from "@/lib/api/services/fetchArtifact";
 import type { OrgProject } from "@/lib/api/services/fetchProject";
-import { formatProjectDateRange } from "@/lib/project/projectDisplay";
 import { cn } from "@/lib/utils";
 
+import { useOrgWorkspace } from "../../../orgWorkspaceContext";
+import { ProjectUpsertDialog } from "../../components/projectUpsertDialog";
 import { ProjectWorkspaceOrgRailSwitcher } from "./projectWorkspaceOrgRailSwitcher";
 import { ProjectWorkspaceNavSidebar } from "./projectWorkspaceNavSidebar";
 import {
@@ -25,6 +26,12 @@ import {
   projectSubPathFromPathname,
 } from "./projectWorkspaceNav";
 import { ProjectWorkspaceNavProvider } from "./projectWorkspaceNavContext";
+import {
+  ProjectWorkspaceModeProvider,
+  useProjectWorkspaceMode,
+} from "./projectWorkspaceModeContext";
+import { ArtifactLinkPageContent } from "../artifact-link/ArtifactLinkPageContent";
+import { AgentSessionSidebar } from "../(deliverables)/artifacts/[artifactType]/components/AgentSessionSidebar";
 
 const PROJECT_RAIL_GRADIENTS = [
   "from-orange-400 to-rose-600",
@@ -166,6 +173,29 @@ function DiscordRailItem({
   );
 }
 
+function ProjectWorkspaceMain({
+  isMembersView,
+  children,
+}: {
+  isMembersView: boolean;
+  children: React.ReactNode;
+}) {
+  const { mode } = useProjectWorkspaceMode();
+  return (
+    <main
+      data-scroll-gutter-scope
+      data-project-scroll-gutter
+      className={cn(
+        "flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-background",
+        isMembersView && mode === "deliverables" ? "p-0" : "p-4 sm:p-6"
+      )}
+    >
+      {mode === "artifact-link" && <ArtifactLinkPageContent />}
+      {mode === "deliverables" && children}
+    </main>
+  );
+}
+
 export function ProjectWorkspaceLayout({
   orgSlug,
   projectSlug,
@@ -181,15 +211,23 @@ export function ProjectWorkspaceLayout({
 }) {
   const router = useRouter();
   const pathname = usePathname() ?? "";
+  const params = useParams();
+  const { orgId } = useOrgWorkspace();
   const encOrg = encodeURIComponent(orgSlug);
   const encProj = encodeURIComponent(projectSlug);
   const base = `/${encOrg}/projects/${encProj}`;
-  const newProjectHref = buildProjectNewPath(orgSlug, { returnTo: pathname });
   const currentSubPath = projectSubPathFromPathname(pathname, base);
+  const [createProjectOpen, setCreateProjectOpen] = useState(false);
   const isMembersView =
     pathname === `${base}/members` || pathname === `${base}/members/`;
   const currentProject = projects.find((p) => p.slug === projectSlug);
   const projectId = currentProject?.id ?? null;
+
+  const validArtifactType: ArtifactType | null = useMemo(() => {
+    const raw = params?.artifactType;
+    const s = typeof raw === "string" ? raw : null;
+    return s && (ARTIFACT_TYPES as readonly string[]).includes(s) ? (s as ArtifactType) : null;
+  }, [params?.artifactType]);
 
   const navigateAfterProjectDelete = useCallback(
     (deletedProjectId: string, nextSlugOverride?: string | null) => {
@@ -237,6 +275,7 @@ export function ProjectWorkspaceLayout({
   ]);
 
   return (
+    <ProjectWorkspaceModeProvider>
     <ProjectWorkspaceNavProvider value={{ navigateAfterProjectDelete }}>
     <div className="flex h-full min-h-0 w-full flex-1 flex-row overflow-hidden bg-background">
       {/* Rail 1 — project list (Discord style) */}
@@ -262,14 +301,12 @@ export function ProjectWorkspaceLayout({
             projects.map((p) => {
               const active = p.slug === projectSlug;
               const href = `/${encOrg}/projects/${encodeURIComponent(p.slug)}/${currentSubPath}`;
-              const dateHint = formatProjectDateRange(p.startDate, p.endDate);
               return (
                 <DiscordRailItem
                   key={p.id}
                   href={href}
                   active={active}
                   title={p.name}
-                  subtitle={dateHint || undefined}
                   className={cn(
                     "bg-linear-to-br shadow-inner shadow-black/25 ring-1 ring-white/10",
                     projectRailGradient(p.id)
@@ -287,18 +324,28 @@ export function ProjectWorkspaceLayout({
           aria-hidden
         />
 
-        <Link
-          href={newProjectHref}
+        <button
+          type="button"
           title="Add project"
           aria-label="Add project"
+          onClick={() => setCreateProjectOpen(true)}
           className={cn(
             RAIL_ICON_SCALE_MOTION,
             "group/add flex size-12 shrink-0 scale-100 items-center justify-center rounded-full bg-muted/50 text-primary outline-none active:scale-[0.96] focus-visible:ring-2 focus-visible:ring-ring/50 hover:scale-[1.06] hover:rounded-2xl hover:bg-primary hover:text-primary-foreground"
           )}
         >
           <Plus className="size-5 transition-transform group-hover/add:scale-110" aria-hidden />
-        </Link>
+        </button>
       </aside>
+
+      <ProjectUpsertDialog
+        orgId={orgId}
+        open={createProjectOpen}
+        onOpenChange={setCreateProjectOpen}
+        onSuccess={(p) => {
+          router.push(`/${encOrg}/projects/${encodeURIComponent(p.slug)}/dashboard`);
+        }}
+      />
 
       <ProjectWorkspaceNavSidebar
         orgSlug={orgSlug}
@@ -307,17 +354,19 @@ export function ProjectWorkspaceLayout({
         projectsLoaded={!isProjectsPending}
       />
 
-      <main
-        data-scroll-gutter-scope
-        data-project-scroll-gutter
-        className={cn(
-          "flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-background",
-          isMembersView ? "p-0" : "p-4 sm:p-6"
-        )}
-      >
+      <ProjectWorkspaceMain isMembersView={isMembersView}>
         {children}
-      </main>
+      </ProjectWorkspaceMain>
+
+      {validArtifactType && (
+        <AgentSessionSidebar
+          key={`${projectId ?? "pending"}:${validArtifactType}`}
+          projectId={projectId}
+          artifactType={validArtifactType}
+        />
+      )}
     </div>
     </ProjectWorkspaceNavProvider>
+    </ProjectWorkspaceModeProvider>
   );
 }

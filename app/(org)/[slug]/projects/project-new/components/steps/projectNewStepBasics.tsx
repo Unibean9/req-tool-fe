@@ -1,6 +1,6 @@
 "use client";
 
-import { FileText, FolderKanban } from "lucide-react";
+import { FolderKanban } from "lucide-react";
 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,11 +11,8 @@ import type { CreateOrgProjectRequest } from "@/lib/api/services/fetchProject";
 import { ProjectNewFieldError } from "../projectNewFieldError";
 import {
   PROJECT_DESCRIPTION_MAX_CHARS,
-  PROJECT_MIN_TEXT_CHARS,
   PROJECT_NAME_MAX_CHARS,
-  PROJECT_SHORT_SUMMARY_MAX_CHARS,
 } from "../projectFormLimits";
-import { resolveProjectNewTextFieldError } from "../projectNewFieldValidation";
 import type { ProjectNewFormErrors } from "../projectNewFormSchema";
 
 export function ProjectNewStepBasics({
@@ -32,23 +29,12 @@ export function ProjectNewStepBasics({
   errors?: ProjectNewFormErrors;
 }) {
   const nameLen = form.name.length;
-  const shortLen = (form.executiveSummary ?? "").length;
-  const descriptionLen = form.description.length;
-  const nameError = resolveProjectNewTextFieldError(
-    form.name,
-    errors?.name,
-    showSubmitErrors
-  );
-  const executiveError = resolveProjectNewTextFieldError(
-    form.executiveSummary ?? "",
-    errors?.executiveSummary,
-    showSubmitErrors
-  );
-  const descriptionError = resolveProjectNewTextFieldError(
-    form.description,
-    errors?.description,
-    showSubmitErrors
-  );
+  const descriptionLen = (form.description ?? "").length;
+
+  const nameError =
+    showSubmitErrors && errors?.name ? errors.name : undefined;
+  const descriptionError =
+    showSubmitErrors && errors?.description ? errors.description : undefined;
 
   return (
     <div className="flex flex-col gap-6">
@@ -57,8 +43,7 @@ export function ProjectNewStepBasics({
           Project basics
         </h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          All fields are required — each description must be at least {PROJECT_MIN_TEXT_CHARS}{" "}
-          characters.
+          Give your project a name and an optional description.
         </p>
       </div>
 
@@ -101,49 +86,8 @@ export function ProjectNewStepBasics({
 
         <div className="grid gap-2">
           <div className="flex items-center justify-between gap-2">
-            <Label htmlFor="pn-executive" className="text-sm font-semibold">
-              Executive summary <span className="text-destructive">*</span>
-            </Label>
-            <span
-              className="text-xs tabular-nums text-muted-foreground"
-              aria-live="polite"
-            >
-              {shortLen} / {PROJECT_SHORT_SUMMARY_MAX_CHARS}
-            </span>
-          </div>
-          <div className="relative">
-            <FileText
-              className="pointer-events-none absolute top-3 left-3 size-4 text-muted-foreground"
-              aria-hidden
-            />
-            <Textarea
-              id="pn-executive"
-              aria-invalid={Boolean(executiveError)}
-              placeholder="Short summary for stakeholders / leadership…"
-              value={form.executiveSummary ?? ""}
-              onChange={(e) =>
-                onPatch({
-                  executiveSummary: e.target.value.slice(
-                    0,
-                    PROJECT_SHORT_SUMMARY_MAX_CHARS
-                  ),
-                })
-              }
-              disabled={disabled}
-              maxLength={PROJECT_SHORT_SUMMARY_MAX_CHARS}
-              className={cn(
-                "min-h-28 border-2 border-border/90 pl-10 dark:border-zinc-600",
-                executiveError && "border-destructive"
-              )}
-            />
-          </div>
-          <ProjectNewFieldError message={executiveError} />
-        </div>
-
-        <div className="grid gap-2">
-          <div className="flex items-center justify-between gap-2">
             <Label htmlFor="pn-desc" className="text-sm font-semibold">
-              Detailed description <span className="text-destructive">*</span>
+              Description
             </Label>
             <span
               className="text-xs tabular-nums text-muted-foreground"
@@ -152,28 +96,26 @@ export function ProjectNewStepBasics({
               {descriptionLen} / {PROJECT_DESCRIPTION_MAX_CHARS}
             </span>
           </div>
-          <div className="relative">
-            <Textarea
-              id="pn-desc"
-              aria-invalid={Boolean(descriptionError)}
-              placeholder="Describe the project's purpose, scope, and intended audience…"
-              value={form.description}
-              onChange={(e) =>
-                onPatch({
-                  description: e.target.value.slice(
-                    0,
-                    PROJECT_DESCRIPTION_MAX_CHARS
-                  ),
-                })
-              }
-              disabled={disabled}
-              maxLength={PROJECT_DESCRIPTION_MAX_CHARS}
-              className={cn(
-                "min-h-48 border-2 border-border/90 sm:min-h-52 dark:border-zinc-600",
-                descriptionError && "border-destructive"
-              )}
-            />
-          </div>
+          <Textarea
+            id="pn-desc"
+            aria-invalid={Boolean(descriptionError)}
+            placeholder="Describe the project's purpose, scope, and intended audience…"
+            value={form.description ?? ""}
+            onChange={(e) =>
+              onPatch({
+                description: e.target.value.slice(
+                  0,
+                  PROJECT_DESCRIPTION_MAX_CHARS
+                ),
+              })
+            }
+            disabled={disabled}
+            maxLength={PROJECT_DESCRIPTION_MAX_CHARS}
+            className={cn(
+              "min-h-36 border-2 border-border/90 sm:min-h-40 dark:border-zinc-600",
+              descriptionError && "border-destructive"
+            )}
+          />
           <ProjectNewFieldError message={descriptionError} />
         </div>
       </div>

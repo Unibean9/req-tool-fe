@@ -207,6 +207,100 @@ export function projectBrdExportQueryKey(projectId: string) {
   return [...PROJECTS_ROOT, projectId, "brd", "export"] as const;
 }
 
+/** Key danh sách artifact theo `project_id` + filter params. */
+export function projectArtifactsQueryKey(
+  projectId: string,
+  params?: {
+    type?: string;
+    status?: string;
+    stepKey?: string;
+    phase?: string;
+    priority?: string;
+    currentVersionStatus?: string;
+  }
+) {
+  return [
+    ...PROJECTS_ROOT,
+    "artifacts",
+    projectId,
+    params?.type ?? "",
+    params?.status ?? "",
+    params?.stepKey ?? "",
+    params?.phase ?? "",
+    params?.priority ?? "",
+    params?.currentVersionStatus ?? "",
+  ] as const;
+}
+
+/** Key chi tiết một artifact. */
+export function projectArtifactQueryKey(projectId: string, artifactId: string) {
+  return [...PROJECTS_ROOT, "artifacts", projectId, artifactId] as const;
+}
+
+/** Key danh sách evidence của artifact. */
+export function projectArtifactEvidenceQueryKey(
+  projectId: string,
+  artifactId: string
+) {
+  return [
+    ...PROJECTS_ROOT,
+    "artifacts",
+    projectId,
+    artifactId,
+    "evidence",
+  ] as const;
+}
+
+/** Key artifact graph theo `project_id`. */
+export function projectArtifactGraphQueryKey(projectId: string) {
+  return [...PROJECTS_ROOT, projectId, "artifact-graph"] as const;
+}
+
+/** Key chi tiết một agent session. */
+export function projectAgentSessionQueryKey(projectId: string, sessionId: string) {
+  return [...PROJECTS_ROOT, projectId, "agent-sessions", sessionId] as const;
+}
+
+/** Key lịch sử messages của agent session. */
+export function projectAgentSessionMessagesQueryKey(projectId: string, sessionId: string) {
+  return [...PROJECTS_ROOT, projectId, "agent-sessions", sessionId, "messages"] as const;
+}
+
+/** Key danh sách tool calls cần duyệt của agent session. */
+export function projectAgentSessionToolCallsQueryKey(projectId: string, sessionId: string) {
+  return [...PROJECTS_ROOT, projectId, "agent-sessions", sessionId, "tool-calls"] as const;
+}
+
+/** Key active workflow run theo `project_id`. */
+export function projectWorkflowRunCurrentQueryKey(projectId: string) {
+  return [...PROJECTS_ROOT, projectId, "workflow-runs", "current"] as const;
+}
+
+/** Key danh sách workflow steps của active run. */
+export function projectWorkflowStepsQueryKey(projectId: string) {
+  return [...PROJECTS_ROOT, projectId, "workflow-steps"] as const;
+}
+
+/** Key workflow progress theo `project_id`. */
+export function projectWorkflowProgressQueryKey(projectId: string) {
+  return [...PROJECTS_ROOT, projectId, "workflow-progress"] as const;
+}
+
+/** Key markdown export theo `project_id`, tên file và params. */
+export function projectExportQueryKey(
+  projectId: string,
+  name: string,
+  params?: { includeWont?: boolean }
+) {
+  return [
+    ...PROJECTS_ROOT,
+    projectId,
+    "exports",
+    name,
+    params?.includeWont ?? false,
+  ] as const;
+}
+
 /** Key context diagram theo `project_id`. */
 export function projectContextDiagramQueryKey(projectId: string) {
   return [...PROJECTS_ROOT, projectId, "context-diagram"] as const;
@@ -303,6 +397,14 @@ export const queryKeys = {
     setupProgress: projectSetupProgressQueryKey,
     brdExport: projectBrdExportQueryKey,
     contextDiagram: projectContextDiagramQueryKey,
+    artifacts: projectArtifactsQueryKey,
+    artifact: projectArtifactQueryKey,
+    artifactEvidence: projectArtifactEvidenceQueryKey,
+    artifactGraph: projectArtifactGraphQueryKey,
+    workflowRunCurrent: projectWorkflowRunCurrentQueryKey,
+    workflowSteps: projectWorkflowStepsQueryKey,
+    workflowProgress: projectWorkflowProgressQueryKey,
+    export: projectExportQueryKey,
   },
   users: {
     all: ["users"] as const,
@@ -312,5 +414,10 @@ export const queryKeys = {
     /** Infinite scroll — cùng `q` + `limit`, không gắn offset vào key. */
     searchInfinite: (q: string, limit: number) =>
       [...queryKeys.users.all, "searchInfinite", q, limit] as const,
+  },
+  llmProviderConfigs: {
+    all: ["llm-provider-configs"] as const,
+    list: () => ["llm-provider-configs", "list"] as const,
+    detail: (configId: string) => ["llm-provider-configs", "detail", configId] as const,
   },
 } as const;

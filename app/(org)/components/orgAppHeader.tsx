@@ -17,6 +17,7 @@ import { AnimatePresence, LayoutGroup, motion } from "framer-motion";
 import {
   Check,
   FolderKanban,
+  KeyRound,
   LogOut,
   Plus,
   Search,
@@ -49,6 +50,7 @@ import type { UserProfile } from "@/lib/api/services/fetchUser";
 import { orgProjectsQueryKey } from "@/lib/query/query-keys";
 import { cn } from "@/lib/utils";
 
+import { LlmProviderConfigDialog } from "@/components/shared/LlmProviderConfigDialog";
 import { CreateOrgDialog } from "./createOrgDialog";
 import { buildOrgEntryPath } from "./orgWorkspacePaths";
 
@@ -138,6 +140,7 @@ type OrgAccountDropdownMenuProps = {
   switchingOrgId: string | null;
   onSwitchOrg: (org: Org) => void;
   setCreateOrgOpen: (open: boolean) => void;
+  setLlmConfigOpen: (open: boolean) => void;
   logout: () => void | Promise<void>;
   isLoggingOut: boolean;
 };
@@ -161,6 +164,7 @@ function OrgAccountDropdownMenu({
   switchingOrgId,
   onSwitchOrg,
   setCreateOrgOpen,
+  setLlmConfigOpen,
   logout,
   isLoggingOut,
 }: OrgAccountDropdownMenuProps) {
@@ -335,6 +339,20 @@ function OrgAccountDropdownMenu({
         <div className="p-1">
           <DropdownMenuGroup>
             <DropdownMenuItem
+              className="cursor-default gap-2 rounded-lg py-2 font-medium"
+              onClick={() => setLlmConfigOpen(true)}
+            >
+              <KeyRound className="size-4 text-muted-foreground" aria-hidden />
+              LLM Settings
+            </DropdownMenuItem>
+          </DropdownMenuGroup>
+        </div>
+
+        <DropdownMenuSeparator className="my-0" />
+
+        <div className="p-1">
+          <DropdownMenuGroup>
+            <DropdownMenuItem
               variant="destructive"
               disabled={isLoggingOut}
               className="rounded-lg"
@@ -491,6 +509,7 @@ export function OrgAppHeader({ className }: { className?: string }) {
   const { data: orgs, isPending: isOrgsPending } = useOrgMe();
   const [orgMenuQuery, setOrgMenuQuery] = useState("");
   const [createOrgOpen, setCreateOrgOpen] = useState(false);
+  const [llmConfigOpen, setLlmConfigOpen] = useState(false);
   const [switchingOrgId, setSwitchingOrgId] = useState<string | null>(null);
   const orgSearchInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -590,6 +609,7 @@ export function OrgAppHeader({ className }: { className?: string }) {
       switchingOrgId={switchingOrgId}
       onSwitchOrg={(org) => void switchToOrg(org)}
       setCreateOrgOpen={setCreateOrgOpen}
+      setLlmConfigOpen={setLlmConfigOpen}
       logout={logout}
       isLoggingOut={isLoggingOut}
     />
@@ -598,6 +618,7 @@ export function OrgAppHeader({ className }: { className?: string }) {
   return (
     <>
       <CreateOrgDialog open={createOrgOpen} onOpenChange={setCreateOrgOpen} />
+      <LlmProviderConfigDialog open={llmConfigOpen} onOpenChange={setLlmConfigOpen} />
       {isMobile ? (
         <OrgWorkspaceMobileBottomNav
           className={className}

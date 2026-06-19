@@ -1,0 +1,290 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-06-19T10:11:02Z",
+  "title": "Design System: Requirements | Bean9",
+  "extensions": {
+    "colorMeta": {
+      "brand-abyss": {
+        "role": "secondary",
+        "displayName": "Abyss Green",
+        "canonical": "#091413",
+        "tonalRamp": ["oklch(15% 0.025 165)", "oklch(27% 0.025 165)", "oklch(39% 0.025 165)", "oklch(51% 0.025 165)", "oklch(63% 0.025 165)", "oklch(75% 0.025 165)", "oklch(87% 0.025 165)", "oklch(95% 0.025 165)"]
+      },
+      "brand-canopy": {
+        "role": "secondary",
+        "displayName": "Canopy Green",
+        "canonical": "#285A48",
+        "tonalRamp": ["oklch(15% 0.07 165)", "oklch(27% 0.07 165)", "oklch(39% 0.07 165)", "oklch(51% 0.07 165)", "oklch(63% 0.07 165)", "oklch(75% 0.07 165)", "oklch(87% 0.07 165)", "oklch(95% 0.07 165)"]
+      },
+      "primary-jade": {
+        "role": "primary",
+        "displayName": "Working Jade",
+        "canonical": "#408A71",
+        "tonalRamp": ["oklch(15% 0.1 165)", "oklch(27% 0.1 165)", "oklch(39% 0.1 165)", "oklch(51% 0.1 165)", "oklch(63% 0.1 165)", "oklch(75% 0.1 165)", "oklch(87% 0.1 165)", "oklch(95% 0.1 165)"]
+      },
+      "brand-mint": {
+        "role": "primary",
+        "displayName": "Review Mint",
+        "canonical": "#B0E4CC",
+        "tonalRamp": ["oklch(15% 0.075 165)", "oklch(27% 0.075 165)", "oklch(39% 0.075 165)", "oklch(51% 0.075 165)", "oklch(63% 0.075 165)", "oklch(75% 0.075 165)", "oklch(87% 0.075 165)", "oklch(95% 0.075 165)"]
+      },
+      "app-background": {
+        "role": "neutral",
+        "displayName": "Worktop Charcoal",
+        "canonical": "#222222",
+        "tonalRamp": ["oklch(15% 0 0)", "oklch(27% 0 0)", "oklch(39% 0 0)", "oklch(51% 0 0)", "oklch(63% 0 0)", "oklch(75% 0 0)", "oklch(87% 0 0)", "oklch(95% 0 0)"]
+      },
+      "sidebar-background": {
+        "role": "neutral",
+        "displayName": "Rail Charcoal",
+        "canonical": "#1F1F1F",
+        "tonalRamp": ["oklch(15% 0 0)", "oklch(27% 0 0)", "oklch(39% 0 0)", "oklch(51% 0 0)", "oklch(63% 0 0)", "oklch(75% 0 0)", "oklch(87% 0 0)", "oklch(95% 0 0)"]
+      },
+      "card-surface": {
+        "role": "neutral",
+        "displayName": "Tool Surface",
+        "canonical": "#282828",
+        "tonalRamp": ["oklch(15% 0 0)", "oklch(27% 0 0)", "oklch(39% 0 0)", "oklch(51% 0 0)", "oklch(63% 0 0)", "oklch(75% 0 0)", "oklch(87% 0 0)", "oklch(95% 0 0)"]
+      },
+      "muted-surface": {
+        "role": "neutral",
+        "displayName": "Muted Tool Surface",
+        "canonical": "#2E2E2E",
+        "tonalRamp": ["oklch(15% 0 0)", "oklch(27% 0 0)", "oklch(39% 0 0)", "oklch(51% 0 0)", "oklch(63% 0 0)", "oklch(75% 0 0)", "oklch(87% 0 0)", "oklch(95% 0 0)"]
+      },
+      "accent-surface": {
+        "role": "neutral",
+        "displayName": "Active Neutral",
+        "canonical": "#353535",
+        "tonalRamp": ["oklch(15% 0 0)", "oklch(27% 0 0)", "oklch(39% 0 0)", "oklch(51% 0 0)", "oklch(63% 0 0)", "oklch(75% 0 0)", "oklch(87% 0 0)", "oklch(95% 0 0)"]
+      },
+      "popover-surface": {
+        "role": "neutral",
+        "displayName": "Raised Tool Surface",
+        "canonical": "#2C2C2C",
+        "tonalRamp": ["oklch(15% 0 0)", "oklch(27% 0 0)", "oklch(39% 0 0)", "oklch(51% 0 0)", "oklch(63% 0 0)", "oklch(75% 0 0)", "oklch(87% 0 0)", "oklch(95% 0 0)"]
+      },
+      "foreground": {
+        "role": "neutral",
+        "displayName": "Primary Ink",
+        "canonical": "#E8F1EC",
+        "tonalRamp": ["oklch(15% 0.015 165)", "oklch(27% 0.015 165)", "oklch(39% 0.015 165)", "oklch(51% 0.015 165)", "oklch(63% 0.015 165)", "oklch(75% 0.015 165)", "oklch(87% 0.015 165)", "oklch(95% 0.015 165)"]
+      },
+      "muted-foreground": {
+        "role": "neutral",
+        "displayName": "Secondary Ink",
+        "canonical": "#9CA8A3",
+        "tonalRamp": ["oklch(15% 0.01 165)", "oklch(27% 0.01 165)", "oklch(39% 0.01 165)", "oklch(51% 0.01 165)", "oklch(63% 0.01 165)", "oklch(75% 0.01 165)", "oklch(87% 0.01 165)", "oklch(95% 0.01 165)"]
+      },
+      "border": {
+        "role": "neutral",
+        "displayName": "Structural Line",
+        "canonical": "#3D3D3D",
+        "tonalRamp": ["oklch(15% 0 0)", "oklch(27% 0 0)", "oklch(39% 0 0)", "oklch(51% 0 0)", "oklch(63% 0 0)", "oklch(75% 0 0)", "oklch(87% 0 0)", "oklch(95% 0 0)"]
+      },
+      "destructive": {
+        "role": "tertiary",
+        "displayName": "Action Red",
+        "canonical": "#F97373",
+        "tonalRamp": ["oklch(15% 0.14 25)", "oklch(27% 0.14 25)", "oklch(39% 0.14 25)", "oklch(51% 0.14 25)", "oklch(63% 0.14 25)", "oklch(75% 0.14 25)", "oklch(87% 0.14 25)", "oklch(95% 0.14 25)"]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Brand Display",
+        "purpose": "Compact identity moments only."
+      },
+      "headline": {
+        "displayName": "Page Headline",
+        "purpose": "Page-level and high-priority section hierarchy."
+      },
+      "title": {
+        "displayName": "Working Title",
+        "purpose": "Dialogs, cards, panels, and grouped content."
+      },
+      "body": {
+        "displayName": "Product Body",
+        "purpose": "Dense working content, controls, and descriptions."
+      },
+      "label": {
+        "displayName": "Compact Label",
+        "purpose": "Metadata, navigation, filters, and badges."
+      }
+    },
+    "shadows": [
+      {
+        "name": "resting-control",
+        "value": "0 1px 2px rgb(0 0 0 / 0.18)",
+        "purpose": "Quiet separation for controls and compact surfaces."
+      },
+      {
+        "name": "active-action",
+        "value": "0 4px 6px color-mix(in oklab, var(--primary) 25%, transparent)",
+        "purpose": "Primary actions and high-value active controls."
+      },
+      {
+        "name": "floating-layer",
+        "value": "0 10px 15px rgb(0 0 0 / 0.28)",
+        "purpose": "Menus, selects, popovers, and sheets."
+      },
+      {
+        "name": "modal-layer",
+        "value": "0 25px 50px color-mix(in oklab, var(--primary) 15%, transparent)",
+        "purpose": "Dialogs requiring full attention."
+      }
+    ],
+    "motion": [
+      {
+        "name": "pressable",
+        "value": "150ms ease-out",
+        "purpose": "Buttons and direct manipulation feedback."
+      },
+      {
+        "name": "popup",
+        "value": "200ms cubic-bezier(0.22, 1, 0.36, 1)",
+        "purpose": "Menus, popovers, selects, and dialogs."
+      },
+      {
+        "name": "progressive",
+        "value": "300ms ease-out",
+        "purpose": "Progress bars and larger state transitions."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "sm",
+        "value": "640px"
+      },
+      {
+        "name": "md",
+        "value": "768px"
+      },
+      {
+        "name": "lg",
+        "value": "1024px"
+      },
+      {
+        "name": "xl",
+        "value": "1280px"
+      },
+      {
+        "name": "2xl",
+        "value": "1536px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The default high-value action.",
+      "html": "<button class=\"ds-btn-primary\" type=\"button\">Create artifact</button>",
+      "css": ".ds-btn-primary { height: 40px; padding: 8px 16px; border: 1px solid transparent; border-radius: 12px; background: var(--primary); color: var(--primary-foreground); font: 600 14px/1.25 var(--font-inter), system-ui, sans-serif; letter-spacing: -0.01em; box-shadow: 0 4px 6px color-mix(in oklab, var(--primary) 25%, transparent); transition: transform 150ms ease-out, box-shadow 150ms ease-out, background-color 150ms ease-out; } .ds-btn-primary:hover { background: color-mix(in oklab, var(--primary) 90%, black); box-shadow: 0 8px 12px color-mix(in oklab, var(--primary) 35%, transparent); } .ds-btn-primary:focus-visible { outline: 3px solid color-mix(in oklab, var(--ring) 45%, transparent); outline-offset: 2px; } .ds-btn-primary:active { transform: scale(.97); }"
+    },
+    {
+      "name": "Outline Button",
+      "kind": "button",
+      "refersTo": "button-outline",
+      "description": "A neutral secondary action.",
+      "html": "<button class=\"ds-btn-outline\" type=\"button\">Review</button>",
+      "css": ".ds-btn-outline { height: 40px; padding: 8px 16px; border: 1px solid var(--border); border-radius: 12px; background: color-mix(in oklab, var(--background) 90%, transparent); color: var(--foreground); font: 600 14px/1.25 var(--font-inter), system-ui, sans-serif; transition: transform 150ms ease-out, background-color 150ms ease-out, border-color 150ms ease-out; } .ds-btn-outline:hover { background: var(--muted); } .ds-btn-outline:focus-visible { outline: 3px solid color-mix(in oklab, var(--ring) 45%, transparent); outline-offset: 2px; } .ds-btn-outline:active { transform: scale(.97); }"
+    },
+    {
+      "name": "Text Input",
+      "kind": "input",
+      "refersTo": "input-default",
+      "description": "The default search and form field.",
+      "html": "<input class=\"ds-input\" type=\"text\" placeholder=\"Search artifacts…\" />",
+      "css": ".ds-input { width: 280px; height: 40px; padding: 8px 12px; border: 1px solid color-mix(in oklab, var(--border) 70%, transparent); border-radius: 12px; background: var(--muted); color: var(--foreground); font: 400 14px/1.5 var(--font-inter), system-ui, sans-serif; box-shadow: 0 1px 2px rgb(0 0 0 / .18); transition: border-color 150ms ease-out, box-shadow 150ms ease-out; } .ds-input::placeholder { color: var(--muted-foreground); } .ds-input:hover { border-color: var(--border); } .ds-input:focus-visible { border-color: var(--ring); outline: 3px solid color-mix(in oklab, var(--ring) 45%, transparent); outline-offset: 0; }"
+    },
+    {
+      "name": "Status Badge",
+      "kind": "chip",
+      "refersTo": "badge-default",
+      "description": "A compact semantic or selected-state label.",
+      "html": "<span class=\"ds-badge\">Accepted</span>",
+      "css": ".ds-badge { display: inline-flex; align-items: center; height: 20px; padding: 2px 8px; border-radius: 9999px; background: var(--primary); color: var(--primary-foreground); font: 600 12px/1.35 var(--font-inter), system-ui, sans-serif; box-shadow: 0 1px 2px color-mix(in oklab, var(--primary) 25%, transparent); }"
+    },
+    {
+      "name": "Work Card",
+      "kind": "card",
+      "refersTo": "card-default",
+      "description": "A standard grouped content surface.",
+      "html": "<article class=\"ds-card\"><h3>Functional Requirement</h3><p>Review scope, priority, and current version status.</p></article>",
+      "css": ".ds-card { width: 320px; padding: 16px; border: 1px solid color-mix(in oklab, var(--border) 80%, transparent); border-radius: 12px; background: var(--card); color: var(--card-foreground); box-shadow: 0 4px 6px color-mix(in oklab, var(--primary) 12%, transparent); font-family: var(--font-inter), system-ui, sans-serif; transition: border-color 200ms ease-out, background-color 200ms ease-out; } .ds-card:hover { border-color: var(--border); background: color-mix(in oklab, var(--card) 92%, white); } .ds-card h3 { margin: 0 0 6px; font: 500 16px/1.35 var(--font-roboto-condensed), var(--font-inter), sans-serif; } .ds-card p { margin: 0; color: var(--muted-foreground); font-size: 14px; line-height: 1.5; }"
+    },
+    {
+      "name": "Sidebar Navigation Item",
+      "kind": "nav",
+      "description": "A compact active destination in the project sidebar.",
+      "html": "<a class=\"ds-nav-item\" href=\"#\" aria-current=\"page\">Project overview</a>",
+      "css": ".ds-nav-item { display: flex; align-items: center; min-height: 36px; padding: 8px 10px; border: 1px solid color-mix(in oklab, var(--primary) 30%, transparent); border-radius: 8px; background: color-mix(in oklab, var(--primary) 10%, transparent); color: var(--foreground); font: 500 14px/1.35 var(--font-inter), system-ui, sans-serif; text-decoration: none; transition: background-color 200ms ease-out, border-color 200ms ease-out; } .ds-nav-item:hover { background: color-mix(in oklab, var(--primary) 14%, transparent); } .ds-nav-item:focus-visible { outline: 2px solid color-mix(in oklab, var(--ring) 45%, transparent); outline-offset: 2px; }"
+    },
+    {
+      "name": "Select Trigger",
+      "kind": "input",
+      "description": "A compact filter and structured-choice control.",
+      "html": "<button class=\"ds-select\" type=\"button\" aria-haspopup=\"listbox\">Status <svg viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" aria-hidden=\"true\"><path d=\"m6 9 6 6 6-6\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg></button>",
+      "css": ".ds-select { display: inline-flex; align-items: center; justify-content: space-between; gap: 8px; min-width: 120px; height: 36px; padding: 8px 10px 8px 12px; border: 1px solid color-mix(in oklab, var(--border) 70%, transparent); border-radius: 12px; background: var(--muted); color: var(--foreground); font: 500 12px/1.35 var(--font-inter), system-ui, sans-serif; box-shadow: 0 1px 2px rgb(0 0 0 / .18); transition: background-color 150ms ease-out, border-color 150ms ease-out; } .ds-select:hover { background: color-mix(in oklab, var(--muted) 85%, white); } .ds-select:focus-visible { border-color: var(--ring); outline: 3px solid color-mix(in oklab, var(--ring) 45%, transparent); outline-offset: 0; } .ds-select svg { color: var(--muted-foreground); }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Structured Workbench",
+    "overview": "The interface is a focused workspace for turning ambiguous project input into reviewable, traceable artifacts. Its dark neutral foundation lowers visual fatigue, while jade and mint provide a precise signal for action, selection, and progress.\n\nThe system is information-dense but never frantic. Familiar controls, stable navigation, restrained motion, and clear state language create trust. It explicitly rejects playful consumer-app styling, generic neon AI cockpit visuals, decorative glassmorphism, gradient-heavy surfaces, ornamental SaaS dashboards, and interactions that trade clarity for novelty.",
+    "keyCharacteristics": [
+      "Dark neutral work surfaces with a restrained jade signal color.",
+      "Compact, repeatable controls designed for long working sessions.",
+      "Clear hierarchy across organization, project, artifact, and AI-assistant contexts.",
+      "State-driven motion that remains useful with reduced motion enabled.",
+      "Human review and next actions are visible whenever AI participates."
+    ],
+    "rules": [
+      {
+        "name": "The Signal Color Rule",
+        "body": "Jade and mint communicate action, selection, progress, or status. They are never scattered as decoration.",
+        "section": "colors"
+      },
+      {
+        "name": "The Neutral Canvas Rule",
+        "body": "The application canvas stays neutral charcoal. Brand abyss is an overlay and brand depth token, not a full-page background.",
+        "section": "colors"
+      },
+      {
+        "name": "The One Working Voice Rule",
+        "body": "Inter is the default interface voice. Roboto Condensed and Rubik earn their use through hierarchy or brand function; they never appear merely to add variety.",
+        "section": "typography"
+      },
+      {
+        "name": "The Flat-Until-Active Rule",
+        "body": "Tonal contrast and borders establish structure at rest. Strong shadows appear only when interaction or layer hierarchy requires them.",
+        "section": "elevation"
+      },
+      {
+        "name": "The One Boundary Rule",
+        "body": "Do not combine a decorative wide shadow with a decorative border. Each boundary must have a structural reason.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Familiar Control Rule",
+        "body": "A save button, filter, select, dialog, or table behaves like the same control everywhere else in the product.",
+        "section": "components"
+      }
+    ],
+    "dos": [
+      "Do use neutral charcoal surfaces as the dominant canvas and reserve Working Jade for meaningful state.",
+      "Do keep controls compact, keyboard accessible, and visually consistent across organizations, projects, artifacts, and AI panels.",
+      "Do use 150–250ms state transitions with clear reduced-motion alternatives.",
+      "Do show loading, empty, error, approval, and uncertainty states with an obvious next action.",
+      "Do preserve readable contrast and non-color cues for every semantic state."
+    ],
+    "donts": [
+      "Don't use playful consumer-app styling that makes professional project work feel lightweight.",
+      "Don't use generic neon AI cockpit visuals, excessive glow, or technology theater.",
+      "Don't use decorative glassmorphism, gradient-heavy surfaces, or ornamental SaaS dashboards.",
+      "Don't introduce inconsistent controls or novel interactions that make standard tasks harder to learn.",
+      "Don't ship empty states or AI output that hide uncertainty or leave the next action unclear.",
+      "Don't use colored side-stripe borders, gradient text, oversized card radii, or decorative motion."
+    ]
+  }
+}

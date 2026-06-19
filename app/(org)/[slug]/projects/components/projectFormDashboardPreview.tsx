@@ -3,14 +3,8 @@
 import type { CreateOrgProjectRequest } from "@/lib/api/services/fetchProject";
 import { cn } from "@/lib/utils";
 
-import { PROJECT_BUSINESS_VALUE_LABEL } from "../project-new/components/projectFormLimits";
-import { ProjectDashboardIndexedList } from "../[projectSlug]/dashboard/components/projectDashboardIndexedList";
-import { ProjectDashboardMeta } from "../[projectSlug]/dashboard/components/projectDashboardMeta";
-import { ProjectDashboardProse } from "../[projectSlug]/dashboard/components/projectDashboardProse";
-import { ProjectDashboardSection } from "../[projectSlug]/dashboard/components/projectDashboardSection";
-
-const DASHBOARD_PAIR_ROW_CLASS =
-  "grid gap-8 lg:grid-cols-2 lg:items-start lg:gap-x-12 xl:gap-x-16";
+import { ProjectDashboardProse } from "../[projectSlug]/(deliverables)/dashboard/components/projectDashboardProse";
+import { ProjectDashboardSection } from "../[projectSlug]/(deliverables)/dashboard/components/projectDashboardSection";
 
 function EmptyHint({ children }: { children: string }) {
   return (
@@ -30,84 +24,21 @@ export function ProjectFormDashboardPreview({
   className,
 }: ProjectFormDashboardPreviewProps) {
   const name = (form.name ?? "").trim();
-  const executiveSummary = (form.executiveSummary ?? "").trim();
   const description = (form.description ?? "").trim();
-  const context = (form.context ?? "").trim();
-  const roiNotes = (form.roiNotes ?? "").trim();
-  const problems = form.problems ?? [];
-  const proposedSolutions = form.proposedSolutions ?? [];
-  const budgetWire =
-    form.budget != null && Number.isFinite(form.budget)
-      ? String(form.budget)
-      : null;
 
   return (
     <div className={cn("flex flex-col gap-8 pb-2", className)}>
-      <header className="space-y-4 border-b border-border/50 pb-6">
-        <div className="space-y-2">
-          <h1 className="font-heading text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-            {name || "—"}
-          </h1>
-          {executiveSummary ? (
-            <p className="max-w-3xl text-sm leading-relaxed text-muted-foreground sm:text-base">
-              {executiveSummary}
-            </p>
-          ) : (
-            <p className="text-sm italic text-muted-foreground">
-              No summary yet.
-            </p>
-          )}
-        </div>
-
-        <ProjectDashboardMeta
-          startDate={form.startDate ?? ""}
-          endDate={form.endDate ?? ""}
-          budget={budgetWire}
-        />
+      <header className="space-y-2 border-b border-border/50 pb-6">
+        <h1 className="font-heading text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+          {name || "—"}
+        </h1>
       </header>
 
-      <div className={DASHBOARD_PAIR_ROW_CLASS}>
-        <ProjectDashboardSection title="Description" accent="violet">
-          {description ? (
-            <ProjectDashboardProse>{description}</ProjectDashboardProse>
-          ) : (
-            <EmptyHint>No description yet.</EmptyHint>
-          )}
-        </ProjectDashboardSection>
-
-        <ProjectDashboardSection title="Context" accent="sky">
-          {context ? (
-            <ProjectDashboardProse>{context}</ProjectDashboardProse>
-          ) : (
-            <EmptyHint>No context yet.</EmptyHint>
-          )}
-        </ProjectDashboardSection>
-      </div>
-
-      <div className={DASHBOARD_PAIR_ROW_CLASS}>
-        <ProjectDashboardSection title="Problems" accent="orange">
-          <ProjectDashboardIndexedList
-            items={problems}
-            emptyLabel="No problems listed yet."
-          />
-        </ProjectDashboardSection>
-
-        <ProjectDashboardSection title="Proposed solutions" accent="fuchsia">
-          <ProjectDashboardIndexedList
-            items={proposedSolutions}
-            emptyLabel="No proposed solutions yet."
-          />
-        </ProjectDashboardSection>
-      </div>
-
-      <ProjectDashboardSection
-        title={PROJECT_BUSINESS_VALUE_LABEL}
-        accent="teal"
-      >
-        {roiNotes ? (
-          <ProjectDashboardProse>{roiNotes}</ProjectDashboardProse>
+      <ProjectDashboardSection title="Description" accent="violet">
+        {description ? (
+          <ProjectDashboardProse>{description}</ProjectDashboardProse>
         ) : (
-          <EmptyHint>No business purpose specified yet.</EmptyHint>
+          <EmptyHint>No description yet.</EmptyHint>
         )}
       </ProjectDashboardSection>
     </div>
