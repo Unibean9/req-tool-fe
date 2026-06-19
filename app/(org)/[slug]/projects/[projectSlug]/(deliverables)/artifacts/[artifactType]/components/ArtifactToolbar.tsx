@@ -133,7 +133,8 @@ export function ArtifactToolbar({
           aria-hidden
         />
         <Input
-          placeholder="Search by title or code…"
+          placeholder="Search title, description, or code…"
+          aria-label="Search artifacts"
           value={filters.search}
           onChange={(e) => onFiltersChange({ search: e.target.value })}
           className="h-8 pl-8 text-xs"

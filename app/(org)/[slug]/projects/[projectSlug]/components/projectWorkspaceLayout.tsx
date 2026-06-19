@@ -228,7 +228,6 @@ export function ProjectWorkspaceLayout({
     const s = typeof raw === "string" ? raw : null;
     return s && (ARTIFACT_TYPES as readonly string[]).includes(s) ? (s as ArtifactType) : null;
   }, [params?.artifactType]);
-
   const navigateAfterProjectDelete = useCallback(
     (deletedProjectId: string, nextSlugOverride?: string | null) => {
       const subPath = projectSubPathFromPathname(pathname, base);

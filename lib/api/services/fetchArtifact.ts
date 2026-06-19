@@ -51,6 +51,7 @@ export type ArtifactPriority = (typeof ARTIFACT_PRIORITIES)[number];
 export const ARTIFACT_CHANGE_SOURCES = [
   "manual",
   "ai_output",
+  "ai_generation",
   "import",
 ] as const;
 export type ArtifactChangeSource = (typeof ARTIFACT_CHANGE_SOURCES)[number];
@@ -90,12 +91,18 @@ export type WorkflowStepKey = (typeof WORKFLOW_STEP_KEYS)[number];
 interface ArtifactVersionApiRow {
   id: string;
   artifact_id: string;
+  version_number?: number;
+  title?: string;
   body: string;
+  status?: string;
+  parent_version_id?: string | null;
   change_source: string;
   change_summary: string | null;
-  source_document_id: string | null;
+  review_status?: string | null;
+  source_document_id?: string | null;
   created_by_id: string;
   created_at: string;
+  metadata?: Record<string, unknown>;
 }
 
 interface ArtifactApiRow {
@@ -176,12 +183,18 @@ interface ArtifactEvidenceApiResponse {
 export interface ArtifactVersion {
   id: string;
   artifactId: string;
+  versionNumber: number | null;
+  title: string | null;
   body: string;
+  status: ArtifactCurrentVersionStatus | null;
+  parentVersionId: string | null;
   changeSource: ArtifactChangeSource;
   changeSummary: string | null;
+  reviewStatus: ArtifactVersionReviewStatus | null;
   sourceDocumentId: string | null;
   createdById: string;
   createdAt: string;
+  metadata: Record<string, unknown>;
 }
 
 export interface Artifact {
@@ -388,12 +401,30 @@ function parseArtifactChangeSource(value: string): ArtifactChangeSource {
     : "manual";
 }
 
+function parseArtifactCurrentVersionStatus(
+  value: string | null | undefined
+): ArtifactCurrentVersionStatus | null {
+  if (!value) return null;
+  return (ARTIFACT_CURRENT_VERSION_STATUSES as readonly string[]).includes(value)
+    ? (value as ArtifactCurrentVersionStatus)
+    : null;
+}
+
 function parseArtifactVersionReviewStatus(
   value: string
 ): ArtifactVersionReviewStatus {
   return (ARTIFACT_VERSION_REVIEW_STATUSES as readonly string[]).includes(value)
     ? (value as ArtifactVersionReviewStatus)
     : "changes_requested";
+}
+
+function parseNullableArtifactVersionReviewStatus(
+  value: string | null | undefined
+): ArtifactVersionReviewStatus | null {
+  if (!value) return null;
+  return (ARTIFACT_VERSION_REVIEW_STATUSES as readonly string[]).includes(value)
+    ? (value as ArtifactVersionReviewStatus)
+    : null;
 }
 
 function parseEvidenceSourceType(value: string): EvidenceSourceType {
@@ -409,12 +440,22 @@ function mapArtifactVersionRow(
   return {
     id: row.id,
     artifactId: row.artifact_id,
+    versionNumber:
+      typeof row.version_number === "number" ? row.version_number : null,
+    title:
+      typeof row.title === "string" && row.title.trim()
+        ? row.title.trim()
+        : null,
     body: row.body ?? "",
+    status: parseArtifactCurrentVersionStatus(row.status),
+    parentVersionId: row.parent_version_id ?? null,
     changeSource: parseArtifactChangeSource(row.change_source),
     changeSummary: row.change_summary ?? null,
+    reviewStatus: parseNullableArtifactVersionReviewStatus(row.review_status),
     sourceDocumentId: row.source_document_id ?? null,
     createdById: row.created_by_id,
     createdAt: row.created_at,
+    metadata: row.metadata ?? {},
   };
 }
 
