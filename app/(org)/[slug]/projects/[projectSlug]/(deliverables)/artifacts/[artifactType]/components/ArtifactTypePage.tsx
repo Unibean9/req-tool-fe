@@ -1,25 +1,13 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useMemo } from "react";
 
 import { Button } from "@/components/ui/button";
 import { useProjectArtifacts } from "@/hooks/useArtifact";
-import {
-  type ArtifactCurrentVersionStatus,
-  type ArtifactPhase,
-  type ArtifactPriority,
-  type ArtifactStatus,
-  type ArtifactType,
-  type WorkflowStepKey,
-} from "@/lib/api/services/fetchArtifact";
+import { type ArtifactType } from "@/lib/api/services/fetchArtifact";
 
 import { ArtifactEmptyState, ArtifactTable } from "./ArtifactTable";
 import { ArtifactTableSkeleton } from "./ArtifactTableSkeleton";
-import {
-  ArtifactToolbar,
-  INITIAL_FILTERS,
-  type ArtifactFilters,
-} from "./ArtifactToolbar";
 
 export const ARTIFACT_TYPE_LABELS: Record<ArtifactType, string> = {
   research_output: "Research Output",
@@ -53,26 +41,13 @@ export function ArtifactTypePage({
   projectId,
   isProjectsPending,
 }: ArtifactTypePageProps) {
-  const [filters, setFilters] = useState<ArtifactFilters>(INITIAL_FILTERS);
-
-  const patchFilters = useCallback((patch: Partial<ArtifactFilters>) => {
-    setFilters((prev) => ({ ...prev, ...patch }));
-  }, []);
-
-  const clearFilters = useCallback(() => setFilters(INITIAL_FILTERS), []);
-
   // Server-side params: stepKey, phase, currentVersionStatus reduce the dataset
   // status, priority, search are applied client-side for instant filtering
   const apiParams = useMemo(
     () => ({
       type: artifactType,
-      ...(filters.stepKey !== "all" && { stepKey: filters.stepKey as WorkflowStepKey }),
-      ...(filters.phase !== "all" && { phase: filters.phase as ArtifactPhase }),
-      ...(filters.currentVersionStatus !== "all" && {
-        currentVersionStatus: filters.currentVersionStatus as ArtifactCurrentVersionStatus,
-      }),
     }),
-    [artifactType, filters.stepKey, filters.phase, filters.currentVersionStatus]
+    [artifactType]
   );
 
   const {
@@ -88,37 +63,10 @@ export function ArtifactTypePage({
   });
 
   const filtered = useMemo(() => {
-    let result = artifacts;
-
-    if (filters.status !== "all") {
-      const s = filters.status as ArtifactStatus;
-      result = result.filter((a) => a.status === s);
-    }
-    if (filters.priority !== "all") {
-      const p = filters.priority as ArtifactPriority;
-      result = result.filter((a) => a.priority === p);
-    }
-    if (filters.search.trim()) {
-      const q = filters.search.trim().toLowerCase();
-      result = result.filter(
-        (a) =>
-          a.title.toLowerCase().includes(q) ||
-          (a.code?.toLowerCase().includes(q) ?? false)
-      );
-    }
-
-    return result;
-  }, [artifacts, filters.status, filters.priority, filters.search]);
+    return artifacts;
+  }, [artifacts]);
 
   const label = ARTIFACT_TYPE_LABELS[artifactType];
-
-  const hasActiveFilters =
-    filters.status !== "all" ||
-    filters.stepKey !== "all" ||
-    filters.phase !== "all" ||
-    filters.priority !== "all" ||
-    filters.currentVersionStatus !== "all" ||
-    filters.search !== "";
 
   const isInitialLoad = isProjectsPending || (isArtifactsPending && !isFetching);
 
@@ -177,13 +125,13 @@ export function ArtifactTypePage({
         </p>
       </div>
 
-      <ArtifactToolbar
+      {/* <ArtifactToolbar
         filters={filters}
         onFiltersChange={patchFilters}
         onClearFilters={clearFilters}
         hasActiveFilters={hasActiveFilters}
         isFetching={isFetching}
-      />
+      /> */}
 
       {artifacts.length === 0 ? (
         <ArtifactEmptyState typeLabel={label} />

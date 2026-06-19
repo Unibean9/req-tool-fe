@@ -19,7 +19,6 @@ import {
   type ArtifactEvidenceResponse,
   type ArtifactListResponse,
   type ArtifactResponse,
-  type ArtifactVersionReview,
   type ArtifactVersionReviewResponse,
   type CreateArtifactEvidenceRequest,
   type CreateArtifactRequest,
@@ -30,13 +29,14 @@ import {
 import {
   projectArtifactEvidenceQueryKey,
   projectArtifactsQueryKey,
+  projectArtifactsQueryRoot,
 } from "@/lib/query/query-keys";
 
 // ─── Invalidation helpers ─────────────────────────────────────────────────────
 
 function invalidateArtifacts(queryClient: QueryClient, projectId: string) {
   void queryClient.invalidateQueries({
-    queryKey: projectArtifactsQueryKey(projectId),
+    queryKey: projectArtifactsQueryRoot(projectId),
     exact: false,
   });
 }

@@ -207,6 +207,19 @@ export function projectBrdExportQueryKey(projectId: string) {
   return [...PROJECTS_ROOT, projectId, "brd", "export"] as const;
 }
 
+/** Root cache của toàn bộ artifact list theo `project_id`. */
+export function projectArtifactsQueryRoot(projectId: string) {
+  return [...PROJECTS_ROOT, "artifacts", projectId] as const;
+}
+
+/** Prefix cache của artifact list theo `project_id` + `type`. */
+export function projectArtifactsByTypeQueryKey(
+  projectId: string,
+  type: string
+) {
+  return [...projectArtifactsQueryRoot(projectId), type] as const;
+}
+
 /** Key danh sách artifact theo `project_id` + filter params. */
 export function projectArtifactsQueryKey(
   projectId: string,
@@ -220,9 +233,7 @@ export function projectArtifactsQueryKey(
   }
 ) {
   return [
-    ...PROJECTS_ROOT,
-    "artifacts",
-    projectId,
+    ...projectArtifactsQueryRoot(projectId),
     params?.type ?? "",
     params?.status ?? "",
     params?.stepKey ?? "",

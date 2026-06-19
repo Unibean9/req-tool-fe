@@ -1,6 +1,10 @@
 "use client";
 
 import {
+  useEffect,
+  useState,
+} from "react";
+import {
   useMutation,
   useQueryClient,
   type QueryClient,
@@ -18,6 +22,7 @@ import {
   type AgentSession,
   type AgentSessionCreatedResponse,
   type AgentSessionResponse,
+  type AgentSessionStreamEvent,
   type AgentToolCall,
   type AgentToolCallListResponse,
   type AgentToolCallResponse,
@@ -29,8 +34,9 @@ import {
   projectAgentSessionMessagesQueryKey,
   projectAgentSessionQueryKey,
   projectAgentSessionToolCallsQueryKey,
-  projectArtifactsQueryKey,
+  projectArtifactsByTypeQueryKey,
 } from "@/lib/query/query-keys";
+import type { ArtifactType } from "@/lib/api/services/fetchArtifact";
 
 export type {
   AgentSession,
@@ -42,8 +48,8 @@ export type {
   AgentToolCallStatus,
   AgentMessageRole,
   CreateAgentSessionRequest,
-  SendMessageRequest,
   RequestEditRequest,
+  SendMessageRequest,
 } from "@/lib/api/services/fetchAgentSession";
 
 // ─── Invalidation helpers ─────────────────────────────────────────────────────
@@ -78,17 +84,212 @@ function invalidateToolCalls(
   });
 }
 
+function invalidateArtifactsByType(
+  queryClient: QueryClient,
+  projectId: string,
+  artifactType: ArtifactType
+) {
+  void queryClient.invalidateQueries({
+    queryKey: projectArtifactsByTypeQueryKey(projectId, artifactType),
+    exact: false,
+  });
+}
+
+function markSessionActive(
+  queryClient: QueryClient,
+  projectId: string,
+  sessionId: string
+) {
+  queryClient.setQueryData<AgentSessionResponse>(
+    projectAgentSessionQueryKey(projectId, sessionId),
+    (current) =>
+      current
+        ? {
+            ...current,
+            data: {
+              ...current.data,
+              status: "active",
+              interruptType: null,
+            },
+          }
+        : current
+  );
+}
+
+function applyStreamEvent(
+  queryClient: QueryClient,
+  projectId: string,
+  sessionId: string,
+  event: AgentSessionStreamEvent
+) {
+  if (event.type === "stream_closed") {
+    queryClient.setQueryData<AgentSessionResponse>(
+      projectAgentSessionQueryKey(projectId, sessionId),
+      (current) =>
+        current
+          ? {
+              ...current,
+              data: { ...current.data, status: event.status },
+            }
+          : current
+    );
+    return;
+  }
+
+  queryClient.setQueryData<AgentSessionResponse>(
+    projectAgentSessionQueryKey(projectId, sessionId),
+    {
+      success: true,
+      message: null,
+      data: event.session,
+    }
+  );
+  queryClient.setQueryData<AgentMessageListResponse>(
+    projectAgentSessionMessagesQueryKey(projectId, sessionId),
+    {
+      success: true,
+      message: null,
+      data: event.messages,
+    }
+  );
+  queryClient.setQueryData<AgentToolCallListResponse>(
+    projectAgentSessionToolCallsQueryKey(projectId, sessionId),
+    {
+      success: true,
+      message: null,
+      data: event.toolCalls,
+    }
+  );
+
+  if (
+    event.toolCalls.some(
+      (toolCall) =>
+        Boolean(toolCall.createdArtifactId) ||
+        Boolean(toolCall.createdVersionId)
+    )
+  ) {
+    invalidateArtifactsByType(
+      queryClient,
+      projectId,
+      event.session.artifactType
+    );
+  }
+}
+
 // ─── GET hooks ────────────────────────────────────────────────────────────────
+
+export type AgentSessionRealtimeMode =
+  | "idle"
+  | "connecting"
+  | "live"
+  | "fallback"
+  | "closed";
+
+/**
+ * Snapshot SSE is the primary source of truth. When streaming is unavailable
+ * or closes before a terminal event, callers can enable their existing polling
+ * queries as a rollout fallback.
+ */
+export function useAgentSessionRealtime(
+  projectId: string | null | undefined,
+  sessionId: string | null | undefined
+) {
+  const queryClient = useQueryClient();
+  const pid = projectId?.trim() ?? "";
+  const sid = sessionId?.trim() ?? "";
+  const sessionKey = pid && sid ? `${pid}:${sid}` : "";
+  const supportsStreaming = typeof ReadableStream !== "undefined";
+  const [connection, setConnection] = useState<{
+    key: string;
+    mode: AgentSessionRealtimeMode;
+    snapshotCount: number;
+  }>({
+    key: "",
+    mode: "idle",
+    snapshotCount: 0,
+  });
+
+  const mode: AgentSessionRealtimeMode = !sessionKey
+    ? "idle"
+    : !supportsStreaming
+      ? "fallback"
+      : connection.key === sessionKey
+        ? connection.mode
+        : "connecting";
+  const snapshotCount =
+    connection.key === sessionKey ? connection.snapshotCount : 0;
+
+  useEffect(() => {
+    if (!sessionKey || !supportsStreaming) return;
+
+    const controller = new AbortController();
+    let active = true;
+
+    void fetchAgentSession
+      .streamEvents(pid, sid, {
+        signal: controller.signal,
+        onEvent: (event) => {
+          if (!active) return;
+          applyStreamEvent(queryClient, pid, sid, event);
+          if (event.type === "snapshot") {
+            setConnection((current) => ({
+              key: sessionKey,
+              mode: "live",
+              snapshotCount:
+                current.key === sessionKey ? current.snapshotCount + 1 : 1,
+            }));
+          } else {
+            setConnection((current) => ({
+              key: sessionKey,
+              mode: "closed",
+              snapshotCount:
+                current.key === sessionKey ? current.snapshotCount : 0,
+            }));
+          }
+        },
+      })
+      .then((result) => {
+        if (!active || controller.signal.aborted) return;
+        setConnection((current) => ({
+          key: sessionKey,
+          mode: result === "stream_closed" ? "closed" : "fallback",
+          snapshotCount:
+            current.key === sessionKey ? current.snapshotCount : 0,
+        }));
+      })
+      .catch(() => {
+        if (!active || controller.signal.aborted) return;
+        setConnection((current) => ({
+          key: sessionKey,
+          mode: "fallback",
+          snapshotCount:
+            current.key === sessionKey ? current.snapshotCount : 0,
+        }));
+      });
+
+    return () => {
+      active = false;
+      controller.abort();
+    };
+  }, [pid, queryClient, sessionKey, sid, supportsStreaming]);
+
+  return {
+    mode,
+    snapshotCount,
+    isFallback: mode === "fallback",
+    isStreaming: mode === "connecting" || mode === "live",
+  };
+}
 
 /**
  * GET /api/v1/projects/{project_id}/agent-sessions/{session_id}
- * Polls while the workflow can still transition. Waiting sessions are polled
- * more slowly so batch approvals and user replies cannot leave stale UI.
+ * Polls only while the agent is processing. Waiting states are stable user
+ * input boundaries and stop polling until the next mutation.
  */
 export function useAgentSession(
   projectId: string | null | undefined,
   sessionId: string | null | undefined,
-  options?: { enabled?: boolean }
+  options?: { enabled?: boolean; pollingEnabled?: boolean }
 ) {
   const pid = projectId?.trim() ?? "";
   const sid = sessionId?.trim() ?? "";
@@ -101,9 +302,9 @@ export function useAgentSession(
     enabled,
     staleTime: 0,
     refetchInterval: (query) => {
+      if (!(options?.pollingEnabled ?? true)) return false;
       const raw = query.state.data as AgentSessionResponse | undefined;
       if (raw?.data?.status === "active") return 2000;
-      if (raw?.data?.status === "waiting_for_human") return 4000;
       return false;
     },
   });
@@ -125,7 +326,6 @@ export function useAgentSessionMessages(
     select: (res) => res.data,
     enabled,
     staleTime: 0,
-    refetchInterval: 4000,
   });
 }
 
@@ -145,7 +345,6 @@ export function useAgentSessionToolCalls(
     select: (res) => res.data,
     enabled,
     staleTime: 0,
-    refetchInterval: 4000,
   });
 }
 
@@ -211,7 +410,7 @@ export function useDeleteAgentSession(
       userOnSuccess?.(data, variables, onMutateResult, context);
     },
     onError: (error, variables, onMutateResult, context) => {
-      toast.error(getApiErrorMessage(error, "Xoá phiên agent thất bại"));
+      toast.error(getApiErrorMessage(error, "Could not delete agent session"));
       userOnError?.(error, variables, onMutateResult, context);
     },
   });
@@ -237,6 +436,7 @@ export function useSendAgentMessage(
     mutationFn: ({ projectId, sessionId, req }: SendMessageVariables) =>
       fetchAgentSession.sendMessage(projectId, sessionId, req),
     onSuccess: (data, variables, onMutateResult, context) => {
+      markSessionActive(queryClient, variables.projectId, variables.sessionId);
       invalidateMessages(queryClient, variables.projectId, variables.sessionId);
       invalidateSession(queryClient, variables.projectId, variables.sessionId);
       userOnSuccess?.(data, variables, onMutateResult, context);
@@ -244,7 +444,7 @@ export function useSendAgentMessage(
     onError: (error, variables, onMutateResult, context) => {
       invalidateMessages(queryClient, variables.projectId, variables.sessionId);
       invalidateSession(queryClient, variables.projectId, variables.sessionId);
-      toast.error(getApiErrorMessage(error, "Gửi tin nhắn thất bại"));
+      toast.error(getApiErrorMessage(error, "Could not send message"));
       userOnError?.(error, variables, onMutateResult, context);
     },
   });
@@ -254,9 +454,12 @@ type ToolCallActionVariables = {
   projectId: string;
   sessionId: string;
   toolCallId: string;
+  artifactType: ArtifactType;
 };
 
-type RequestEditVariables = ToolCallActionVariables & { req: RequestEditRequest };
+type RequestEditVariables = ToolCallActionVariables & {
+  req: RequestEditRequest;
+};
 
 /** POST /api/v1/projects/{project_id}/agent-tool-calls/{tool_call_id}/approve */
 export function useApproveToolCall(
@@ -274,16 +477,17 @@ export function useApproveToolCall(
     onSuccess: (data, variables, onMutateResult, context) => {
       invalidateToolCalls(queryClient, variables.projectId, variables.sessionId);
       invalidateSession(queryClient, variables.projectId, variables.sessionId);
-      void queryClient.invalidateQueries({
-        queryKey: projectArtifactsQueryKey(variables.projectId),
-        exact: false,
-      });
+      invalidateArtifactsByType(
+        queryClient,
+        variables.projectId,
+        variables.artifactType
+      );
       userOnSuccess?.(data, variables, onMutateResult, context);
     },
     onError: (error, variables, onMutateResult, context) => {
       invalidateToolCalls(queryClient, variables.projectId, variables.sessionId);
       invalidateSession(queryClient, variables.projectId, variables.sessionId);
-      toast.error(getApiErrorMessage(error, "Duyệt đề xuất thất bại"));
+      toast.error(getApiErrorMessage(error, "Could not approve proposal"));
       userOnError?.(error, variables, onMutateResult, context);
     },
   });
@@ -305,12 +509,17 @@ export function useRejectToolCall(
     onSuccess: (data, variables, onMutateResult, context) => {
       invalidateToolCalls(queryClient, variables.projectId, variables.sessionId);
       invalidateSession(queryClient, variables.projectId, variables.sessionId);
+      invalidateArtifactsByType(
+        queryClient,
+        variables.projectId,
+        variables.artifactType
+      );
       userOnSuccess?.(data, variables, onMutateResult, context);
     },
     onError: (error, variables, onMutateResult, context) => {
       invalidateToolCalls(queryClient, variables.projectId, variables.sessionId);
       invalidateSession(queryClient, variables.projectId, variables.sessionId);
-      toast.error(getApiErrorMessage(error, "Từ chối đề xuất thất bại"));
+      toast.error(getApiErrorMessage(error, "Could not reject proposal"));
       userOnError?.(error, variables, onMutateResult, context);
     },
   });
@@ -324,10 +533,15 @@ export function useRequestEditToolCall(
   >
 ) {
   const queryClient = useQueryClient();
-  const { onSuccess: userOnSuccess, onError: userOnError, ...rest } = options ?? {};
+  const { onSuccess: userOnSuccess, onError: userOnError, ...rest } =
+    options ?? {};
   return useMutation({
     ...rest,
-    mutationFn: ({ projectId, toolCallId, req }: RequestEditVariables) =>
+    mutationFn: ({
+      projectId,
+      toolCallId,
+      req,
+    }: RequestEditVariables) =>
       fetchAgentSession.requestEdit(projectId, toolCallId, req),
     onSuccess: (data, variables, onMutateResult, context) => {
       invalidateToolCalls(queryClient, variables.projectId, variables.sessionId);
@@ -337,7 +551,7 @@ export function useRequestEditToolCall(
     onError: (error, variables, onMutateResult, context) => {
       invalidateToolCalls(queryClient, variables.projectId, variables.sessionId);
       invalidateSession(queryClient, variables.projectId, variables.sessionId);
-      toast.error(getApiErrorMessage(error, "Yêu cầu chỉnh sửa thất bại"));
+      toast.error(getApiErrorMessage(error, "Could not request a revision"));
       userOnError?.(error, variables, onMutateResult, context);
     },
   });
