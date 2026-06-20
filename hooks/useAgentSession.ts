@@ -41,8 +41,13 @@ import type { ArtifactType } from "@/lib/api/services/fetchArtifact";
 export type {
   AgentSession,
   AgentMessage,
+  AgentMessagePayload,
+  AgentMessagePayloadLocale,
+  AgentMessagePayloadBlock,
+  AgentMessagePayloadOption,
   AgentToolCall,
   AgentSessionStatus,
+  AgentSessionUiStatus,
   AgentInterruptType,
   AgentMissingContext,
   AgentToolCallStatus,
@@ -109,11 +114,105 @@ function markSessionActive(
             data: {
               ...current.data,
               status: "active",
+              uiStatus: "processing",
               interruptType: null,
             },
           }
         : current
   );
+}
+
+function upsertMessage(
+  queryClient: QueryClient,
+  projectId: string,
+  sessionId: string,
+  message: AgentMessage
+) {
+  queryClient.setQueryData<AgentMessageListResponse>(
+    projectAgentSessionMessagesQueryKey(projectId, sessionId),
+    (current) => {
+      if (!current) {
+        return {
+          success: true,
+          message: null,
+          data: [message],
+        };
+      }
+
+      const exists = current.data.some((item) => item.id === message.id);
+      return {
+        ...current,
+        data: exists
+          ? current.data.map((item) =>
+              item.id === message.id ? message : item
+            )
+          : [...current.data, message],
+      };
+    }
+  );
+}
+
+function upsertToolCall(
+  queryClient: QueryClient,
+  projectId: string,
+  sessionId: string,
+  toolCall: AgentToolCall
+) {
+  queryClient.setQueryData<AgentToolCallListResponse>(
+    projectAgentSessionToolCallsQueryKey(projectId, sessionId),
+    (current) => {
+      if (!current) {
+        return {
+          success: true,
+          message: null,
+          data: [toolCall],
+        };
+      }
+
+      const exists = current.data.some((item) => item.id === toolCall.id);
+      return {
+        ...current,
+        data: exists
+          ? current.data.map((item) =>
+              item.id === toolCall.id ? toolCall : item
+            )
+          : [...current.data, toolCall],
+      };
+    }
+  );
+}
+
+function refreshSessionSnapshot(
+  queryClient: QueryClient,
+  projectId: string,
+  sessionId: string
+) {
+  void queryClient.fetchQuery({
+    queryKey: projectAgentSessionQueryKey(projectId, sessionId),
+    queryFn: () => fetchAgentSession.getById(projectId, sessionId),
+  });
+  void queryClient.fetchQuery({
+    queryKey: projectAgentSessionMessagesQueryKey(projectId, sessionId),
+    queryFn: () => fetchAgentSession.listMessages(projectId, sessionId),
+  });
+  void queryClient.fetchQuery({
+    queryKey: projectAgentSessionToolCallsQueryKey(projectId, sessionId),
+    queryFn: () => fetchAgentSession.listToolCalls(projectId, sessionId),
+  });
+}
+
+function refreshSessionSnapshotAfterAction(
+  queryClient: QueryClient,
+  projectId: string,
+  sessionId: string
+) {
+  refreshSessionSnapshot(queryClient, projectId, sessionId);
+  window.setTimeout(() => {
+    refreshSessionSnapshot(queryClient, projectId, sessionId);
+  }, 750);
+  window.setTimeout(() => {
+    refreshSessionSnapshot(queryClient, projectId, sessionId);
+  }, 2000);
 }
 
 function applyStreamEvent(
@@ -129,10 +228,15 @@ function applyStreamEvent(
         current
           ? {
               ...current,
-              data: { ...current.data, status: event.status },
+              data: {
+                ...current.data,
+                status: event.status,
+                uiStatus: event.status === "failed" ? "error" : "idle",
+              },
             }
           : current
     );
+    refreshSessionSnapshot(queryClient, projectId, sessionId);
     return;
   }
 
@@ -304,7 +408,7 @@ export function useAgentSession(
     refetchInterval: (query) => {
       if (!(options?.pollingEnabled ?? true)) return false;
       const raw = query.state.data as AgentSessionResponse | undefined;
-      if (raw?.data?.status === "active") return 2000;
+      if (raw?.data?.uiStatus === "processing") return 2000;
       return false;
     },
   });
@@ -436,7 +540,15 @@ export function useSendAgentMessage(
     mutationFn: ({ projectId, sessionId, req }: SendMessageVariables) =>
       fetchAgentSession.sendMessage(projectId, sessionId, req),
     onSuccess: (data, variables, onMutateResult, context) => {
-      markSessionActive(queryClient, variables.projectId, variables.sessionId);
+      upsertMessage(
+        queryClient,
+        variables.projectId,
+        variables.sessionId,
+        data.data
+      );
+      if (data.data.payload?.queued !== true) {
+        markSessionActive(queryClient, variables.projectId, variables.sessionId);
+      }
       invalidateMessages(queryClient, variables.projectId, variables.sessionId);
       invalidateSession(queryClient, variables.projectId, variables.sessionId);
       userOnSuccess?.(data, variables, onMutateResult, context);
@@ -475,6 +587,17 @@ export function useApproveToolCall(
     mutationFn: ({ projectId, toolCallId }: ToolCallActionVariables) =>
       fetchAgentSession.approve(projectId, toolCallId),
     onSuccess: (data, variables, onMutateResult, context) => {
+      upsertToolCall(
+        queryClient,
+        variables.projectId,
+        variables.sessionId,
+        data.data
+      );
+      refreshSessionSnapshotAfterAction(
+        queryClient,
+        variables.projectId,
+        variables.sessionId
+      );
       invalidateToolCalls(queryClient, variables.projectId, variables.sessionId);
       invalidateSession(queryClient, variables.projectId, variables.sessionId);
       invalidateArtifactsByType(
@@ -507,6 +630,17 @@ export function useRejectToolCall(
     mutationFn: ({ projectId, toolCallId }: ToolCallActionVariables) =>
       fetchAgentSession.reject(projectId, toolCallId),
     onSuccess: (data, variables, onMutateResult, context) => {
+      upsertToolCall(
+        queryClient,
+        variables.projectId,
+        variables.sessionId,
+        data.data
+      );
+      refreshSessionSnapshotAfterAction(
+        queryClient,
+        variables.projectId,
+        variables.sessionId
+      );
       invalidateToolCalls(queryClient, variables.projectId, variables.sessionId);
       invalidateSession(queryClient, variables.projectId, variables.sessionId);
       invalidateArtifactsByType(
@@ -544,6 +678,17 @@ export function useRequestEditToolCall(
     }: RequestEditVariables) =>
       fetchAgentSession.requestEdit(projectId, toolCallId, req),
     onSuccess: (data, variables, onMutateResult, context) => {
+      upsertToolCall(
+        queryClient,
+        variables.projectId,
+        variables.sessionId,
+        data.data
+      );
+      refreshSessionSnapshotAfterAction(
+        queryClient,
+        variables.projectId,
+        variables.sessionId
+      );
       invalidateToolCalls(queryClient, variables.projectId, variables.sessionId);
       invalidateSession(queryClient, variables.projectId, variables.sessionId);
       userOnSuccess?.(data, variables, onMutateResult, context);

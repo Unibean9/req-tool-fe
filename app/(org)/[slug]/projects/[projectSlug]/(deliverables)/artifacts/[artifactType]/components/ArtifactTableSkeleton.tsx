@@ -15,10 +15,10 @@ export function ArtifactTableSkeleton() {
       aria-label="Loading artifacts"
       aria-busy="true"
     >
-      <Table className="min-w-[1080px] table-fixed">
+      <Table className="min-w-[640px] table-fixed">
         <TableHeader className="bg-muted/45">
           <TableRow className="hover:bg-transparent">
-            {["42%", "15%", "13%", "10%", "10%", "10%"].map(
+            {["55%", "17%", "13%", "15%"].map(
               (width, index) => (
                 <TableHead
                   key={`${width}-${index}`}
@@ -35,13 +35,9 @@ export function ArtifactTableSkeleton() {
           {Array.from({ length: 5 }).map((_, rowIndex) => (
             <TableRow key={rowIndex}>
               <TableCell className="px-4 py-4">
-                <div className="flex flex-col gap-2">
-                  <Skeleton className="h-4 w-3/4" />
-                  <Skeleton className="h-3 w-full" />
-                  <Skeleton className="h-3 w-5/6" />
-                </div>
+                <Skeleton className="h-4 w-3/4" />
               </TableCell>
-              {Array.from({ length: 5 }).map((__, cellIndex) => (
+              {Array.from({ length: 3 }).map((__, cellIndex) => (
                 <TableCell
                   key={cellIndex}
                   className="px-3 py-4 align-top"

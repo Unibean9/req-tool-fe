@@ -16,6 +16,34 @@ export type AgentInterruptType = (typeof AGENT_INTERRUPT_TYPES)[number] | null;
 
 export const AGENT_MESSAGE_ROLES = ["user", "agent"] as const;
 export type AgentMessageRole = (typeof AGENT_MESSAGE_ROLES)[number];
+export const AGENT_SESSION_UI_STATUSES = [
+  "processing",
+  "waiting_input",
+  "waiting_approval",
+  "error",
+  "idle",
+] as const;
+export type AgentSessionUiStatus = (typeof AGENT_SESSION_UI_STATUSES)[number];
+export type AgentMessagePayloadLocale = "vi" | "en";
+export type AgentMessagePayloadOption = {
+  id: string;
+  label: string;
+  value: string;
+};
+export type AgentMessagePayloadBlock =
+  | { type: "heading"; text: string }
+  | { type: "list"; items: string[] }
+  | { type: string; [key: string]: unknown };
+export type AgentMessagePayload =
+  | {
+      kind?: string;
+      locale?: AgentMessagePayloadLocale;
+      queued?: boolean;
+      options?: AgentMessagePayloadOption[];
+      blocks?: AgentMessagePayloadBlock[];
+      [key: string]: unknown;
+    }
+  | null;
 
 export const AGENT_TOOL_CALL_STATUSES = [
   "proposed",
@@ -39,6 +67,7 @@ interface AgentSessionApi {
   workflow_area: string;
   step_key?: string | null;
   status: AgentSessionStatus;
+  ui_status?: AgentSessionUiStatus | null;
   interrupt_type: AgentInterruptType;
   missing_context: AgentMissingContext;
   agent_role?: string | null;
@@ -70,6 +99,7 @@ interface AgentMessageApi {
   session_id: string;
   role: AgentMessageRole;
   content: string;
+  payload?: AgentMessagePayload;
   created_at: string | null;
   updated_at: string | null;
 }
@@ -143,6 +173,7 @@ export interface AgentSession {
   workflowArea: string;
   stepKey: string | null;
   status: AgentSessionStatus;
+  uiStatus: AgentSessionUiStatus;
   interruptType: AgentInterruptType;
   missingContext: AgentMissingContext;
   agentRole: string | null;
@@ -163,6 +194,7 @@ export interface AgentMessage {
   sessionId: string;
   role: AgentMessageRole;
   content: string;
+  payload: AgentMessagePayload;
   createdAt: string | null;
   updatedAt: string | null;
 }
@@ -241,6 +273,17 @@ export interface RequestEditRequest {
 // ─── Mapping helpers ──────────────────────────────────────────────────────────
 
 function mapSession(s: AgentSessionApi): AgentSession {
+  const fallbackUiStatus: AgentSessionUiStatus =
+    s.status === "active"
+      ? "processing"
+      : s.status === "failed"
+        ? "error"
+        : s.status === "completed"
+          ? "idle"
+          : s.interrupt_type === "propose_artifacts"
+            ? "waiting_approval"
+            : "waiting_input";
+
   return {
     id: s.id,
     projectId: s.project_id,
@@ -248,6 +291,7 @@ function mapSession(s: AgentSessionApi): AgentSession {
     workflowArea: s.workflow_area,
     stepKey: s.step_key ?? null,
     status: s.status,
+    uiStatus: s.ui_status ?? fallbackUiStatus,
     interruptType: s.interrupt_type,
     missingContext: s.missing_context,
     agentRole: s.agent_role ?? null,
@@ -264,6 +308,7 @@ function mapMessage(m: AgentMessageApi): AgentMessage {
     sessionId: m.session_id,
     role: m.role,
     content: m.content,
+    payload: m.payload ?? null,
     createdAt: m.created_at,
     updatedAt: m.updated_at,
   };

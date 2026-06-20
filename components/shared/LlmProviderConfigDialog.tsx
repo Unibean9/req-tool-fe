@@ -151,6 +151,8 @@ export function LlmProviderConfigDialog({
   const [apiKey, setApiKey] = useState("");
   const [secretKey, setSecretKey] = useState("");
   const [region, setRegion] = useState("");
+  const [modelName, setModelName] = useState("");
+  const [strongModelName, setStrongModelName] = useState("");
   const [showApiKey, setShowApiKey] = useState(false);
   const [showSecretKey, setShowSecretKey] = useState(false);
 
@@ -170,6 +172,8 @@ export function LlmProviderConfigDialog({
     if (!open || !activeConfig) return;
     setProviderType(activeConfig.providerType);
     setRegion(activeConfig.region ?? "");
+    setModelName(activeConfig.modelName ?? "");
+    setStrongModelName(activeConfig.strongModelName ?? "");
   }, [open, activeConfig?.id, activeConfig?.providerType]);
 
   const upsertMutation = useUpsertLlmProviderConfig();
@@ -187,6 +191,8 @@ export function LlmProviderConfigDialog({
     upsertMutation.mutate({
       provider_type: providerType,
       api_key: apiKey.trim(),
+      model_name: modelName.trim(),
+      strong_model_name: strongModelName.trim(),
       ...(isBedrock
         ? { secret_key: secretKey.trim() || null, region: region.trim() || null }
         : { secret_key: null, region: null }),
@@ -349,6 +355,58 @@ export function LlmProviderConfigDialog({
                   if (e.key === "Enter" && canSave) handleSave();
                 }}
               />
+            </div>
+
+            {/* Model names */}
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="grid gap-1.5">
+                <label
+                  htmlFor="llm-model-name"
+                  className="text-sm font-medium text-foreground"
+                >
+                  Model Name
+                </label>
+                <Input
+                  id="llm-model-name"
+                  type="text"
+                  placeholder={
+                    providerType === "openai"
+                      ? "gpt-4.1-mini"
+                      : providerType === "anthropic"
+                      ? "claude-3-5-haiku-latest"
+                      : providerType === "google"
+                      ? "gemini-2.0-flash"
+                      : "anthropic.claude-3-haiku"
+                  }
+                  value={modelName}
+                  onChange={(e) => setModelName(e.target.value)}
+                  maxLength={128}
+                />
+              </div>
+              <div className="grid gap-1.5">
+                <label
+                  htmlFor="llm-strong-model-name"
+                  className="text-sm font-medium text-foreground"
+                >
+                  Strong Model Name
+                </label>
+                <Input
+                  id="llm-strong-model-name"
+                  type="text"
+                  placeholder={
+                    providerType === "openai"
+                      ? "gpt-4.1"
+                      : providerType === "anthropic"
+                      ? "claude-3-5-sonnet-latest"
+                      : providerType === "google"
+                      ? "gemini-2.0-pro"
+                      : "anthropic.claude-3-5-sonnet"
+                  }
+                  value={strongModelName}
+                  onChange={(e) => setStrongModelName(e.target.value)}
+                  maxLength={128}
+                />
+              </div>
             </div>
 
             {/*

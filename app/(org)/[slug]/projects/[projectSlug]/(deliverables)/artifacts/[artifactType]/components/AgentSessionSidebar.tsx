@@ -61,7 +61,12 @@ function extractConflictSessionId(error: unknown): string | null {
   if (!error || typeof error !== "object") return null;
   const data = (error as { data?: unknown }).data;
   if (!data || typeof data !== "object") return null;
-  const id = (data as { session_id?: unknown }).session_id;
+  const id =
+    (data as { session_id?: unknown }).session_id ??
+    ((data as { detail?: unknown }).detail &&
+    typeof (data as { detail?: unknown }).detail === "object"
+      ? ((data as { detail: { session_id?: unknown } }).detail).session_id
+      : null);
   return typeof id === "string" && id ? id : null;
 }
 
@@ -349,14 +354,69 @@ function SessionError({
   );
 }
 
+function formatPayloadKind(kind: string): string {
+  return kind
+    .replace(/[_-]+/g, " ")
+    .replace(/\b\w/g, (character) => character.toUpperCase());
+}
+
+function PayloadBlocks({ message }: { message: AgentMessage }) {
+  const blocks = message.payload?.blocks ?? [];
+  if (!blocks.length) return null;
+
+  return (
+    <div className="mt-3 grid gap-2 rounded-lg border border-border/60 bg-muted/20 p-3">
+      {blocks.map((block, index) => {
+        if (block.type === "heading" && typeof block.text === "string") {
+          return (
+            <h3
+              key={`${block.type}-${index}`}
+              className="text-sm font-semibold leading-5 text-foreground"
+            >
+              {block.text}
+            </h3>
+          );
+        }
+
+        if (block.type === "list" && Array.isArray(block.items)) {
+          return (
+            <ul
+              key={`${block.type}-${index}`}
+              className="grid gap-1.5 pl-4 text-sm leading-5 text-foreground/85"
+            >
+              {block.items
+                .filter((item): item is string => typeof item === "string")
+                .map((item, itemIndex) => (
+                  <li key={`${index}-${itemIndex}`} className="list-disc">
+                    {item}
+                  </li>
+                ))}
+            </ul>
+          );
+        }
+
+        return null;
+      })}
+    </div>
+  );
+}
+
 function ChatBubble({
   message,
   animate,
+  onQuickAction,
 }: {
   message: AgentMessage;
   animate: boolean;
+  onQuickAction: (value: string) => void;
 }) {
   const isAgent = message.role === "agent";
+  const payload = message.payload;
+  const payloadLabel = payload?.kind ? formatPayloadKind(payload.kind) : null;
+  const localeLabel = payload?.locale ? payload.locale.toUpperCase() : null;
+  const isQueued = payload?.queued === true;
+  const options = isAgent ? payload?.options ?? [] : [];
+
   return (
     <article
       className={cn(
@@ -364,12 +424,50 @@ function ChatBubble({
         isAgent
           ? "py-1"
           : "ml-auto w-fit max-w-[85%] rounded-lg border border-border/60 bg-muted/35 px-3 py-2.5",
+        isQueued && "opacity-65",
         animate && "agent-message-enter"
       )}
     >
       <p className="whitespace-pre-wrap wrap-break-word text-pretty text-sm leading-6 text-foreground">
         {message.content}
       </p>
+      {payloadLabel || isQueued ? (
+        <div className="mt-1.5 flex items-center gap-1.5">
+          {payloadLabel ? (
+            <span className="rounded-md border border-primary/20 bg-primary/8 px-1.5 py-0.5 text-[0.625rem] font-semibold uppercase leading-none tracking-[0.12em] text-primary">
+              {payloadLabel}
+            </span>
+          ) : null}
+          {localeLabel ? (
+            <span className="text-[0.625rem] font-medium uppercase leading-none tracking-[0.12em] text-muted-foreground">
+              {localeLabel}
+            </span>
+          ) : null}
+          {isQueued ? (
+            <span className="inline-flex items-center gap-1 text-[0.625rem] font-medium uppercase leading-none tracking-[0.12em] text-muted-foreground">
+              <Loader2 className="size-3 animate-spin" aria-hidden />
+              Queued
+            </span>
+          ) : null}
+        </div>
+      ) : null}
+      {isAgent ? <PayloadBlocks message={message} /> : null}
+      {options.length > 0 ? (
+        <div className="mt-3 flex flex-wrap gap-2">
+          {options.map((option) => (
+            <Button
+              key={option.id || option.value}
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={() => onQuickAction(option.value)}
+              className="h-8 rounded-lg px-2.5 text-xs"
+            >
+              {option.label}
+            </Button>
+          ))}
+        </div>
+      ) : null}
     </article>
   );
 }
@@ -409,13 +507,16 @@ function ChatView({
   });
   const [text, setText] = useState("");
   const endRef = useRef<HTMLDivElement>(null);
-  const isComposerBusy = isAgentResponding || isSending;
-  const canSend = !isComposerBusy;
-  const latestMessageId = messages.at(-1)?.id ?? null;
+  const canSend = !isSending;
+  const latestMessage = messages.at(-1) ?? null;
+  const latestMessageId = latestMessage?.id ?? null;
+  const isAwaitingAgentReply =
+    isAgentResponding ||
+    (latestMessage?.role === "user" && latestMessage.payload?.queued !== true);
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "auto" });
-  }, [messages.length]);
+  }, [isAwaitingAgentReply, messages.length]);
 
   const handleSend = useCallback(() => {
     const trimmed = text.trim();
@@ -492,9 +593,10 @@ function ChatView({
                 animate={
                   realtimeSnapshotCount > 1 && msg.id === latestMessageId
                 }
+                onQuickAction={onSend}
               />
             ))}
-            {isAgentResponding ? (
+            {isAwaitingAgentReply ? (
               <AgentThinkingBubble agentRole={agentRole} />
             ) : null}
             <div ref={endRef} />
@@ -505,15 +607,15 @@ function ChatView({
       <div className="shrink-0 border-t border-border/60 bg-sidebar p-3">
         <div
           className="rounded-xl border border-border/80 bg-background/70 focus-within:border-ring focus-within:ring-[3px] focus-within:ring-ring/30"
-          aria-busy={isComposerBusy}
+          aria-busy={isSending}
         >
           <AgentAutoResizeTextarea
             value={text}
             onValueChange={setText}
             onSubmit={handleSend}
             placeholder={
-              isAgentResponding
-                ? "Workbench is working…"
+              isAwaitingAgentReply
+                ? "Add a note; it will queue…"
                 : isInitialTurn
                   ? "Describe the outcome you need…"
                   : "Add direction or clarification…"
@@ -543,14 +645,14 @@ function ChatView({
               onClick={handleSend}
               disabled={!text.trim() || !canSend}
               aria-label={
-                isAgentResponding
-                  ? "Workbench is preparing an update"
+                isAwaitingAgentReply
+                  ? "Queue message while workbench is preparing an update"
                   : isSending
                     ? "Sending message"
                     : "Send message"
               }
             >
-              {isComposerBusy ? (
+              {isSending ? (
                 <Loader2
                   data-icon="inline-start"
                   className="animate-spin"
@@ -559,11 +661,7 @@ function ChatView({
               ) : (
                 <Send data-icon="inline-start" aria-hidden />
               )}
-              {isAgentResponding
-                ? "Working…"
-                : isSending
-                  ? "Sending…"
-                  : "Send"}
+              {isSending ? "Sending…" : isAwaitingAgentReply ? "Queue" : "Send"}
             </Button>
           </div>
         </div>
@@ -598,12 +696,17 @@ function ProposalsView({
   sessionId,
   artifactType,
   realtimeMode,
+  onSend,
 }: {
   projectId: string;
   sessionId: string;
   artifactType: ArtifactType;
   realtimeMode: AgentSessionRealtimeMode;
+  onSend: (content: string) => void;
 }) {
+  const { data: messages = [] } = useAgentSessionMessages(projectId, sessionId, {
+    enabled: realtimeMode === "fallback",
+  });
   const {
     data: toolCalls = [],
     isPending,
@@ -617,6 +720,12 @@ function ProposalsView({
 
   const proposed = toolCalls.filter((t) => t.status === "proposed");
   const resolved = toolCalls.filter((t) => t.status !== "proposed");
+  const proposalMessages = messages.filter(
+    (message) =>
+      message.role === "agent" &&
+      (message.payload?.kind === "proposal" ||
+        message.payload?.kind === "confirm")
+  );
 
   if (isPending) {
     return (
@@ -655,7 +764,7 @@ function ProposalsView({
     );
   }
 
-  if (!toolCalls.length) {
+  if (!toolCalls.length && !proposalMessages.length) {
     return (
       <div className="flex flex-1 items-center justify-center px-4 py-8 text-center">
         <p className="text-xs text-muted-foreground">No proposals available.</p>
@@ -665,6 +774,23 @@ function ProposalsView({
 
   return (
     <div className="flex flex-1 flex-col gap-5 overflow-y-auto p-3">
+      {proposalMessages.length > 0 ? (
+        <section className="flex flex-col gap-3">
+          <h2 className="text-balance text-sm font-semibold text-foreground">
+            Workbench recommendation
+          </h2>
+          <div className="flex flex-col gap-3">
+            {proposalMessages.map((message) => (
+              <ChatBubble
+                key={message.id}
+                message={message}
+                animate={false}
+                onQuickAction={onSend}
+              />
+            ))}
+          </div>
+        </section>
+      ) : null}
       {proposed.length > 0 && (
         <section className="flex flex-col gap-3">
           <div className="flex flex-col gap-1">
@@ -973,14 +1099,11 @@ function resolveAgentSessionView({
     return { kind: "connecting", isDeleting };
   }
 
-  if (session.status === "active") {
+  if (session.uiStatus === "processing") {
     return { kind: "active", agentRole: session.agentRole };
   }
 
-  if (
-    session.status === "waiting_for_human" &&
-    (session.interruptType === null || session.interruptType === "ask_human")
-  ) {
+  if (session.uiStatus === "waiting_input") {
     return {
       kind: "chat",
       agentRole: session.agentRole,
@@ -988,13 +1111,11 @@ function resolveAgentSessionView({
     };
   }
 
-  if (
-    session.status === "waiting_for_human" &&
-    session.interruptType === "propose_artifacts"
-  ) {
+  if (session.uiStatus === "waiting_approval") {
     return { kind: "proposals" };
   }
 
+  if (session.uiStatus === "error") return { kind: "failed" };
   if (session.status === "completed") return { kind: "completed" };
   if (session.status === "failed") return { kind: "failed" };
   return { kind: "connecting", isDeleting };
@@ -1097,6 +1218,7 @@ function AgentSessionBody({
           sessionId={sessionId!}
           artifactType={artifactType}
           realtimeMode={realtimeMode}
+          onSend={onSend}
         />
       );
       break;
@@ -1273,9 +1395,9 @@ export function AgentSessionSidebar({
       if (
         !projectId ||
         !sessionId ||
-        session?.status !== "waiting_for_human" ||
-        (session.interruptType !== null &&
-          session.interruptType !== "ask_human")
+        !session ||
+        session.status === "completed" ||
+        session.status === "failed"
       ) {
         void refetchSession();
         return;
