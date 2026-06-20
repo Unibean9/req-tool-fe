@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   AlertTriangle,
+  ArrowRight,
   CheckCircle2,
   Loader2,
   PenLine,
@@ -25,6 +26,12 @@ import {
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AgentAutoResizeTextarea } from "./AgentAutoResizeTextarea";
+import {
+  AgentInitialPromptState,
+  getInitialArtifactPrompt,
+  useAgentInitialPrompt,
+  type AgentInitialPromptAttempt,
+} from "./AgentInitialPrompt";
 import { AgentProposalReviewDialog } from "./AgentProposalReviewDialog";
 import { getApiErrorMessage } from "@/lib/api/getApiErrorMessage";
 import type { ArtifactType } from "@/lib/api/services/fetchArtifact";
@@ -405,10 +412,12 @@ function ChatBubble({
   message,
   animate,
   onQuickAction,
+  showOptions = true,
 }: {
   message: AgentMessage;
   animate: boolean;
   onQuickAction: (value: string) => void;
+  showOptions?: boolean;
 }) {
   const isAgent = message.role === "agent";
   const payload = message.payload;
@@ -452,7 +461,7 @@ function ChatBubble({
         </div>
       ) : null}
       {isAgent ? <PayloadBlocks message={message} /> : null}
-      {options.length > 0 ? (
+      {showOptions && options.length > 0 ? (
         <div className="mt-3 flex flex-wrap gap-2">
           {options.map((option) => (
             <Button
@@ -513,6 +522,11 @@ function ChatView({
   const isAwaitingAgentReply =
     isAgentResponding ||
     (latestMessage?.role === "user" && latestMessage.payload?.queued !== true);
+  const decisionOptions =
+    latestMessage?.role === "agent" && !isAwaitingAgentReply
+      ? (latestMessage.payload?.options ?? [])
+      : [];
+  const isDecisionMode = decisionOptions.length > 0;
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "auto" });
@@ -594,6 +608,9 @@ function ChatView({
                   realtimeSnapshotCount > 1 && msg.id === latestMessageId
                 }
                 onQuickAction={onSend}
+                showOptions={
+                  !isDecisionMode || msg.id !== latestMessageId
+                }
               />
             ))}
             {isAwaitingAgentReply ? (
@@ -604,68 +621,98 @@ function ChatView({
         )}
       </div>
 
-      <div className="shrink-0 border-t border-border/60 bg-sidebar p-3">
+      {isDecisionMode ? (
         <div
-          className="rounded-xl border border-border/80 bg-background/70 focus-within:border-ring focus-within:ring-[3px] focus-within:ring-ring/30"
+          className="shrink-0 border-t border-border/60 bg-sidebar p-3"
           aria-busy={isSending}
         >
-          <AgentAutoResizeTextarea
-            value={text}
-            onValueChange={setText}
-            onSubmit={handleSend}
-            placeholder={
-              isAwaitingAgentReply
-                ? "Add a note; it will queue…"
-                : isInitialTurn
-                  ? "Describe the outcome you need…"
-                  : "Add direction or clarification…"
-            }
-            aria-label={
-              isInitialTurn
-                ? "Initial drafting direction"
-                : "Additional drafting direction"
-            }
-            maxLength={MAX_AGENT_INPUT_LENGTH}
-            minHeight={56}
-            maxHeight={240}
-            className="rounded-none border-0 bg-transparent px-3.5 pt-3 pb-2 text-sm leading-5 shadow-none transition-none focus-visible:border-transparent focus-visible:ring-0"
-            disabled={!canSend}
-          />
-          <div className="flex min-h-10 items-center justify-end gap-3 px-2.5 pb-2">
-            {showCharacterCount ? (
-              <p className="mr-auto min-w-0 truncate text-xs text-muted-foreground tabular-nums">
-                {text.length.toLocaleString()}/
-                {MAX_AGENT_INPUT_LENGTH.toLocaleString()}
-              </p>
-            ) : null}
-            <Button
-              type="button"
-              size="sm"
-              className="shrink-0 rounded-xl"
-              onClick={handleSend}
-              disabled={!text.trim() || !canSend}
-              aria-label={
+          <fieldset className="grid gap-2">
+            <legend className="sr-only">
+              Choose the next artifact action
+            </legend>
+            {decisionOptions.map((option, index) => (
+              <Button
+                key={option.id || option.value}
+                type="button"
+                variant={index === 0 ? "default" : "outline"}
+                onClick={() => onSend(option.value)}
+                disabled={isSending}
+                className="h-auto min-h-11 justify-between rounded-xl px-4 py-3 text-left"
+              >
+                <span className="text-pretty">{option.label}</span>
+                <ArrowRight data-icon="inline-end" aria-hidden />
+              </Button>
+            ))}
+          </fieldset>
+        </div>
+      ) : (
+        <div className="shrink-0 border-t border-border/60 bg-sidebar p-3">
+          <div
+            className="rounded-xl border border-border/80 bg-background/70 focus-within:border-ring focus-within:ring-[3px] focus-within:ring-ring/30"
+            aria-busy={isSending}
+          >
+            <AgentAutoResizeTextarea
+              value={text}
+              onValueChange={setText}
+              onSubmit={handleSend}
+              placeholder={
                 isAwaitingAgentReply
-                  ? "Queue message while workbench is preparing an update"
-                  : isSending
-                    ? "Sending message"
-                    : "Send message"
+                  ? "Add a note; it will queue…"
+                  : isInitialTurn
+                    ? "Describe the outcome you need…"
+                    : "Add direction or clarification…"
               }
-            >
-              {isSending ? (
-                <Loader2
-                  data-icon="inline-start"
-                  className="animate-spin"
-                  aria-hidden
-                />
-              ) : (
-                <Send data-icon="inline-start" aria-hidden />
-              )}
-              {isSending ? "Sending…" : isAwaitingAgentReply ? "Queue" : "Send"}
-            </Button>
+              aria-label={
+                isInitialTurn
+                  ? "Initial drafting direction"
+                  : "Additional drafting direction"
+              }
+              maxLength={MAX_AGENT_INPUT_LENGTH}
+              minHeight={56}
+              maxHeight={240}
+              className="rounded-none border-0 bg-transparent px-3.5 pt-3 pb-2 text-sm leading-5 shadow-none transition-none focus-visible:border-transparent focus-visible:ring-0"
+              disabled={!canSend}
+            />
+            <div className="flex min-h-10 items-center justify-end gap-3 px-2.5 pb-2">
+              {showCharacterCount ? (
+                <p className="mr-auto min-w-0 truncate text-xs text-muted-foreground tabular-nums">
+                  {text.length.toLocaleString()}/
+                  {MAX_AGENT_INPUT_LENGTH.toLocaleString()}
+                </p>
+              ) : null}
+              <Button
+                type="button"
+                size="sm"
+                className="shrink-0 rounded-xl"
+                onClick={handleSend}
+                disabled={!text.trim() || !canSend}
+                aria-label={
+                  isAwaitingAgentReply
+                    ? "Queue message while workbench is preparing an update"
+                    : isSending
+                      ? "Sending message"
+                      : "Send message"
+                }
+              >
+                {isSending ? (
+                  <Loader2
+                    data-icon="inline-start"
+                    className="animate-spin"
+                    aria-hidden
+                  />
+                ) : (
+                  <Send data-icon="inline-start" aria-hidden />
+                )}
+                {isSending
+                  ? "Sending…"
+                  : isAwaitingAgentReply
+                    ? "Queue"
+                    : "Send"}
+              </Button>
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
@@ -1129,8 +1176,11 @@ function AgentSessionBody({
   realtimeMode,
   realtimeSnapshotCount,
   isSending,
+  initialPromptAttempt,
+  isSendingInitialPrompt,
   onStart,
   onRetry,
+  onRetryInitialPrompt,
   onReset,
   onCancel,
   onSend,
@@ -1142,15 +1192,28 @@ function AgentSessionBody({
   realtimeMode: AgentSessionRealtimeMode;
   realtimeSnapshotCount: number;
   isSending: boolean;
+  initialPromptAttempt: AgentInitialPromptAttempt | null;
+  isSendingInitialPrompt: boolean;
   onStart: () => void;
   onRetry: () => void;
+  onRetryInitialPrompt: () => void;
   onReset: () => void;
   onCancel: () => void;
   onSend: (content: string) => void;
 }) {
   let content: React.ReactNode;
 
-  switch (view.kind) {
+  if (initialPromptAttempt) {
+    content = (
+      <AgentInitialPromptState
+        artifactType={artifactType}
+        prompt={initialPromptAttempt.content}
+        error={initialPromptAttempt.error}
+        isSending={isSendingInitialPrompt}
+        onRetry={onRetryInitialPrompt}
+      />
+    );
+  } else switch (view.kind) {
     case "empty":
       content = (
         <SessionEmpty
@@ -1239,9 +1302,9 @@ function AgentSessionBody({
 
   return (
     <div
-      key={view.kind}
+      key={initialPromptAttempt ? "initial-prompt" : view.kind}
       className="agent-session-state-enter flex min-h-0 flex-1 flex-col"
-      aria-busy={view.kind === "active"}
+      aria-busy={view.kind === "active" || isSendingInitialPrompt}
     >
       {content}
     </div>
@@ -1337,17 +1400,33 @@ export function AgentSessionSidebar({
     };
   }, [isSessionError, sessionErrorCode, sessionId, setSessionId]);
 
+  const sendMessage = useSendAgentMessage();
+  const {
+    attempt: initialPromptAttempt,
+    isSending: isSendingInitialPrompt,
+    send: sendInitialPrompt,
+    retry: retryInitialPrompt,
+    clear: clearInitialPrompt,
+  } = useAgentInitialPrompt();
+
   const createSession = useCreateAgentSession({
-    onSuccess: (res) => {
+    onSuccess: (res, variables) => {
+      const initialPrompt = getInitialArtifactPrompt(artifactType);
       setStartError(null);
       setSessionNotice(null);
       setSessionId(res.data.sessionId);
       setMissingContext(res.data.missingContext);
+      sendInitialPrompt(
+        variables.projectId,
+        res.data.sessionId,
+        initialPrompt
+      );
     },
     onError: (error) => {
       const conflictId = extractConflictSessionId(error);
       if (conflictId) {
         setStartError(null);
+        clearInitialPrompt();
         setSessionNotice("Reopened your active drafting session.");
         setSessionId(conflictId);
         return;
@@ -1363,16 +1442,16 @@ export function AgentSessionSidebar({
       setCancelDialogOpen(false);
       setSessionId(null);
       setMissingContext([]);
+      clearInitialPrompt();
       setSessionNotice("The drafting session was ended.");
     },
   });
-
-  const sendMessage = useSendAgentMessage();
 
   const handleStart = useCallback(() => {
     if (!projectId) return;
     setStartError(null);
     setSessionNotice(null);
+    clearInitialPrompt();
     createSession.mutate({
       projectId,
       req: {
@@ -1383,7 +1462,18 @@ export function AgentSessionSidebar({
         provider_config_id: activeConfig?.id ?? null,
       },
     });
-  }, [projectId, artifactType, activeConfig, createSession]);
+  }, [
+    projectId,
+    artifactType,
+    activeConfig,
+    clearInitialPrompt,
+    createSession,
+  ]);
+
+  const handleRetryInitialPrompt = useCallback(() => {
+    if (!projectId) return;
+    retryInitialPrompt(projectId);
+  }, [projectId, retryInitialPrompt]);
 
   const handleConfirmCancel = useCallback(() => {
     if (!projectId || !sessionId) return;
@@ -1412,7 +1502,8 @@ export function AgentSessionSidebar({
     setMissingContext([]);
     setStartError(null);
     setSessionNotice(null);
-  }, [setSessionId]);
+    clearInitialPrompt();
+  }, [clearInitialPrompt, setSessionId]);
 
   const status = session?.status ?? null;
   const restoredMissingContext = formatMissingContext(
@@ -1425,6 +1516,10 @@ export function AgentSessionSidebar({
 
   const isCreating = createSession.isPending;
   const isDeleting = deleteSession.isPending;
+  const visibleInitialPromptAttempt =
+    initialPromptAttempt?.sessionId === sessionId
+      ? initialPromptAttempt
+      : null;
   const view = resolveAgentSessionView({
     sessionId,
     session,
@@ -1472,8 +1567,11 @@ export function AgentSessionSidebar({
           realtimeMode={realtime.mode}
           realtimeSnapshotCount={realtime.snapshotCount}
           isSending={sendMessage.isPending}
+          initialPromptAttempt={visibleInitialPromptAttempt}
+          isSendingInitialPrompt={isSendingInitialPrompt}
           onStart={handleStart}
           onRetry={() => void refetchSession()}
+          onRetryInitialPrompt={handleRetryInitialPrompt}
           onReset={handleReset}
           onCancel={() => setCancelDialogOpen(true)}
           onSend={handleSendMessage}
