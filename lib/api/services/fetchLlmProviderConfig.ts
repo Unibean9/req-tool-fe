@@ -13,6 +13,7 @@ interface LLMProviderConfigApi {
   base_url: string | null;
   region: string | null;
   model_name: string | null;
+  strong_model_name: string | null;
   status: LLMProviderConfigStatus;
   is_default: boolean;
   api_key_set: boolean;
@@ -55,6 +56,7 @@ export interface LLMProviderConfig {
   baseUrl: string | null;
   region: string | null;
   modelName: string | null;
+  strongModelName: string | null;
   status: LLMProviderConfigStatus;
   isDefault: boolean;
   apiKeySet: boolean;
@@ -94,6 +96,8 @@ export interface UpsertLLMProviderConfigBody {
   api_key: string;
   secret_key?: string | null;
   region?: string | null;
+  model_name?: string;
+  strong_model_name?: string;
 }
 
 // ─── Mapping ─────────────────────────────────────────────────────────────────
@@ -107,6 +111,7 @@ function mapConfig(c: LLMProviderConfigApi): LLMProviderConfig {
     baseUrl: c.base_url,
     region: c.region,
     modelName: c.model_name,
+    strongModelName: c.strong_model_name,
     status: c.status,
     isDefault: c.is_default,
     apiKeySet: c.api_key_set,
