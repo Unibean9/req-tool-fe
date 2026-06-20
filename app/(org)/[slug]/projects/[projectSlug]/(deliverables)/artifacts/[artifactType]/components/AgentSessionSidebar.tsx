@@ -1,9 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   AlertTriangle,
-  ArrowRight,
   CheckCircle2,
   Loader2,
   PenLine,
@@ -25,7 +24,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { AgentAutoResizeTextarea } from "./AgentAutoResizeTextarea";
+import { AgentAssistantThread } from "./AgentAssistantThread";
 import {
   AgentInitialPromptState,
   getInitialArtifactPrompt,
@@ -55,8 +54,6 @@ import {
 } from "@/hooks/useAgentSession";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-
-const MAX_AGENT_INPUT_LENGTH = 8000;
 
 function formatArtifactType(artifactType: string): string {
   return artifactType
@@ -288,23 +285,6 @@ function SessionActive({
   );
 }
 
-function AgentThinkingBubble({ agentRole }: { agentRole?: string | null }) {
-  return (
-    <output
-      className="agent-message-enter flex h-8 items-center gap-1 py-2"
-      aria-label={
-        agentRole
-          ? `${formatArtifactType(agentRole)} is preparing a response`
-          : "Preparing a response"
-      }
-    >
-      <span className="agent-thinking-dot size-1 rounded-full bg-primary/80" />
-      <span className="agent-thinking-dot size-1 rounded-full bg-primary/80" />
-      <span className="agent-thinking-dot size-1 rounded-full bg-primary/80" />
-    </output>
-  );
-}
-
 function SessionError({
   message,
   onRetry,
@@ -373,11 +353,11 @@ function PayloadBlocks({ message }: { message: AgentMessage }) {
 
   return (
     <div className="mt-3 grid gap-2 rounded-lg border border-border/60 bg-muted/20 p-3">
-      {blocks.map((block, index) => {
+      {blocks.map((block) => {
         if (block.type === "heading" && typeof block.text === "string") {
           return (
             <h3
-              key={`${block.type}-${index}`}
+              key={`${block.type}-${block.text}`}
               className="text-sm font-semibold leading-5 text-foreground"
             >
               {block.text}
@@ -388,13 +368,13 @@ function PayloadBlocks({ message }: { message: AgentMessage }) {
         if (block.type === "list" && Array.isArray(block.items)) {
           return (
             <ul
-              key={`${block.type}-${index}`}
+              key={`${block.type}-${block.items.join("\u001f")}`}
               className="grid gap-1.5 pl-4 text-sm leading-5 text-foreground/85"
             >
               {block.items
                 .filter((item): item is string => typeof item === "string")
-                .map((item, itemIndex) => (
-                  <li key={`${index}-${itemIndex}`} className="list-disc">
+                .map((item) => (
+                  <li key={item} className="list-disc">
                     {item}
                   </li>
                 ))}
@@ -514,11 +494,7 @@ function ChatView({
   } = useAgentSessionMessages(projectId, sessionId, {
     enabled: realtimeMode === "fallback",
   });
-  const [text, setText] = useState("");
-  const endRef = useRef<HTMLDivElement>(null);
-  const canSend = !isSending;
   const latestMessage = messages.at(-1) ?? null;
-  const latestMessageId = latestMessage?.id ?? null;
   const isAwaitingAgentReply =
     isAgentResponding ||
     (latestMessage?.role === "user" && latestMessage.payload?.queued !== true);
@@ -526,25 +502,11 @@ function ChatView({
     latestMessage?.role === "agent" && !isAwaitingAgentReply
       ? (latestMessage.payload?.options ?? [])
       : [];
-  const isDecisionMode = decisionOptions.length > 0;
-
-  useEffect(() => {
-    endRef.current?.scrollIntoView({ behavior: "auto" });
-  }, [isAwaitingAgentReply, messages.length]);
-
-  const handleSend = useCallback(() => {
-    const trimmed = text.trim();
-    if (!trimmed || !canSend) return;
-    onSend(trimmed);
-    setText("");
-  }, [canSend, onSend, text]);
-
-  const showCharacterCount = text.length >= MAX_AGENT_INPUT_LENGTH * 0.8;
 
   return (
     <div className="flex flex-1 flex-col gap-0 overflow-hidden">
-      <div className="flex-1 overflow-y-auto px-4 py-4">
-        {isPending ? (
+      {isPending ? (
+        <div className="flex-1 overflow-y-auto px-4 py-4">
           <div
             className="flex flex-col gap-5"
             role="log"
@@ -561,7 +523,9 @@ function ChatView({
               <Skeleton className="h-3 w-3/4" />
             </div>
           </div>
-        ) : isError ? (
+        </div>
+      ) : isError ? (
+        <div className="flex-1 overflow-y-auto px-4 py-4">
           <div className="flex h-full flex-col items-center justify-center gap-3 text-center">
             <p className="text-pretty text-xs text-destructive">
               {getApiErrorMessage(error, "Could not load the workbench history")}
@@ -581,137 +545,19 @@ function ChatView({
               Reload
             </Button>
           </div>
-        ) : (
-          <div
-            className="flex flex-col gap-3"
-            role="log"
-            aria-live="polite"
-            aria-label="Workbench transcript"
-          >
-            {messages.length === 0 && isInitialTurn ? (
-              <div className="border-b border-border/60 pb-5">
-                <p className="text-balance font-heading text-base font-semibold text-foreground">
-                  Set the brief
-                </p>
-                <p className="mt-1.5 text-pretty text-xs leading-5 text-muted-foreground">
-                  Describe the outcome you need for{" "}
-                  {formatArtifactType(artifactType)}. The workbench will use it
-                  as the drafting direction.
-                </p>
-              </div>
-            ) : null}
-            {messages.map((msg) => (
-              <ChatBubble
-                key={msg.id}
-                message={msg}
-                animate={
-                  realtimeSnapshotCount > 1 && msg.id === latestMessageId
-                }
-                onQuickAction={onSend}
-                showOptions={
-                  !isDecisionMode || msg.id !== latestMessageId
-                }
-              />
-            ))}
-            {isAwaitingAgentReply ? (
-              <AgentThinkingBubble agentRole={agentRole} />
-            ) : null}
-            <div ref={endRef} />
-          </div>
-        )}
-      </div>
-
-      {isDecisionMode ? (
-        <div
-          className="shrink-0 border-t border-border/60 bg-sidebar p-3"
-          aria-busy={isSending}
-        >
-          <fieldset className="grid gap-2">
-            <legend className="sr-only">
-              Choose the next artifact action
-            </legend>
-            {decisionOptions.map((option, index) => (
-              <Button
-                key={option.id || option.value}
-                type="button"
-                variant={index === 0 ? "default" : "outline"}
-                onClick={() => onSend(option.value)}
-                disabled={isSending}
-                className="h-auto min-h-11 justify-between rounded-xl px-4 py-3 text-left"
-              >
-                <span className="text-pretty">{option.label}</span>
-                <ArrowRight data-icon="inline-end" aria-hidden />
-              </Button>
-            ))}
-          </fieldset>
         </div>
       ) : (
-        <div className="shrink-0 border-t border-border/60 bg-sidebar p-3">
-          <div
-            className="rounded-xl border border-border/80 bg-background/70 focus-within:border-ring focus-within:ring-[3px] focus-within:ring-ring/30"
-            aria-busy={isSending}
-          >
-            <AgentAutoResizeTextarea
-              value={text}
-              onValueChange={setText}
-              onSubmit={handleSend}
-              placeholder={
-                isAwaitingAgentReply
-                  ? "Add a note; it will queue…"
-                  : isInitialTurn
-                    ? "Describe the outcome you need…"
-                    : "Add direction or clarification…"
-              }
-              aria-label={
-                isInitialTurn
-                  ? "Initial drafting direction"
-                  : "Additional drafting direction"
-              }
-              maxLength={MAX_AGENT_INPUT_LENGTH}
-              minHeight={56}
-              maxHeight={240}
-              className="rounded-none border-0 bg-transparent px-3.5 pt-3 pb-2 text-sm leading-5 shadow-none transition-none focus-visible:border-transparent focus-visible:ring-0"
-              disabled={!canSend}
-            />
-            <div className="flex min-h-10 items-center justify-end gap-3 px-2.5 pb-2">
-              {showCharacterCount ? (
-                <p className="mr-auto min-w-0 truncate text-xs text-muted-foreground tabular-nums">
-                  {text.length.toLocaleString()}/
-                  {MAX_AGENT_INPUT_LENGTH.toLocaleString()}
-                </p>
-              ) : null}
-              <Button
-                type="button"
-                size="sm"
-                className="shrink-0 rounded-xl"
-                onClick={handleSend}
-                disabled={!text.trim() || !canSend}
-                aria-label={
-                  isAwaitingAgentReply
-                    ? "Queue message while workbench is preparing an update"
-                    : isSending
-                      ? "Sending message"
-                      : "Send message"
-                }
-              >
-                {isSending ? (
-                  <Loader2
-                    data-icon="inline-start"
-                    className="animate-spin"
-                    aria-hidden
-                  />
-                ) : (
-                  <Send data-icon="inline-start" aria-hidden />
-                )}
-                {isSending
-                  ? "Sending…"
-                  : isAwaitingAgentReply
-                    ? "Queue"
-                    : "Send"}
-              </Button>
-            </div>
-          </div>
-        </div>
+        <AgentAssistantThread
+          messages={messages}
+          onSend={onSend}
+          isSending={isSending}
+          isInitialTurn={isInitialTurn}
+          isAwaitingAgentReply={isAwaitingAgentReply}
+          artifactType={artifactType}
+          agentRole={agentRole}
+          realtimeSnapshotCount={realtimeSnapshotCount}
+          decisionOptions={decisionOptions}
+        />
       )}
     </div>
   );
@@ -1302,7 +1148,13 @@ function AgentSessionBody({
 
   return (
     <div
-      key={initialPromptAttempt ? "initial-prompt" : view.kind}
+      key={
+        initialPromptAttempt
+          ? "initial-prompt"
+          : view.kind === "active" || view.kind === "chat"
+            ? "chat"
+            : view.kind
+      }
       className="agent-session-state-enter flex min-h-0 flex-1 flex-col"
       aria-busy={view.kind === "active" || isSendingInitialPrompt}
     >

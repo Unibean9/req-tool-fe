@@ -9,6 +9,7 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@assistant-ui/react": "^0.14.23",
     "@base-ui/react": "^1.4.1",
     "@fontsource/noto-sans": "^5.2.10",
     "@gsap/react": "^2.1.2",
