@@ -195,7 +195,7 @@ function SessionEmpty({
           aria-hidden
           className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,color-mix(in_oklab,var(--primary)_16%,transparent)_0%,transparent_68%)]"
         />
-        <div className="relative flex w-full max-w-[16.5rem] flex-col items-center gap-4 rounded-2xl border border-primary/20 bg-card/55 px-5 py-5 text-center shadow-[0_0_0_1px_color-mix(in_oklab,var(--primary)_8%,transparent),0_12px_40px_-20px_color-mix(in_oklab,var(--primary)_35%,transparent)] backdrop-blur-sm">
+        <div className="relative flex w-full max-w-66 flex-col items-center gap-4 rounded-2xl border border-primary/20 bg-card/55 px-5 py-5 text-center shadow-[0_0_0_1px_color-mix(in_oklab,var(--primary)_8%,transparent),0_12px_40px_-20px_color-mix(in_oklab,var(--primary)_35%,transparent)] backdrop-blur-sm">
           <div className="flex flex-col gap-1.5">
             <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.14em] text-primary">
               {artifactLabel}
@@ -222,7 +222,7 @@ function SessionEmpty({
             size="sm"
             onClick={onStart}
             disabled={isLoading}
-            className="min-w-[9.5rem] shadow-[0_0_20px_-6px_color-mix(in_oklab,var(--primary)_55%,transparent)]"
+            className="min-w-38 shadow-[0_0_20px_-6px_color-mix(in_oklab,var(--primary)_55%,transparent)]"
           >
             {isLoading ? (
               <Loader2

@@ -69,6 +69,7 @@ type ProjectWorkspaceNavSidebarProps = {
 export function ProjectWorkspaceNavSidebar({
   orgSlug,
   projectSlug,
+  projectId,
   className,
 }: ProjectWorkspaceNavSidebarProps) {
   const { orgFromList } = useOrgWorkspace();
@@ -121,7 +122,11 @@ export function ProjectWorkspaceNavSidebar({
           </div>
 
           {mode === "deliverables" && (
-            <DeliverablesSidebarContent orgSlug={orgSlug} projectSlug={projectSlug} />
+            <DeliverablesSidebarContent
+              orgSlug={orgSlug}
+              projectSlug={projectSlug}
+              projectId={projectId}
+            />
           )}
         </nav>
 
