@@ -7,6 +7,7 @@ import { useProjectArtifacts } from "@/hooks/useArtifact";
 import { type ArtifactType } from "@/lib/api/services/fetchArtifact";
 
 import { ArtifactEmptyState, ArtifactTable } from "./ArtifactTable";
+import { ArtifactPageHeader } from "./ArtifactPageHeader";
 import { ArtifactTableSkeleton } from "./ArtifactTableSkeleton";
 
 export const ARTIFACT_TYPE_LABELS: Record<ArtifactType, string> = {
@@ -69,20 +70,14 @@ export function ArtifactTypePage({
   const label = ARTIFACT_TYPE_LABELS[artifactType];
 
   const isInitialLoad = isProjectsPending || (isArtifactsPending && !isFetching);
+  const itemStatus = `${filtered.length} ${
+    filtered.length === 1 ? "item" : "items"
+  } in this BRD section`;
 
   if (isInitialLoad) {
     return (
       <div className="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto">
-        <div className="space-y-2">
-          <div className="h-8 w-48 animate-pulse rounded-lg bg-muted" />
-          <div className="h-4 w-24 animate-pulse rounded bg-muted" />
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <div className="h-8 min-w-50 flex-1 animate-pulse rounded-lg bg-muted" />
-          <div className="h-8 w-28 animate-pulse rounded-lg bg-muted" />
-          <div className="h-8 w-28 animate-pulse rounded-lg bg-muted" />
-          <div className="h-8 w-28 animate-pulse rounded-lg bg-muted" />
-        </div>
+        <ArtifactPageHeader title={label} status="Loading artifacts…" />
         <ArtifactTableSkeleton />
       </div>
     );
@@ -91,9 +86,10 @@ export function ArtifactTypePage({
   if (isError) {
     return (
       <div className="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">{label}</h1>
-        </div>
+        <ArtifactPageHeader
+          title={label}
+          status="This BRD section could not be loaded"
+        />
         <div className="rounded-xl border border-border/70 bg-card/50 px-5 py-8 text-center">
           <p className="text-sm text-destructive">
             {error instanceof Error ? error.message : "Failed to load artifacts."}
@@ -114,16 +110,7 @@ export function ArtifactTypePage({
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">{label}</h1>
-        <p className="mt-0.5 text-sm text-muted-foreground">
-          {filtered.length}
-          {filtered.length !== artifacts.length
-            ? ` of ${artifacts.length}`
-            : ""}{" "}
-          {artifacts.length === 1 ? "item" : "items"}
-        </p>
-      </div>
+      <ArtifactPageHeader title={label} status={itemStatus} />
 
       {/* <ArtifactToolbar
         filters={filters}

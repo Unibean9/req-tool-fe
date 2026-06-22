@@ -35,6 +35,7 @@ import {
   projectAgentSessionQueryKey,
   projectAgentSessionToolCallsQueryKey,
   projectArtifactsByTypeQueryKey,
+  projectBrdExportQueryRoot,
 } from "@/lib/query/query-keys";
 import type { ArtifactType } from "@/lib/api/services/fetchArtifact";
 
@@ -97,6 +98,14 @@ function invalidateArtifactsByType(
   void queryClient.invalidateQueries({
     queryKey: projectArtifactsByTypeQueryKey(projectId, artifactType),
     exact: false,
+  });
+}
+
+function invalidateBrdExport(queryClient: QueryClient, projectId: string) {
+  void queryClient.invalidateQueries({
+    queryKey: projectBrdExportQueryRoot(projectId),
+    exact: false,
+    refetchType: "active",
   });
 }
 
@@ -605,6 +614,7 @@ export function useApproveToolCall(
         variables.projectId,
         variables.artifactType
       );
+      invalidateBrdExport(queryClient, variables.projectId);
       userOnSuccess?.(data, variables, onMutateResult, context);
     },
     onError: (error, variables, onMutateResult, context) => {
@@ -648,6 +658,7 @@ export function useRejectToolCall(
         variables.projectId,
         variables.artifactType
       );
+      invalidateBrdExport(queryClient, variables.projectId);
       userOnSuccess?.(data, variables, onMutateResult, context);
     },
     onError: (error, variables, onMutateResult, context) => {

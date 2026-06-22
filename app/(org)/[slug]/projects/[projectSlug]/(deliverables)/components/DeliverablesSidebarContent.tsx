@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useMemo } from "react";
+import { type ReactNode, useMemo } from "react";
 import {
   AlertCircle,
   AlertTriangle,
@@ -21,14 +21,18 @@ import {
 
 import { cn } from "@/lib/utils";
 
+import { BrdExportDialog } from "./BrdExportDialog";
+
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
 function SidebarSectionTitle({
   children,
   withDivider = false,
+  action,
 }: {
   children: string;
   withDivider?: boolean;
+  action?: ReactNode;
 }) {
   return (
     <div
@@ -37,13 +41,16 @@ function SidebarSectionTitle({
         withDivider && "mt-1 border-t border-border/70 pt-3"
       )}
     >
-      <p className="flex items-center gap-2 px-1 pb-2 text-xs font-bold tracking-wide text-foreground/95 uppercase">
-        <span
-          className="h-3.5 w-0.5 shrink-0 rounded-full bg-brand-mint/90 shadow-[0_0_6px_color-mix(in_oklab,var(--brand-mint)_50%,transparent)]"
-          aria-hidden
-        />
-        <span className="leading-snug">{children}</span>
-      </p>
+      <div className="flex min-h-8 items-center gap-2 px-1 pb-2">
+        <h2 className="flex min-w-0 items-center gap-2 text-xs font-bold tracking-wide text-foreground/95 uppercase">
+          <span
+            className="h-3.5 w-0.5 shrink-0 rounded-full bg-brand-mint/90 shadow-[0_0_6px_color-mix(in_oklab,var(--brand-mint)_50%,transparent)]"
+            aria-hidden
+          />
+          <span className="truncate leading-snug">{children}</span>
+        </h2>
+        {action ? <div className="ml-auto shrink-0">{action}</div> : null}
+      </div>
     </div>
   );
 }
@@ -103,9 +110,11 @@ const BRD_ARTIFACT_NAV = [
 export function DeliverablesSidebarContent({
   orgSlug,
   projectSlug,
+  projectId,
 }: {
   orgSlug: string;
   projectSlug: string;
+  projectId: string | null;
 }) {
   const pathname = usePathname() ?? "";
   const encOrg = encodeURIComponent(orgSlug);
@@ -142,7 +151,17 @@ export function DeliverablesSidebarContent({
       </div>
 
       <div className="shrink-0 space-y-1">
-        <SidebarSectionTitle withDivider>BRD</SidebarSectionTitle>
+        <SidebarSectionTitle
+          withDivider
+          action={
+            <BrdExportDialog
+              projectId={projectId}
+              projectSlug={projectSlug}
+            />
+          }
+        >
+          BRD
+        </SidebarSectionTitle>
         <div className="space-y-1 px-0.5">
           {BRD_ARTIFACT_NAV.map(({ type, label, icon }) => {
             const href = `${nav.artifactsBase}/${type}`;
@@ -158,7 +177,6 @@ export function DeliverablesSidebarContent({
           })}
         </div>
       </div>
-
     </>
   );
 }

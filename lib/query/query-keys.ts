@@ -202,9 +202,20 @@ export function projectSetupProgressQueryKey(projectId: string) {
   return [...PROJECTS_ROOT, projectId, "setup-progress"] as const;
 }
 
-/** Key nội dung BRD export theo `project_id`. */
-export function projectBrdExportQueryKey(projectId: string) {
-  return [...PROJECTS_ROOT, projectId, "brd", "export"] as const;
+/** Prefix cache của toàn bộ biến thể BRD Markdown export theo `project_id`. */
+export function projectBrdExportQueryRoot(projectId: string) {
+  return [...PROJECTS_ROOT, projectId, "exports", "brd.md"] as const;
+}
+
+/** Key nội dung BRD Markdown export theo `project_id` + `include_wont`. */
+export function projectBrdExportQueryKey(
+  projectId: string,
+  params?: { includeWont?: boolean }
+) {
+  return [
+    ...projectBrdExportQueryRoot(projectId),
+    params?.includeWont ?? false,
+  ] as const;
 }
 
 /** Root cache của toàn bộ artifact list theo `project_id`. */

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   AlertTriangle,
   CheckCircle2,
@@ -24,7 +24,13 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { AgentAutoResizeTextarea } from "./AgentAutoResizeTextarea";
+import { AgentAssistantThread } from "./AgentAssistantThread";
+import {
+  AgentInitialPromptState,
+  getInitialArtifactPrompt,
+  useAgentInitialPrompt,
+  type AgentInitialPromptAttempt,
+} from "./AgentInitialPrompt";
 import { AgentProposalReviewDialog } from "./AgentProposalReviewDialog";
 import { getApiErrorMessage } from "@/lib/api/getApiErrorMessage";
 import type { ArtifactType } from "@/lib/api/services/fetchArtifact";
@@ -48,8 +54,6 @@ import {
 } from "@/hooks/useAgentSession";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-
-const MAX_AGENT_INPUT_LENGTH = 8000;
 
 function formatArtifactType(artifactType: string): string {
   return artifactType
@@ -191,7 +195,7 @@ function SessionEmpty({
           aria-hidden
           className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,color-mix(in_oklab,var(--primary)_16%,transparent)_0%,transparent_68%)]"
         />
-        <div className="relative flex w-full max-w-[16.5rem] flex-col items-center gap-4 rounded-2xl border border-primary/20 bg-card/55 px-5 py-5 text-center shadow-[0_0_0_1px_color-mix(in_oklab,var(--primary)_8%,transparent),0_12px_40px_-20px_color-mix(in_oklab,var(--primary)_35%,transparent)] backdrop-blur-sm">
+        <div className="relative flex w-full max-w-66 flex-col items-center gap-4 rounded-2xl border border-primary/20 bg-card/55 px-5 py-5 text-center shadow-[0_0_0_1px_color-mix(in_oklab,var(--primary)_8%,transparent),0_12px_40px_-20px_color-mix(in_oklab,var(--primary)_35%,transparent)] backdrop-blur-sm">
           <div className="flex flex-col gap-1.5">
             <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.14em] text-primary">
               {artifactLabel}
@@ -218,7 +222,7 @@ function SessionEmpty({
             size="sm"
             onClick={onStart}
             disabled={isLoading}
-            className="min-w-[9.5rem] shadow-[0_0_20px_-6px_color-mix(in_oklab,var(--primary)_55%,transparent)]"
+            className="min-w-38 shadow-[0_0_20px_-6px_color-mix(in_oklab,var(--primary)_55%,transparent)]"
           >
             {isLoading ? (
               <Loader2
@@ -278,23 +282,6 @@ function SessionActive({
         </Button>
       </div>
     </div>
-  );
-}
-
-function AgentThinkingBubble({ agentRole }: { agentRole?: string | null }) {
-  return (
-    <output
-      className="agent-message-enter flex h-8 items-center gap-1 py-2"
-      aria-label={
-        agentRole
-          ? `${formatArtifactType(agentRole)} is preparing a response`
-          : "Preparing a response"
-      }
-    >
-      <span className="agent-thinking-dot size-1 rounded-full bg-primary/80" />
-      <span className="agent-thinking-dot size-1 rounded-full bg-primary/80" />
-      <span className="agent-thinking-dot size-1 rounded-full bg-primary/80" />
-    </output>
   );
 }
 
@@ -366,11 +353,11 @@ function PayloadBlocks({ message }: { message: AgentMessage }) {
 
   return (
     <div className="mt-3 grid gap-2 rounded-lg border border-border/60 bg-muted/20 p-3">
-      {blocks.map((block, index) => {
+      {blocks.map((block) => {
         if (block.type === "heading" && typeof block.text === "string") {
           return (
             <h3
-              key={`${block.type}-${index}`}
+              key={`${block.type}-${block.text}`}
               className="text-sm font-semibold leading-5 text-foreground"
             >
               {block.text}
@@ -381,13 +368,13 @@ function PayloadBlocks({ message }: { message: AgentMessage }) {
         if (block.type === "list" && Array.isArray(block.items)) {
           return (
             <ul
-              key={`${block.type}-${index}`}
+              key={`${block.type}-${block.items.join("\u001f")}`}
               className="grid gap-1.5 pl-4 text-sm leading-5 text-foreground/85"
             >
               {block.items
                 .filter((item): item is string => typeof item === "string")
-                .map((item, itemIndex) => (
-                  <li key={`${index}-${itemIndex}`} className="list-disc">
+                .map((item) => (
+                  <li key={item} className="list-disc">
                     {item}
                   </li>
                 ))}
@@ -405,10 +392,12 @@ function ChatBubble({
   message,
   animate,
   onQuickAction,
+  showOptions = true,
 }: {
   message: AgentMessage;
   animate: boolean;
   onQuickAction: (value: string) => void;
+  showOptions?: boolean;
 }) {
   const isAgent = message.role === "agent";
   const payload = message.payload;
@@ -452,7 +441,7 @@ function ChatBubble({
         </div>
       ) : null}
       {isAgent ? <PayloadBlocks message={message} /> : null}
-      {options.length > 0 ? (
+      {showOptions && options.length > 0 ? (
         <div className="mt-3 flex flex-wrap gap-2">
           {options.map((option) => (
             <Button
@@ -505,32 +494,19 @@ function ChatView({
   } = useAgentSessionMessages(projectId, sessionId, {
     enabled: realtimeMode === "fallback",
   });
-  const [text, setText] = useState("");
-  const endRef = useRef<HTMLDivElement>(null);
-  const canSend = !isSending;
   const latestMessage = messages.at(-1) ?? null;
-  const latestMessageId = latestMessage?.id ?? null;
   const isAwaitingAgentReply =
     isAgentResponding ||
     (latestMessage?.role === "user" && latestMessage.payload?.queued !== true);
-
-  useEffect(() => {
-    endRef.current?.scrollIntoView({ behavior: "auto" });
-  }, [isAwaitingAgentReply, messages.length]);
-
-  const handleSend = useCallback(() => {
-    const trimmed = text.trim();
-    if (!trimmed || !canSend) return;
-    onSend(trimmed);
-    setText("");
-  }, [canSend, onSend, text]);
-
-  const showCharacterCount = text.length >= MAX_AGENT_INPUT_LENGTH * 0.8;
+  const decisionOptions =
+    latestMessage?.role === "agent" && !isAwaitingAgentReply
+      ? (latestMessage.payload?.options ?? [])
+      : [];
 
   return (
     <div className="flex flex-1 flex-col gap-0 overflow-hidden">
-      <div className="flex-1 overflow-y-auto px-4 py-4">
-        {isPending ? (
+      {isPending ? (
+        <div className="flex-1 overflow-y-auto px-4 py-4">
           <div
             className="flex flex-col gap-5"
             role="log"
@@ -547,7 +523,9 @@ function ChatView({
               <Skeleton className="h-3 w-3/4" />
             </div>
           </div>
-        ) : isError ? (
+        </div>
+      ) : isError ? (
+        <div className="flex-1 overflow-y-auto px-4 py-4">
           <div className="flex h-full flex-col items-center justify-center gap-3 text-center">
             <p className="text-pretty text-xs text-destructive">
               {getApiErrorMessage(error, "Could not load the workbench history")}
@@ -567,105 +545,20 @@ function ChatView({
               Reload
             </Button>
           </div>
-        ) : (
-          <div
-            className="flex flex-col gap-3"
-            role="log"
-            aria-live="polite"
-            aria-label="Workbench transcript"
-          >
-            {messages.length === 0 && isInitialTurn ? (
-              <div className="border-b border-border/60 pb-5">
-                <p className="text-balance font-heading text-base font-semibold text-foreground">
-                  Set the brief
-                </p>
-                <p className="mt-1.5 text-pretty text-xs leading-5 text-muted-foreground">
-                  Describe the outcome you need for{" "}
-                  {formatArtifactType(artifactType)}. The workbench will use it
-                  as the drafting direction.
-                </p>
-              </div>
-            ) : null}
-            {messages.map((msg) => (
-              <ChatBubble
-                key={msg.id}
-                message={msg}
-                animate={
-                  realtimeSnapshotCount > 1 && msg.id === latestMessageId
-                }
-                onQuickAction={onSend}
-              />
-            ))}
-            {isAwaitingAgentReply ? (
-              <AgentThinkingBubble agentRole={agentRole} />
-            ) : null}
-            <div ref={endRef} />
-          </div>
-        )}
-      </div>
-
-      <div className="shrink-0 border-t border-border/60 bg-sidebar p-3">
-        <div
-          className="rounded-xl border border-border/80 bg-background/70 focus-within:border-ring focus-within:ring-[3px] focus-within:ring-ring/30"
-          aria-busy={isSending}
-        >
-          <AgentAutoResizeTextarea
-            value={text}
-            onValueChange={setText}
-            onSubmit={handleSend}
-            placeholder={
-              isAwaitingAgentReply
-                ? "Add a note; it will queue…"
-                : isInitialTurn
-                  ? "Describe the outcome you need…"
-                  : "Add direction or clarification…"
-            }
-            aria-label={
-              isInitialTurn
-                ? "Initial drafting direction"
-                : "Additional drafting direction"
-            }
-            maxLength={MAX_AGENT_INPUT_LENGTH}
-            minHeight={56}
-            maxHeight={240}
-            className="rounded-none border-0 bg-transparent px-3.5 pt-3 pb-2 text-sm leading-5 shadow-none transition-none focus-visible:border-transparent focus-visible:ring-0"
-            disabled={!canSend}
-          />
-          <div className="flex min-h-10 items-center justify-end gap-3 px-2.5 pb-2">
-            {showCharacterCount ? (
-              <p className="mr-auto min-w-0 truncate text-xs text-muted-foreground tabular-nums">
-                {text.length.toLocaleString()}/
-                {MAX_AGENT_INPUT_LENGTH.toLocaleString()}
-              </p>
-            ) : null}
-            <Button
-              type="button"
-              size="sm"
-              className="shrink-0 rounded-xl"
-              onClick={handleSend}
-              disabled={!text.trim() || !canSend}
-              aria-label={
-                isAwaitingAgentReply
-                  ? "Queue message while workbench is preparing an update"
-                  : isSending
-                    ? "Sending message"
-                    : "Send message"
-              }
-            >
-              {isSending ? (
-                <Loader2
-                  data-icon="inline-start"
-                  className="animate-spin"
-                  aria-hidden
-                />
-              ) : (
-                <Send data-icon="inline-start" aria-hidden />
-              )}
-              {isSending ? "Sending…" : isAwaitingAgentReply ? "Queue" : "Send"}
-            </Button>
-          </div>
         </div>
-      </div>
+      ) : (
+        <AgentAssistantThread
+          messages={messages}
+          onSend={onSend}
+          isSending={isSending}
+          isInitialTurn={isInitialTurn}
+          isAwaitingAgentReply={isAwaitingAgentReply}
+          artifactType={artifactType}
+          agentRole={agentRole}
+          realtimeSnapshotCount={realtimeSnapshotCount}
+          decisionOptions={decisionOptions}
+        />
+      )}
     </div>
   );
 }
@@ -1129,8 +1022,11 @@ function AgentSessionBody({
   realtimeMode,
   realtimeSnapshotCount,
   isSending,
+  initialPromptAttempt,
+  isSendingInitialPrompt,
   onStart,
   onRetry,
+  onRetryInitialPrompt,
   onReset,
   onCancel,
   onSend,
@@ -1142,15 +1038,28 @@ function AgentSessionBody({
   realtimeMode: AgentSessionRealtimeMode;
   realtimeSnapshotCount: number;
   isSending: boolean;
+  initialPromptAttempt: AgentInitialPromptAttempt | null;
+  isSendingInitialPrompt: boolean;
   onStart: () => void;
   onRetry: () => void;
+  onRetryInitialPrompt: () => void;
   onReset: () => void;
   onCancel: () => void;
   onSend: (content: string) => void;
 }) {
   let content: React.ReactNode;
 
-  switch (view.kind) {
+  if (initialPromptAttempt) {
+    content = (
+      <AgentInitialPromptState
+        artifactType={artifactType}
+        prompt={initialPromptAttempt.content}
+        error={initialPromptAttempt.error}
+        isSending={isSendingInitialPrompt}
+        onRetry={onRetryInitialPrompt}
+      />
+    );
+  } else switch (view.kind) {
     case "empty":
       content = (
         <SessionEmpty
@@ -1239,9 +1148,15 @@ function AgentSessionBody({
 
   return (
     <div
-      key={view.kind}
+      key={
+        initialPromptAttempt
+          ? "initial-prompt"
+          : view.kind === "active" || view.kind === "chat"
+            ? "chat"
+            : view.kind
+      }
       className="agent-session-state-enter flex min-h-0 flex-1 flex-col"
-      aria-busy={view.kind === "active"}
+      aria-busy={view.kind === "active" || isSendingInitialPrompt}
     >
       {content}
     </div>
@@ -1337,17 +1252,33 @@ export function AgentSessionSidebar({
     };
   }, [isSessionError, sessionErrorCode, sessionId, setSessionId]);
 
+  const sendMessage = useSendAgentMessage();
+  const {
+    attempt: initialPromptAttempt,
+    isSending: isSendingInitialPrompt,
+    send: sendInitialPrompt,
+    retry: retryInitialPrompt,
+    clear: clearInitialPrompt,
+  } = useAgentInitialPrompt();
+
   const createSession = useCreateAgentSession({
-    onSuccess: (res) => {
+    onSuccess: (res, variables) => {
+      const initialPrompt = getInitialArtifactPrompt(artifactType);
       setStartError(null);
       setSessionNotice(null);
       setSessionId(res.data.sessionId);
       setMissingContext(res.data.missingContext);
+      sendInitialPrompt(
+        variables.projectId,
+        res.data.sessionId,
+        initialPrompt
+      );
     },
     onError: (error) => {
       const conflictId = extractConflictSessionId(error);
       if (conflictId) {
         setStartError(null);
+        clearInitialPrompt();
         setSessionNotice("Reopened your active drafting session.");
         setSessionId(conflictId);
         return;
@@ -1363,16 +1294,16 @@ export function AgentSessionSidebar({
       setCancelDialogOpen(false);
       setSessionId(null);
       setMissingContext([]);
+      clearInitialPrompt();
       setSessionNotice("The drafting session was ended.");
     },
   });
-
-  const sendMessage = useSendAgentMessage();
 
   const handleStart = useCallback(() => {
     if (!projectId) return;
     setStartError(null);
     setSessionNotice(null);
+    clearInitialPrompt();
     createSession.mutate({
       projectId,
       req: {
@@ -1383,7 +1314,18 @@ export function AgentSessionSidebar({
         provider_config_id: activeConfig?.id ?? null,
       },
     });
-  }, [projectId, artifactType, activeConfig, createSession]);
+  }, [
+    projectId,
+    artifactType,
+    activeConfig,
+    clearInitialPrompt,
+    createSession,
+  ]);
+
+  const handleRetryInitialPrompt = useCallback(() => {
+    if (!projectId) return;
+    retryInitialPrompt(projectId);
+  }, [projectId, retryInitialPrompt]);
 
   const handleConfirmCancel = useCallback(() => {
     if (!projectId || !sessionId) return;
@@ -1412,7 +1354,8 @@ export function AgentSessionSidebar({
     setMissingContext([]);
     setStartError(null);
     setSessionNotice(null);
-  }, [setSessionId]);
+    clearInitialPrompt();
+  }, [clearInitialPrompt, setSessionId]);
 
   const status = session?.status ?? null;
   const restoredMissingContext = formatMissingContext(
@@ -1425,6 +1368,10 @@ export function AgentSessionSidebar({
 
   const isCreating = createSession.isPending;
   const isDeleting = deleteSession.isPending;
+  const visibleInitialPromptAttempt =
+    initialPromptAttempt?.sessionId === sessionId
+      ? initialPromptAttempt
+      : null;
   const view = resolveAgentSessionView({
     sessionId,
     session,
@@ -1472,8 +1419,11 @@ export function AgentSessionSidebar({
           realtimeMode={realtime.mode}
           realtimeSnapshotCount={realtime.snapshotCount}
           isSending={sendMessage.isPending}
+          initialPromptAttempt={visibleInitialPromptAttempt}
+          isSendingInitialPrompt={isSendingInitialPrompt}
           onStart={handleStart}
           onRetry={() => void refetchSession()}
+          onRetryInitialPrompt={handleRetryInitialPrompt}
           onReset={handleReset}
           onCancel={() => setCancelDialogOpen(true)}
           onSend={handleSendMessage}
