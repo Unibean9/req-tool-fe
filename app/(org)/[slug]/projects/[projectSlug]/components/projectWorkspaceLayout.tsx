@@ -188,7 +188,7 @@ function ProjectWorkspaceMain({
       data-project-scroll-gutter
       className={cn(
         "flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-background",
-        isMembersView && mode === "deliverables" ? "p-0" : "p-4 sm:p-6"
+        isMembersView && mode === "deliverables" ? "p-0" : "px-2 py-4 sm:px-3 sm:py-6"
       )}
     >
       {mode === "artifact-link" && <ArtifactLinkPageContent />}
@@ -290,7 +290,7 @@ export function ProjectWorkspaceLayout({
     <div className="flex h-full min-h-0 w-full flex-1 flex-row overflow-hidden bg-background">
       {/* Rail 1 — project list (Discord style) */}
       <aside
-        className="flex w-21 shrink-0 flex-col items-center bg-sidebar py-3"
+        className="flex w-20 shrink-0 flex-col items-center bg-sidebar py-3"
         aria-label="Organization and projects"
       >
         <ProjectWorkspaceOrgRailSwitcher />

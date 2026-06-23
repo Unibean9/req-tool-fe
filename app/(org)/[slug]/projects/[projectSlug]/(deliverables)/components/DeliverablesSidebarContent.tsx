@@ -209,13 +209,13 @@ function SidebarNavLink({
   disabled?: boolean;
 }) {
   const className = cn(
-    "flex min-h-11 items-center gap-2.5 rounded-lg py-2 text-left transition-[color,background-color,border-color] duration-200 outline-none",
+    "flex min-h-11 min-w-0 items-center gap-2 rounded-lg py-2 text-left transition-[color,background-color,border-color] duration-200 outline-none",
     disabled
       ? "cursor-not-allowed"
       : "focus-visible:ring-2 focus-visible:ring-ring/45",
     nested
       ? cn(
-          "px-2 text-[0.8125rem]",
+          "overflow-hidden px-2 text-[0.8125rem]",
           !disabled &&
             (active
               ? "bg-(--chart-1)/10 font-medium text-foreground ring-1 ring-inset ring-primary/30"
@@ -239,9 +239,7 @@ function SidebarNavLink({
       />
       <span className="min-w-0 flex-1 truncate">{label}</span>
       {trailing ? (
-        <span className="flex size-3.5 shrink-0 items-center justify-center">
-          {trailing}
-        </span>
+        <span className="flex shrink-0 items-center pl-1.5">{trailing}</span>
       ) : null}
     </>
   );
@@ -261,7 +259,7 @@ function SidebarNavLink({
   return (
     <Link
       href={href}
-      title={title}
+      title={title ?? label}
       onPointerEnter={onPrefetch}
       onFocus={onPrefetch}
       className={className}
@@ -378,7 +376,7 @@ function DocumentContainerNav({
   return (
     <div
       className={cn(
-        "shrink-0 space-y-0.5",
+        "min-w-0 shrink-0 space-y-0.5",
         withDivider && "mt-1 border-t border-border/70 pt-3",
         disabled && "pointer-events-none opacity-45",
       )}
@@ -416,7 +414,7 @@ function DocumentContainerNav({
             aria-expanded={totalCount > 0 ? shouldShowChildren : undefined}
             aria-controls={shouldShowChildren ? childNavId : undefined}
             className={cn(
-              "flex min-h-11 items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm transition-[color,background-color,box-shadow] duration-200 outline-none focus-visible:ring-2 focus-visible:ring-ring/45",
+              "flex min-h-11 min-w-0 items-center gap-2 rounded-lg overflow-hidden px-2.5 py-2 text-left text-sm transition-[color,background-color,box-shadow] duration-200 outline-none focus-visible:ring-2 focus-visible:ring-ring/45",
               isOverviewActive
                 ? "border border-primary/30 bg-(--chart-1)/10 font-medium text-foreground"
                 : isChildActive
@@ -433,7 +431,7 @@ function DocumentContainerNav({
             />
             <span className="min-w-0 flex-1 truncate">{label}</span>
             {totalCount > 0 ? (
-              <span className="flex shrink-0 items-center gap-1">
+              <span className="flex shrink-0 items-center gap-1 pl-1.5">
                 <span
                   className={cn(
                     "text-[0.625rem] tabular-nums",
@@ -467,7 +465,7 @@ function DocumentContainerNav({
         >
           <nav
             id={childNavId}
-            className="t-panel-slide ml-2 min-h-0 space-y-0.5 border-l border-border/40 px-0.5 pl-2"
+            className="t-panel-slide ml-1.5 min-h-0 min-w-0 space-y-0.5 border-l border-border/40 pl-1.5"
             data-open={shouldShowChildren ? "true" : "false"}
             data-motion={childMotion}
             aria-label={`${label} sections`}
@@ -550,7 +548,7 @@ export function DeliverablesSidebarContent({
 
   return (
     <>
-      <div className="shrink-0 space-y-1">
+      <div className="min-w-0 shrink-0 space-y-1">
         <SidebarSectionTitle>Overview</SidebarSectionTitle>
         <div className="space-y-1 px-0.5">
           <SidebarNavLink

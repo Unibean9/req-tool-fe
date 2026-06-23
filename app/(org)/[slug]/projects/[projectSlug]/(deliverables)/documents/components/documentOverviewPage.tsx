@@ -25,7 +25,11 @@ import type {
 import { cn } from "@/lib/utils";
 
 import { BrdExportDialog } from "../../components/BrdExportDialog";
-import { DocumentPageHeader } from "./documentPageHeader";
+import {
+  DocumentPageHeader,
+  DOCUMENT_PAGE_INNER_CLASS,
+  DOCUMENT_PAGE_SCROLL_CLASS,
+} from "./documentPageHeader";
 
 type DocumentOverviewPageProps = {
   orgSlug: string;
@@ -34,11 +38,6 @@ type DocumentOverviewPageProps = {
   documentType: DocumentType;
   isProjectsPending: boolean;
 };
-
-const DOCUMENT_OVERVIEW_SCROLL_CLASS =
-  "flex min-h-0 flex-1 flex-col overflow-y-auto px-5 py-6 scrollbar-none sm:px-6";
-
-const DOCUMENT_OVERVIEW_INNER_CLASS = "flex w-full flex-col gap-5";
 
 type SectionState = "inProgress" | "accepted" | "notStarted";
 
@@ -406,8 +405,8 @@ export function DocumentOverviewPage({
 
   if (isInitialLoad) {
     return (
-      <div className={DOCUMENT_OVERVIEW_SCROLL_CLASS}>
-        <div className={DOCUMENT_OVERVIEW_INNER_CLASS}>
+      <div className={DOCUMENT_PAGE_SCROLL_CLASS}>
+        <div className={DOCUMENT_PAGE_INNER_CLASS}>
           <Skeleton className="h-24 w-full rounded-xl" />
           <div className="grid gap-3 sm:grid-cols-2">
             <Skeleton className="h-28 rounded-xl" />
@@ -421,8 +420,8 @@ export function DocumentOverviewPage({
 
   if (isError) {
     return (
-      <div className={DOCUMENT_OVERVIEW_SCROLL_CLASS}>
-        <div className={DOCUMENT_OVERVIEW_INNER_CLASS}>
+      <div className={DOCUMENT_PAGE_SCROLL_CLASS}>
+        <div className={DOCUMENT_PAGE_INNER_CLASS}>
           <DocumentPageHeader
             eyebrow={DOCUMENT_TYPE_SHORT[documentType]}
             title="Document overview"
@@ -451,8 +450,8 @@ export function DocumentOverviewPage({
 
   if (!document?.artifactId) {
     return (
-      <div className={DOCUMENT_OVERVIEW_SCROLL_CLASS}>
-        <div className={DOCUMENT_OVERVIEW_INNER_CLASS}>
+      <div className={DOCUMENT_PAGE_SCROLL_CLASS}>
+        <div className={DOCUMENT_PAGE_INNER_CLASS}>
           <DocumentPageHeader
             eyebrow={DOCUMENT_TYPE_SHORT[documentType]}
             title={document?.label ?? DOCUMENT_TYPE_SHORT[documentType]}
@@ -496,8 +495,8 @@ export function DocumentOverviewPage({
   const nextFocusItem = inProgressItems[0] ?? notStartedItems[0] ?? null;
 
   return (
-    <div className={DOCUMENT_OVERVIEW_SCROLL_CLASS}>
-      <div className={DOCUMENT_OVERVIEW_INNER_CLASS}>
+    <div className={DOCUMENT_PAGE_SCROLL_CLASS}>
+      <div className={DOCUMENT_PAGE_INNER_CLASS}>
         <DocumentPageHeader
           eyebrow={DOCUMENT_TYPE_SHORT[documentType]}
           title={document.label}

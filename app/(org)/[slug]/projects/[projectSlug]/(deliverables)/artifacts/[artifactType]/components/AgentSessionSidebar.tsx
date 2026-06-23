@@ -1471,7 +1471,7 @@ export function AgentSessionSidebar({
   return (
     <>
       <aside
-        className="flex h-full min-h-0 w-[clamp(24rem,31vw,32rem)] shrink-0 flex-col overflow-hidden border-l border-border/70 bg-sidebar"
+        className="flex h-full min-h-0 w-[clamp(15rem,21vw,23rem)] shrink-0 flex-col overflow-hidden border-l border-border/70 bg-sidebar"
         aria-label="Artifact workbench"
       >
         {/* Header */}
