@@ -13,6 +13,7 @@ import {
 import { toast } from "sonner";
 
 import { useCachedGet } from "@/hooks/useCachedGet";
+import { refreshDocumentItemAfterExternalChange } from "@/hooks/useDocument";
 import { getApiErrorMessage } from "@/lib/api/getApiErrorMessage";
 import {
   fetchAgentSession,
@@ -34,10 +35,9 @@ import {
   projectAgentSessionMessagesQueryKey,
   projectAgentSessionQueryKey,
   projectAgentSessionToolCallsQueryKey,
-  projectArtifactsByTypeQueryKey,
   projectBrdExportQueryRoot,
 } from "@/lib/query/query-keys";
-import type { ArtifactType } from "@/lib/api/services/fetchArtifact";
+import type { DocumentType } from "@/lib/api/services/fetchDocument";
 
 export type {
   AgentSession,
@@ -87,17 +87,6 @@ function invalidateToolCalls(
 ) {
   void queryClient.invalidateQueries({
     queryKey: projectAgentSessionToolCallsQueryKey(projectId, sessionId),
-  });
-}
-
-function invalidateArtifactsByType(
-  queryClient: QueryClient,
-  projectId: string,
-  artifactType: ArtifactType
-) {
-  void queryClient.invalidateQueries({
-    queryKey: projectArtifactsByTypeQueryKey(projectId, artifactType),
-    exact: false,
   });
 }
 
@@ -279,13 +268,21 @@ function applyStreamEvent(
       (toolCall) =>
         Boolean(toolCall.createdArtifactId) ||
         Boolean(toolCall.createdVersionId)
-    )
+    ) &&
+    event.session.document
   ) {
-    invalidateArtifactsByType(
-      queryClient,
-      projectId,
-      event.session.artifactType
-    );
+    const doc = event.session.document;
+    const focused = event.session.focusedArtifactId;
+    const focusedItem = doc.items.find((item) => item.artifactId === focused);
+    if (focusedItem) {
+      refreshDocumentItemAfterExternalChange(
+        queryClient,
+        projectId,
+        doc.documentType,
+        focusedItem.artifactType
+      );
+      invalidateBrdExport(queryClient, projectId);
+    }
   }
 }
 
@@ -575,7 +572,8 @@ type ToolCallActionVariables = {
   projectId: string;
   sessionId: string;
   toolCallId: string;
-  artifactType: ArtifactType;
+  documentType: DocumentType;
+  itemType: string;
 };
 
 type RequestEditVariables = ToolCallActionVariables & {
@@ -609,10 +607,11 @@ export function useApproveToolCall(
       );
       invalidateToolCalls(queryClient, variables.projectId, variables.sessionId);
       invalidateSession(queryClient, variables.projectId, variables.sessionId);
-      invalidateArtifactsByType(
+      refreshDocumentItemAfterExternalChange(
         queryClient,
         variables.projectId,
-        variables.artifactType
+        variables.documentType,
+        variables.itemType
       );
       invalidateBrdExport(queryClient, variables.projectId);
       userOnSuccess?.(data, variables, onMutateResult, context);
@@ -653,10 +652,11 @@ export function useRejectToolCall(
       );
       invalidateToolCalls(queryClient, variables.projectId, variables.sessionId);
       invalidateSession(queryClient, variables.projectId, variables.sessionId);
-      invalidateArtifactsByType(
+      refreshDocumentItemAfterExternalChange(
         queryClient,
         variables.projectId,
-        variables.artifactType
+        variables.documentType,
+        variables.itemType
       );
       invalidateBrdExport(queryClient, variables.projectId);
       userOnSuccess?.(data, variables, onMutateResult, context);
@@ -702,6 +702,12 @@ export function useRequestEditToolCall(
       );
       invalidateToolCalls(queryClient, variables.projectId, variables.sessionId);
       invalidateSession(queryClient, variables.projectId, variables.sessionId);
+      refreshDocumentItemAfterExternalChange(
+        queryClient,
+        variables.projectId,
+        variables.documentType,
+        variables.itemType
+      );
       userOnSuccess?.(data, variables, onMutateResult, context);
     },
     onError: (error, variables, onMutateResult, context) => {

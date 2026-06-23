@@ -17,7 +17,6 @@ import { ArrowDown, ArrowRight, Loader2, Send } from "lucide-react";
 
 import { MarkdownContent } from "@/components/shared/markdownContent";
 import { Button, buttonVariants } from "@/components/ui/button";
-import type { ArtifactType } from "@/lib/api/services/fetchArtifact";
 import { cn } from "@/lib/utils";
 import type {
   AgentMessage,
@@ -44,8 +43,8 @@ function useAgentThreadContext() {
   return context;
 }
 
-function formatArtifactType(artifactType: string): string {
-  return artifactType
+function formatItemType(itemType: string): string {
+  return itemType
     .replace(/_/g, " ")
     .replace(/\b\w/g, (character) => character.toUpperCase());
 }
@@ -76,7 +75,7 @@ function AgentThinkingIndicator() {
       className="agent-message-enter flex h-8 items-center gap-1 py-2"
       aria-label={
         agentRole
-          ? `${formatArtifactType(agentRole)} is preparing a response`
+          ? `${formatItemType(agentRole)} is preparing a response`
           : "Preparing a response"
       }
     >
@@ -351,7 +350,7 @@ export function AgentAssistantThread({
   isSending,
   isInitialTurn,
   isAwaitingAgentReply,
-  artifactType,
+  itemType,
   agentRole,
   realtimeSnapshotCount,
   decisionOptions,
@@ -361,7 +360,7 @@ export function AgentAssistantThread({
   isSending: boolean;
   isInitialTurn: boolean;
   isAwaitingAgentReply: boolean;
-  artifactType: ArtifactType;
+  itemType: string;
   agentRole?: string | null;
   realtimeSnapshotCount: number;
   decisionOptions: AgentMessagePayloadOption[];
@@ -449,7 +448,7 @@ export function AgentAssistantThread({
                 </p>
                 <p className="mt-1.5 text-pretty text-xs leading-5 text-muted-foreground">
                   Describe the outcome you need for{" "}
-                  {formatArtifactType(artifactType)}. The workbench will use it
+                  {formatItemType(itemType)}. The workbench will use it
                   as the drafting direction.
                 </p>
               </div>

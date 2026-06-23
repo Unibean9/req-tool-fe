@@ -40,7 +40,7 @@ import {
 } from "@/hooks/useAgentSession";
 import { MarkdownContent } from "@/components/shared/markdownContent";
 import { getApiErrorMessage } from "@/lib/api/getApiErrorMessage";
-import type { ArtifactType } from "@/lib/api/services/fetchArtifact";
+import type { DocumentType } from "@/lib/api/services/fetchDocument";
 import { cn } from "@/lib/utils";
 
 const MAX_AGENT_INPUT_LENGTH = 8000;
@@ -71,6 +71,26 @@ type ReviewMode = "review" | "request-edit";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
+
+function snapshotListItemKey(item: unknown, index: number): string {
+  if (isRecord(item)) {
+    const stableId = item.id ?? item.key ?? item.slug ?? item.title;
+    if (typeof stableId === "string" && stableId.length > 0) {
+      return `record-${stableId}`;
+    }
+    if (typeof stableId === "number") {
+      return `record-${stableId}`;
+    }
+  }
+  if (
+    typeof item === "string" ||
+    typeof item === "number" ||
+    typeof item === "boolean"
+  ) {
+    return `scalar-${index}-${String(item)}`;
+  }
+  return `index-${index}`;
 }
 
 function snapshotString(
@@ -174,7 +194,7 @@ function SnapshotValue({
     return (
       <ol className="flex list-decimal flex-col gap-2 pl-5">
         {value.map((item, index) => (
-          <li key={index} className="pl-1">
+          <li key={snapshotListItemKey(item, index)} className="pl-1">
             <SnapshotValue
               value={item}
               depth={depth + 1}
@@ -248,12 +268,14 @@ export function AgentProposalReviewDialog({
   toolCall,
   projectId,
   sessionId,
-  artifactType,
+  documentType,
+  itemType,
 }: {
   toolCall: AgentToolCall;
   projectId: string;
   sessionId: string;
-  artifactType: ArtifactType;
+  documentType: DocumentType;
+  itemType: string;
 }) {
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState<ReviewMode>("review");
@@ -267,10 +289,10 @@ export function AgentProposalReviewDialog({
   const proposalTitle =
     snapshotString(snapshot, "title") ??
     `Proposed ${formatSnapshotLabel(
-      snapshotString(snapshot, "artifact_type") ?? artifactType
+      snapshotString(snapshot, "artifact_type") ?? itemType
     )}`;
   const artifactLabel =
-    snapshotString(snapshot, "artifact_type") ?? artifactType;
+    snapshotString(snapshot, "artifact_type") ?? itemType;
   const primaryContentKey = PRIMARY_CONTENT_KEYS.find(
     (key) => snapshot[key] !== undefined && snapshot[key] !== null
   );
@@ -324,7 +346,8 @@ export function AgentProposalReviewDialog({
         projectId,
         sessionId,
         toolCallId: toolCall.id,
-        artifactType,
+        documentType,
+        itemType,
       },
       { onSuccess: closeAfterSuccess }
     );
@@ -336,7 +359,8 @@ export function AgentProposalReviewDialog({
         projectId,
         sessionId,
         toolCallId: toolCall.id,
-        artifactType,
+        documentType,
+        itemType,
       },
       { onSuccess: closeAfterSuccess }
     );
@@ -350,7 +374,8 @@ export function AgentProposalReviewDialog({
         projectId,
         sessionId,
         toolCallId: toolCall.id,
-        artifactType,
+        documentType,
+        itemType,
         req: { note },
       },
       { onSuccess: closeAfterSuccess }

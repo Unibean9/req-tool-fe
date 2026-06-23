@@ -12,7 +12,8 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { ARTIFACT_TYPES, type ArtifactType } from "@/lib/api/services/fetchArtifact";
+import { isDocumentType } from "@/lib/api/services/fetchDocument";
+import { isLockedDocumentType } from "@/lib/document/lockedDocumentTypes";
 import type { OrgProject } from "@/lib/api/services/fetchProject";
 import { cn } from "@/lib/utils";
 
@@ -34,13 +35,13 @@ import { ArtifactLinkPageContent } from "../artifact-link/ArtifactLinkPageConten
 import { AgentSessionSidebar } from "../(deliverables)/artifacts/[artifactType]/components/AgentSessionSidebar";
 
 const PROJECT_RAIL_GRADIENTS = [
-  "from-orange-400 to-rose-600",
-  "from-violet-500 to-indigo-700",
-  "from-cyan-400 to-teal-600",
-  "from-amber-400 to-orange-600",
-  "from-fuchsia-500 to-pink-600",
-  "from-emerald-400 to-green-700",
-  "from-sky-400 to-blue-700",
+  "from-stone-500 to-stone-700",
+  "from-amber-600 to-orange-700",
+  "from-emerald-600 to-teal-800",
+  "from-rose-600 to-red-800",
+  "from-slate-600 to-slate-800",
+  "from-orange-500 to-amber-700",
+  "from-teal-700 to-emerald-900",
 ] as const;
 
 /** Only animate scale — round ↔ square instantly when hover/active. */
@@ -223,11 +224,21 @@ export function ProjectWorkspaceLayout({
   const currentProject = projects.find((p) => p.slug === projectSlug);
   const projectId = currentProject?.id ?? null;
 
-  const validArtifactType: ArtifactType | null = useMemo(() => {
-    const raw = params?.artifactType;
-    const s = typeof raw === "string" ? raw : null;
-    return s && (ARTIFACT_TYPES as readonly string[]).includes(s) ? (s as ArtifactType) : null;
-  }, [params?.artifactType]);
+  const documentContext = useMemo(() => {
+    const docRaw = params?.documentType;
+    const itemRaw = params?.itemType;
+    const documentType =
+      typeof docRaw === "string" && isDocumentType(docRaw) ? docRaw : null;
+    const itemType =
+      typeof itemRaw === "string"
+        ? itemRaw
+        : Array.isArray(itemRaw)
+          ? (itemRaw[0] ?? null)
+          : null;
+    if (!documentType || !itemType) return null;
+    if (isLockedDocumentType(documentType)) return null;
+    return { documentType, itemType };
+  }, [params?.documentType, params?.itemType]);
   const navigateAfterProjectDelete = useCallback(
     (deletedProjectId: string, nextSlugOverride?: string | null) => {
       const subPath = projectSubPathFromPathname(pathname, base);
@@ -357,13 +368,14 @@ export function ProjectWorkspaceLayout({
         {children}
       </ProjectWorkspaceMain>
 
-      {validArtifactType && (
+      {documentContext ? (
         <AgentSessionSidebar
-          key={`${projectId ?? "pending"}:${validArtifactType}`}
+          key={`${projectId ?? "pending"}:${documentContext.documentType}`}
           projectId={projectId}
-          artifactType={validArtifactType}
+          documentType={documentContext.documentType}
+          itemType={documentContext.itemType}
         />
-      )}
+      ) : null}
     </div>
     </ProjectWorkspaceNavProvider>
     </ProjectWorkspaceModeProvider>

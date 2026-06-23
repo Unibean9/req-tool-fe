@@ -34,7 +34,7 @@ import { cn } from "@/lib/utils";
 
 function BrdExportLoading() {
   return (
-    <div className="mx-auto flex w-full max-w-5xl flex-col gap-4 px-5 py-8 sm:px-8 lg:px-10">
+    <div className="mx-auto flex w-full max-w-[88ch] flex-col gap-4 px-5 py-8 sm:px-8">
       <Skeleton className="h-8 w-2/3 max-w-md motion-reduce:animate-none" />
       <Skeleton className="h-4 w-1/3 max-w-52 motion-reduce:animate-none" />
       <div className="mt-3 flex flex-col gap-2.5">
@@ -65,7 +65,7 @@ function markdownFileName(projectSlug: string, includeWont: boolean): string {
 function downloadMarkdown(
   markdown: string,
   projectSlug: string,
-  includeWont: boolean
+  includeWont: boolean,
 ) {
   const blob = new Blob([markdown], {
     type: "text/markdown;charset=utf-8",
@@ -84,9 +84,11 @@ function downloadMarkdown(
 export function BrdExportDialog({
   projectId,
   projectSlug,
+  trigger = "icon",
 }: {
   projectId: string | null;
   projectSlug: string;
+  trigger?: "icon" | "button";
 }) {
   const [open, setOpen] = useState(false);
   const [includeWont, setIncludeWont] = useState(false);
@@ -100,9 +102,20 @@ export function BrdExportDialog({
   } = useProjectBrdExport(projectId, includeWont, { enabled: open });
 
   const hasMarkdown = Boolean(markdown?.trim());
-
-  return (
-    <>
+  const triggerButton =
+    trigger === "button" ? (
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        className="w-full justify-center sm:w-auto"
+        disabled={!projectId}
+        onClick={() => setOpen(true)}
+      >
+        <FileDown data-icon="inline-start" aria-hidden />
+        Download BRD
+      </Button>
+    ) : (
       <Tooltip>
         <TooltipTrigger
           render={
@@ -126,10 +139,15 @@ export function BrdExportDialog({
           {projectId ? "Preview and export BRD" : "Project is loading"}
         </TooltipContent>
       </Tooltip>
+    );
+
+  return (
+    <>
+      {triggerButton}
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent
-          className="top-2 h-[calc(100dvh-1rem)] max-h-[calc(100dvh-1rem)] w-[calc(100vw-1rem)] max-w-none -translate-y-0 overflow-hidden rounded-xl sm:top-4 sm:h-[calc(100dvh-2rem)] sm:max-h-[calc(100dvh-2rem)] sm:w-[calc(100vw-2rem)] sm:max-w-none"
+          className="top-3 h-[calc(100dvh-1.5rem)] max-h-[calc(100dvh-1.5rem)] w-[calc(100vw-1rem)] max-w-[calc(100vw-1rem)] -translate-y-0 overflow-hidden rounded-xl sm:top-6 sm:h-[calc(100dvh-3rem)] sm:max-h-[calc(100dvh-3rem)] sm:w-[min(94vw,68rem)] sm:max-w-[68rem]"
           contentClassName="relative flex h-full min-h-0 flex-col overflow-hidden"
         >
           <DialogHeader className="shrink-0 gap-4 border-b border-border/70 px-5 py-4 pr-14 sm:px-6">
@@ -175,7 +193,7 @@ export function BrdExportDialog({
                   <RefreshCw
                     data-icon="inline-start"
                     className={cn(
-                      isFetching && "animate-spin motion-reduce:animate-none"
+                      isFetching && "animate-spin motion-reduce:animate-none",
                     )}
                     aria-hidden
                   />
@@ -201,14 +219,14 @@ export function BrdExportDialog({
             {isPending ? <BrdExportLoading /> : null}
 
             {isError ? (
-              <div className="mx-auto w-full max-w-5xl px-5 py-8 sm:px-8 lg:px-10">
+              <div className="mx-auto w-full max-w-[88ch] px-5 py-8 sm:px-8">
                 <Alert variant="destructive">
                   <AlertCircle aria-hidden />
                   <AlertTitle>Could not generate the BRD preview</AlertTitle>
                   <AlertDescription>
                     {getApiErrorMessage(
                       error,
-                      "The BRD Markdown export could not be loaded."
+                      "The BRD Markdown export could not be loaded.",
                     )}
                   </AlertDescription>
                 </Alert>
@@ -240,7 +258,7 @@ export function BrdExportDialog({
             ) : null}
 
             {!isPending && !isError && hasMarkdown && markdown ? (
-              <article className="mx-auto w-full max-w-5xl px-5 py-8 sm:px-8 sm:py-10 lg:px-10">
+              <article className="mx-auto w-full max-w-[88ch] px-5 py-8 sm:px-8 sm:py-10">
                 <MarkdownContent content={markdown} variant="document" />
               </article>
             ) : null}
@@ -252,7 +270,7 @@ export function BrdExportDialog({
                 "size-1.5 shrink-0 rounded-full",
                 isFetching
                   ? "animate-pulse bg-amber-400 motion-reduce:animate-none"
-                  : "bg-primary"
+                  : "bg-primary",
               )}
               aria-hidden
             />

@@ -1,5 +1,9 @@
 import apiService from "../core";
-import type { ArtifactType } from "./fetchArtifact";
+import {
+  mapDocumentViewFromApi,
+  type DocumentView,
+  type DocumentViewApi,
+} from "./fetchDocument";
 
 // ─── Status enums ─────────────────────────────────────────────────────────────
 
@@ -63,13 +67,15 @@ export type AgentMissingContext =
 interface AgentSessionApi {
   id: string;
   project_id: string;
-  artifact_type: ArtifactType;
+  artifact_type: string;
   workflow_area: string;
   step_key?: string | null;
   status: AgentSessionStatus;
   ui_status?: AgentSessionUiStatus | null;
   interrupt_type: AgentInterruptType;
   missing_context: AgentMissingContext;
+  focused_artifact_id?: string | null;
+  document?: DocumentViewApi | null;
   agent_role?: string | null;
   provider_config_id?: string | null;
   created_by_id?: string | null;
@@ -80,6 +86,9 @@ interface AgentSessionApi {
 interface AgentSessionCreateApiData {
   session_id: string;
   missing_context: string[];
+  artifact_type?: string;
+  focused_artifact_id?: string;
+  document_type?: string;
 }
 
 interface AgentSessionCreateApiResponse {
@@ -158,6 +167,9 @@ interface AgentSessionStreamClosedApi {
 export interface AgentSessionCreated {
   sessionId: string;
   missingContext: string[];
+  artifactType: string | null;
+  focusedArtifactId: string | null;
+  documentType: string | null;
 }
 
 export interface AgentSessionCreatedResponse {
@@ -169,13 +181,15 @@ export interface AgentSessionCreatedResponse {
 export interface AgentSession {
   id: string;
   projectId: string;
-  artifactType: ArtifactType;
+  artifactType: string;
   workflowArea: string;
   stepKey: string | null;
   status: AgentSessionStatus;
   uiStatus: AgentSessionUiStatus;
   interruptType: AgentInterruptType;
   missingContext: AgentMissingContext;
+  focusedArtifactId: string | null;
+  document: DocumentView | null;
   agentRole: string | null;
   providerConfigId: string | null;
   createdById: string | null;
@@ -255,15 +269,25 @@ export type AgentSessionStreamEvent =
 // ─── Request types ────────────────────────────────────────────────────────────
 
 export interface CreateAgentSessionRequest {
-  artifact_type: ArtifactType;
+  artifact_type: string;
+  focused_artifact_id: string;
   step_key?: string | null;
   workflow_area?: string;
   agent_role?: string | null;
   provider_config_id?: string | null;
 }
 
+export const AGENT_MESSAGE_MODE_HINTS = [
+  "qa",
+  "critique",
+  "explore",
+  "draft",
+] as const;
+export type AgentMessageModeHint = (typeof AGENT_MESSAGE_MODE_HINTS)[number];
+
 export interface SendMessageRequest {
   content: string;
+  mode_hint?: AgentMessageModeHint | null;
 }
 
 export interface RequestEditRequest {
@@ -294,6 +318,8 @@ function mapSession(s: AgentSessionApi): AgentSession {
     uiStatus: s.ui_status ?? fallbackUiStatus,
     interruptType: s.interrupt_type,
     missingContext: s.missing_context,
+    focusedArtifactId: s.focused_artifact_id ?? null,
+    document: s.document ? mapDocumentViewFromApi(s.document) : null,
     agentRole: s.agent_role ?? null,
     providerConfigId: s.provider_config_id ?? null,
     createdById: s.created_by_id ?? null,
@@ -423,6 +449,9 @@ export const fetchAgentSession = {
       data: {
         sessionId: res.data.data.session_id,
         missingContext: res.data.data.missing_context ?? [],
+        artifactType: res.data.data.artifact_type ?? null,
+        focusedArtifactId: res.data.data.focused_artifact_id ?? null,
+        documentType: res.data.data.document_type ?? null,
       },
     };
   },

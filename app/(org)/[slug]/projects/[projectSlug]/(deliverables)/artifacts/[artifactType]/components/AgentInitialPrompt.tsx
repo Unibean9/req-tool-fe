@@ -6,59 +6,18 @@ import { Loader2, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useSendAgentMessage } from "@/hooks/useAgentSession";
 import { getApiErrorMessage } from "@/lib/api/getApiErrorMessage";
-import type { ArtifactType } from "@/lib/api/services/fetchArtifact";
+import { getInitialDocumentItemPrompt } from "@/lib/document/documentItemPrompts";
 import { cn } from "@/lib/utils";
 
-const INITIAL_ARTIFACT_PROMPTS: Record<ArtifactType, string> = {
-  research_output:
-    "Hãy tổng hợp và cấu trúc các kết quả nghiên cứu quan trọng cho dự án này.",
-  intent:
-    "Hãy giúp tôi xác định intent tổng thể và giá trị cốt lõi mà dự án này cần tạo ra.",
-  problem:
-    "Hãy phân tích và làm rõ những vấn đề chính mà dự án này cần giải quyết.",
-  goal:
-    "Hãy xây dựng các mục tiêu cụ thể, đo lường được và phù hợp với dự án này.",
-  stakeholder:
-    "Hãy xác định các stakeholder chính, vai trò, nhu cầu và mức độ ảnh hưởng của họ.",
-  capability:
-    "Hãy xác định các năng lực nghiệp vụ cốt lõi mà hệ thống cần hỗ trợ.",
-  domain_entity:
-    "Hãy khám phá các domain entity chính, thuộc tính và mối quan hệ giữa chúng.",
-  business_rule:
-    "Hãy xác định và cấu trúc các business rule quan trọng của dự án.",
-  constraint:
-    "Hãy phân tích các ràng buộc nghiệp vụ, kỹ thuật và vận hành của dự án.",
-  assumption:
-    "Hãy xác định các giả định đang được sử dụng và những điểm cần kiểm chứng.",
-  risk:
-    "Hãy phân tích các rủi ro chính, tác động, khả năng xảy ra và hướng giảm thiểu.",
-  open_question:
-    "Hãy xác định những câu hỏi còn bỏ ngỏ cần được làm rõ trước khi triển khai.",
-  functional_requirement:
-    "Hãy xây dựng các functional requirement rõ ràng và có thể kiểm chứng cho dự án.",
-  non_functional_requirement:
-    "Hãy xác định các non-functional requirement quan trọng và tiêu chí đo lường phù hợp.",
-  use_case:
-    "Hãy xây dựng các use case chính, actor, luồng chính và các ngoại lệ cần xử lý.",
-  epic:
-    "Hãy nhóm phạm vi dự án thành các epic rõ ràng, có giá trị và dễ ưu tiên.",
-  story:
-    "Hãy xây dựng các user story rõ ràng, tập trung vào nhu cầu và giá trị người dùng.",
-  acceptance_criteria:
-    "Hãy xây dựng acceptance criteria cụ thể, kiểm chứng được cho các yêu cầu hiện tại.",
-};
-
-function formatArtifactType(artifactType: string): string {
-  return artifactType
+function formatItemType(itemType: string): string {
+  return itemType
     .replace(/_/g, " ")
     .replace(/\b\w/g, (character) => character.toUpperCase());
 }
 
-export function getInitialArtifactPrompt(artifactType: ArtifactType): string {
-  return (
-    INITIAL_ARTIFACT_PROMPTS[artifactType] ??
-    `Hãy giúp tôi phân tích và xây dựng ${formatArtifactType(artifactType)} cho dự án này.`
-  );
+/** @deprecated Legacy artifact prompts — use getInitialDocumentItemPrompt. */
+export function getInitialArtifactPrompt(itemType: string): string {
+  return getInitialDocumentItemPrompt(itemType);
 }
 
 export type AgentInitialPromptAttempt = {
@@ -125,13 +84,13 @@ export function useAgentInitialPrompt() {
 }
 
 export function AgentInitialPromptState({
-  artifactType,
+  itemType,
   prompt,
   error,
   isSending,
   onRetry,
 }: {
-  artifactType: ArtifactType;
+  itemType: string;
   prompt: string;
   error: string | null;
   isSending: boolean;
@@ -141,7 +100,7 @@ export function AgentInitialPromptState({
     <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-4 py-5">
       <div className="border-b border-border/60 pb-4">
         <p className="text-balance font-heading text-base font-semibold text-foreground">
-          Starting {formatArtifactType(artifactType)}
+          Starting {formatItemType(itemType)}
         </p>
         <p className="mt-1.5 text-pretty text-xs leading-5 text-muted-foreground">
           The workbench is sending a tailored first direction for this artifact.

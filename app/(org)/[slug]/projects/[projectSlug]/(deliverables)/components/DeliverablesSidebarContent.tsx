@@ -2,28 +2,160 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { type ReactNode, useMemo } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import {
-  AlertCircle,
-  AlertTriangle,
-  Ban,
-  CircleHelp,
-  FileSearch,
-  HelpCircle,
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useMemo,
+  useReducer,
+  useState,
+} from "react";
+import {
+  CheckCircle2,
+  ChevronRight,
+  Circle,
   LayoutDashboard,
-  Lightbulb,
-  Scale,
-  Target,
   Users,
-  UsersRound,
-  Zap,
 } from "lucide-react";
 
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  prefetchDocumentItem,
+  useDocument,
+  useDocumentTypes,
+} from "@/hooks/useDocument";
+import {
+  DOCUMENT_TYPE_SHORT,
+  getDocumentContainerIcon,
+  getDocumentItemIcon,
+} from "@/lib/document/documentItemIcons";
+import type {
+  DocumentRegistryEntry,
+  DocumentType,
+} from "@/lib/api/services/fetchDocument";
 import { cn } from "@/lib/utils";
 
-import { BrdExportDialog } from "./BrdExportDialog";
+import { isLockedDocumentType } from "@/lib/document/lockedDocumentTypes";
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
+
+const SIDEBAR_CHILDREN_CLOSE_MS = 180;
+const SIDEBAR_CHILDREN_OPEN_MS = 220;
+
+function useDisclosurePresence(open: boolean, animate: boolean): boolean {
+  const [isPresent, setIsPresent] = useState(open);
+
+  useEffect(() => {
+    if (open) {
+      const frame = window.requestAnimationFrame(() => {
+        setIsPresent(true);
+      });
+
+      return () => window.cancelAnimationFrame(frame);
+    }
+
+    const timeout = window.setTimeout(
+      () => {
+        setIsPresent(false);
+      },
+      animate ? SIDEBAR_CHILDREN_CLOSE_MS : 0,
+    );
+
+    return () => window.clearTimeout(timeout);
+  }, [animate, open]);
+
+  return isPresent;
+}
+
+type DocumentChildrenRevealState = {
+  armedScope: string | null;
+};
+
+type DocumentChildrenRevealAction =
+  | { type: "document_unknown" }
+  | { type: "document_unstarted"; scopeKey: string }
+  | { type: "document_started_mismatch" }
+  | { type: "animation_complete"; scopeKey: string };
+
+function documentChildrenRevealReducer(
+  state: DocumentChildrenRevealState,
+  action: DocumentChildrenRevealAction,
+): DocumentChildrenRevealState {
+  switch (action.type) {
+    case "document_unknown":
+      return state.armedScope === null ? state : { armedScope: null };
+    case "document_unstarted":
+      return state.armedScope === action.scopeKey
+        ? state
+        : { armedScope: action.scopeKey };
+    case "document_started_mismatch":
+      return state.armedScope === null ? state : { armedScope: null };
+    case "animation_complete":
+      return state.armedScope === action.scopeKey
+        ? { armedScope: null }
+        : state;
+    default:
+      return state;
+  }
+}
+
+function useDocumentChildrenRevealMotion({
+  scopeKey,
+  documentKnown,
+  documentStarted,
+}: {
+  scopeKey: string;
+  documentKnown: boolean;
+  documentStarted: boolean;
+}): boolean {
+  const [{ armedScope }, dispatch] = useReducer(
+    documentChildrenRevealReducer,
+    { armedScope: null },
+  );
+
+  const shouldAnimateReveal = documentStarted && armedScope === scopeKey;
+
+  useEffect(() => {
+    if (!documentKnown) {
+      if (armedScope === null) return;
+
+      const frame = window.requestAnimationFrame(() => {
+        dispatch({ type: "document_unknown" });
+      });
+
+      return () => window.cancelAnimationFrame(frame);
+    }
+
+    if (!documentStarted) {
+      if (armedScope === scopeKey) return;
+
+      const frame = window.requestAnimationFrame(() => {
+        dispatch({ type: "document_unstarted", scopeKey });
+      });
+
+      return () => window.cancelAnimationFrame(frame);
+    }
+
+    if (armedScope !== scopeKey) {
+      if (armedScope === null) return;
+
+      const frame = window.requestAnimationFrame(() => {
+        dispatch({ type: "document_started_mismatch" });
+      });
+
+      return () => window.cancelAnimationFrame(frame);
+    }
+
+    const timeout = window.setTimeout(() => {
+      dispatch({ type: "animation_complete", scopeKey });
+    }, SIDEBAR_CHILDREN_OPEN_MS);
+
+    return () => window.clearTimeout(timeout);
+  }, [armedScope, documentKnown, documentStarted, scopeKey]);
+
+  return shouldAnimateReveal;
+}
 
 function SidebarSectionTitle({
   children,
@@ -38,7 +170,7 @@ function SidebarSectionTitle({
     <div
       className={cn(
         "px-1",
-        withDivider && "mt-1 border-t border-border/70 pt-3"
+        withDivider && "mt-1 border-t border-border/70 pt-3",
       )}
     >
       <div className="flex min-h-8 items-center gap-2 px-1 pb-2">
@@ -60,26 +192,99 @@ function SidebarNavLink({
   label,
   icon: Icon,
   active,
+  trailing,
+  nested = false,
+  title,
+  onPrefetch,
+  disabled = false,
 }: {
   href: string;
   label: string;
   icon: typeof LayoutDashboard;
   active: boolean;
+  trailing?: ReactNode;
+  nested?: boolean;
+  title?: string;
+  onPrefetch?: () => void;
+  disabled?: boolean;
 }) {
+  const className = cn(
+    "flex min-h-11 items-center gap-2.5 rounded-lg py-2 text-left transition-[color,background-color,border-color] duration-200 outline-none",
+    disabled
+      ? "cursor-not-allowed"
+      : "focus-visible:ring-2 focus-visible:ring-ring/45",
+    nested
+      ? cn(
+          "px-2 text-[0.8125rem]",
+          !disabled &&
+            (active
+              ? "bg-(--chart-1)/10 font-medium text-foreground ring-1 ring-inset ring-primary/30"
+              : "text-muted-foreground hover:bg-muted/40 hover:text-foreground"),
+        )
+      : cn(
+          "border border-transparent bg-transparent px-2.5 text-sm",
+          !disabled &&
+            (active
+              ? "border-primary/30 bg-(--chart-1)/10 font-medium text-foreground"
+              : "text-muted-foreground hover:border-border/50 hover:bg-muted/50 hover:text-foreground"),
+        ),
+    disabled && "text-muted-foreground",
+  );
+
+  const content = (
+    <>
+      <Icon
+        className={cn("shrink-0 opacity-85", nested ? "size-3.5" : "size-4")}
+        aria-hidden
+      />
+      <span className="min-w-0 flex-1 truncate">{label}</span>
+      {trailing ? (
+        <span className="flex size-3.5 shrink-0 items-center justify-center">
+          {trailing}
+        </span>
+      ) : null}
+    </>
+  );
+
+  if (disabled) {
+    return (
+      <span
+        aria-disabled="true"
+        title={title ?? "Coming soon"}
+        className={className}
+      >
+        {content}
+      </span>
+    );
+  }
+
   return (
     <Link
       href={href}
-      className={cn(
-        "flex items-center gap-2.5 rounded-lg border border-transparent bg-transparent px-2.5 py-2 text-left text-sm transition-[color,background-color,border-color,box-shadow] duration-200 outline-none focus-visible:ring-2 focus-visible:ring-ring/45",
-        active
-          ? "border-primary/30 bg-(--chart-1)/10 font-medium text-foreground"
-          : "text-muted-foreground hover:border-border/50 hover:bg-muted/50 hover:text-foreground"
-      )}
+      title={title}
+      onPointerEnter={onPrefetch}
+      onFocus={onPrefetch}
+      className={className}
     >
-      <Icon className="size-4 shrink-0 opacity-85" aria-hidden />
-      <span className="min-w-0 flex-1 truncate">{label}</span>
+      {content}
     </Link>
   );
+}
+
+function SidebarIcon({
+  icon: Icon,
+  className,
+}: {
+  icon: typeof LayoutDashboard;
+  className?: string;
+}) {
+  return <Icon className={className} aria-hidden />;
+}
+
+function pathExact(pathname: string, href: string): boolean {
+  const p = pathname.split("?")[0] ?? "";
+  const normalized = href.endsWith("/") ? href.slice(0, -1) : href;
+  return p === normalized || p === `${normalized}/`;
 }
 
 function pathActive(pathname: string, prefix: string): boolean {
@@ -88,22 +293,232 @@ function pathActive(pathname: string, prefix: string): boolean {
   return p === prefix || p.startsWith(`${prefix}/`);
 }
 
-// ─── Nav constants ────────────────────────────────────────────────────────────
+function DocumentContainerNav({
+  orgSlug,
+  projectSlug,
+  projectId,
+  container,
+  registryItems,
+  pathname,
+  withDivider,
+  exportAction,
+  disabled = false,
+}: {
+  orgSlug: string;
+  projectSlug: string;
+  projectId: string | null;
+  container: DocumentRegistryEntry;
+  registryItems: DocumentRegistryEntry[];
+  pathname: string;
+  withDivider?: boolean;
+  exportAction?: ReactNode;
+  disabled?: boolean;
+}) {
+  const queryClient = useQueryClient();
+  const documentType = container.artifactType as DocumentType;
+  const base = `/${encodeURIComponent(orgSlug)}/projects/${encodeURIComponent(projectSlug)}`;
+  const documentHref = `${base}/documents/${documentType}`;
+  const ContainerIcon = getDocumentContainerIcon(documentType);
 
-const BRD_ARTIFACT_NAV = [
-  { type: "research_output", label: "Research Output", icon: FileSearch },
-  { type: "intent", label: "Intent", icon: Lightbulb },
-  { type: "problem", label: "Problem", icon: AlertCircle },
-  { type: "goal", label: "Goal", icon: Target },
-  { type: "stakeholder", label: "Stakeholder", icon: UsersRound },
-  { type: "constraint", label: "Constraint", icon: Ban },
-  { type: "assumption", label: "Assumption", icon: HelpCircle },
-  { type: "risk", label: "Risk", icon: AlertTriangle },
-  { type: "open_question", label: "Open Question", icon: CircleHelp },
-  { type: "capability", label: "Capability", icon: Zap },
-  { type: "business_rule", label: "Business Rule", icon: Scale },
-] as const;
+  const prefetchItem = useCallback(
+    (itemType: string) => {
+      if (!projectId) return;
+      prefetchDocumentItem(queryClient, projectId, documentType, itemType);
+    },
+    [documentType, projectId, queryClient],
+  );
 
+  const { data: document, isPending } = useDocument(projectId, documentType, {
+    enabled: Boolean(projectId) && !disabled,
+  });
+
+  const label = document?.label ?? container.label;
+  const items = useMemo(() => {
+    if (document?.items.length) return document.items;
+    return container.children.map((itemType) => {
+      const meta = registryItems.find(
+        (entry) => entry.artifactType === itemType,
+      );
+      return {
+        artifactType: itemType,
+        label: meta?.label ?? itemType.replace(/_/g, " "),
+        description: meta?.description ?? "",
+        artifactId: null,
+        parentId: null,
+        status: null,
+        title: null,
+        currentVersionId: null,
+        currentVersion: null,
+        versions: [],
+      };
+    });
+  }, [container.children, document?.items, registryItems]);
+
+  const acceptedCount = items.filter(
+    (item) => item.status === "accepted",
+  ).length;
+  const totalCount = items.length;
+  const isOverviewActive = pathExact(pathname, documentHref);
+  const isInDocument = pathActive(pathname, documentHref);
+  const isChildActive = isInDocument && !isOverviewActive;
+  const documentStarted = Boolean(document?.artifactId);
+  const shouldShowChildren = !disabled && (documentStarted || isChildActive);
+  const shouldAnimateChildrenReveal = useDocumentChildrenRevealMotion({
+    scopeKey: `${projectId ?? "no-project"}:${documentType}`,
+    documentKnown: Boolean(document),
+    documentStarted,
+  });
+  const isChildrenPresent = useDisclosurePresence(
+    shouldShowChildren,
+    shouldAnimateChildrenReveal,
+  );
+  const childNavId = `document-${documentType}-sections`;
+  const childMotion = shouldAnimateChildrenReveal ? "animate" : "instant";
+
+  return (
+    <div
+      className={cn(
+        "shrink-0 space-y-0.5",
+        withDivider && "mt-1 border-t border-border/70 pt-3",
+        disabled && "pointer-events-none opacity-45",
+      )}
+      aria-disabled={disabled || undefined}
+    >
+      <SidebarSectionTitle action={disabled ? undefined : exportAction}>
+        {DOCUMENT_TYPE_SHORT[documentType]}
+      </SidebarSectionTitle>
+
+      <div className="px-0.5">
+        {disabled ? (
+          <span
+            aria-disabled="true"
+            title="Coming soon"
+            className="flex min-h-11 cursor-not-allowed items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm text-muted-foreground"
+          >
+            <SidebarIcon
+              icon={ContainerIcon}
+              className="size-4 shrink-0 opacity-85"
+            />
+            <span className="min-w-0 flex-1 truncate">{label}</span>
+            {totalCount > 0 ? (
+              <span className="shrink-0 text-[0.625rem] tabular-nums text-muted-foreground">
+                {acceptedCount}/{totalCount}
+              </span>
+            ) : null}
+          </span>
+        ) : (
+          <Link
+            href={documentHref}
+            title={label}
+            aria-current={
+              isOverviewActive ? "page" : isChildActive ? "true" : undefined
+            }
+            aria-expanded={totalCount > 0 ? shouldShowChildren : undefined}
+            aria-controls={shouldShowChildren ? childNavId : undefined}
+            className={cn(
+              "flex min-h-11 items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm transition-[color,background-color,box-shadow] duration-200 outline-none focus-visible:ring-2 focus-visible:ring-ring/45",
+              isOverviewActive
+                ? "border border-primary/30 bg-(--chart-1)/10 font-medium text-foreground"
+                : isChildActive
+                  ? "bg-muted/30 font-medium text-foreground"
+                  : "text-muted-foreground hover:bg-muted/40 hover:text-foreground",
+            )}
+          >
+            <SidebarIcon
+              icon={ContainerIcon}
+              className={cn(
+                "size-4 shrink-0",
+                isOverviewActive ? "text-brand-mint opacity-100" : "opacity-85",
+              )}
+            />
+            <span className="min-w-0 flex-1 truncate">{label}</span>
+            {totalCount > 0 ? (
+              <span className="flex shrink-0 items-center gap-1">
+                <span
+                  className={cn(
+                    "text-[0.625rem] tabular-nums",
+                    isChildActive
+                      ? "text-foreground/80"
+                      : "text-muted-foreground",
+                  )}
+                >
+                  {acceptedCount}/{totalCount}
+                </span>
+                <ChevronRight
+                  className={cn(
+                    "size-3 text-muted-foreground/70 transition-transform duration-200 motion-reduce:transition-none",
+                    shouldShowChildren && "rotate-90 text-brand-mint/80",
+                  )}
+                  aria-hidden
+                />
+              </span>
+            ) : null}
+          </Link>
+        )}
+      </div>
+
+      {isChildrenPresent ? (
+        <div
+          className="deliverables-section-children"
+          data-open={shouldShowChildren ? "true" : "false"}
+          data-motion={childMotion}
+          aria-hidden={!shouldShowChildren}
+          inert={shouldShowChildren ? undefined : true}
+        >
+          <nav
+            id={childNavId}
+            className="t-panel-slide ml-2 min-h-0 space-y-0.5 border-l border-border/40 px-0.5 pl-2"
+            data-open={shouldShowChildren ? "true" : "false"}
+            data-motion={childMotion}
+            aria-label={`${label} sections`}
+          >
+            {isPending && !document ? (
+              <div className="space-y-1 py-0.5">
+                <Skeleton className="h-8 rounded-lg" />
+                <Skeleton className="h-8 rounded-lg" />
+              </div>
+            ) : (
+              items.map((item) => {
+                const href = `${documentHref}/${item.artifactType}`;
+                const Icon = getDocumentItemIcon(item.artifactType);
+                const accepted = item.status === "accepted";
+
+                return (
+                  <SidebarNavLink
+                    key={item.artifactType}
+                    href={href}
+                    label={item.label}
+                    icon={Icon}
+                    nested
+                    active={pathActive(pathname, href)}
+                    onPrefetch={
+                      item.artifactId
+                        ? () => prefetchItem(item.artifactType)
+                        : undefined
+                    }
+                    trailing={
+                      accepted ? (
+                        <CheckCircle2
+                          className="size-3.5 text-primary"
+                          aria-label="Accepted"
+                        />
+                      ) : item.artifactId ? (
+                        <Circle
+                          className="size-3.5 text-muted-foreground/40"
+                          aria-hidden
+                        />
+                      ) : null
+                    }
+                  />
+                );
+              })
+            )}
+          </nav>
+        </div>
+      ) : null}
+    </div>
+  );
+}
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
@@ -125,10 +540,13 @@ export function DeliverablesSidebarContent({
     () => ({
       dashboard: `${base}/dashboard`,
       members: `${base}/members`,
-      artifactsBase: `${base}/artifacts`,
     }),
-    [base]
+    [base],
   );
+
+  const { data: registry, isPending: isRegistryPending } = useDocumentTypes();
+  const containers = registry?.containers ?? [];
+  const registryItems = registry?.items ?? [];
 
   return (
     <>
@@ -150,33 +568,33 @@ export function DeliverablesSidebarContent({
         </div>
       </div>
 
-      <div className="shrink-0 space-y-1">
-        <SidebarSectionTitle
-          withDivider
-          action={
-            <BrdExportDialog
-              projectId={projectId}
-              projectSlug={projectSlug}
-            />
-          }
-        >
-          BRD
-        </SidebarSectionTitle>
-        <div className="space-y-1 px-0.5">
-          {BRD_ARTIFACT_NAV.map(({ type, label, icon }) => {
-            const href = `${nav.artifactsBase}/${type}`;
-            return (
-              <SidebarNavLink
-                key={type}
-                href={href}
-                label={label}
-                icon={icon}
-                active={pathActive(pathname, href)}
-              />
-            );
-          })}
+      {isRegistryPending && !registry ? (
+        <div className="mt-1 space-y-2 border-t border-border/70 px-1 pt-3">
+          <Skeleton className="h-4 w-12" />
+          <Skeleton className="h-9 rounded-lg" />
+          <Skeleton className="ml-2 h-8 rounded-lg border-l border-border/40 pl-2" />
+          <Skeleton className="ml-2 h-8 rounded-lg border-l border-border/40 pl-2" />
         </div>
-      </div>
+      ) : (
+        containers.map((container) => {
+          const documentType = container.artifactType as DocumentType;
+          const isLocked = isLockedDocumentType(documentType);
+
+          return (
+            <DocumentContainerNav
+              key={container.artifactType}
+              orgSlug={orgSlug}
+              projectSlug={projectSlug}
+              projectId={projectId}
+              container={container}
+              registryItems={registryItems}
+              pathname={pathname}
+              withDivider
+              disabled={isLocked}
+            />
+          );
+        })
+      )}
     </>
   );
 }
