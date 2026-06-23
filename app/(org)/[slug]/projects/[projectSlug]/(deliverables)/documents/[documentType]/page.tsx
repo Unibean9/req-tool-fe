@@ -4,11 +4,13 @@ import { useMemo } from "react";
 import { useParams } from "next/navigation";
 
 import { useOrgProjects } from "@/hooks/useProject";
+import { useDocumentTypes } from "@/hooks/useDocument";
+import { useDocumentContainerLock } from "@/hooks/useDocumentContainerLock";
 import { isDocumentType } from "@/lib/api/services/fetchDocument";
-import { isLockedDocumentType } from "@/lib/document/lockedDocumentTypes";
+import { getPriorRegistryContainer } from "@/lib/document/documentSectionLock";
 
 import { useOrgWorkspace } from "../../../../../orgWorkspaceContext";
-import { DocumentLockedPage } from "../components/documentLockedPage";
+import { DocumentContainerLockedPage } from "../components/documentContainerLockedPage";
 import { DocumentOverviewPage } from "../components/documentOverviewPage";
 
 export default function Page() {
@@ -52,11 +54,29 @@ export default function Page() {
 
   const documentType = isDocumentType(documentTypeRaw) ? documentTypeRaw : null;
 
+  const { data: registry } = useDocumentTypes({
+    enabled: Boolean(documentType),
+  });
+
+  const containers = registry?.containers ?? [];
+  const priorContainer =
+    documentType && containers.length > 0
+      ? getPriorRegistryContainer(containers, documentType)
+      : null;
+
   const { data: projects, isPending: isProjectsPending } = useOrgProjects(orgId);
   const projectId = useMemo(
     () => projects?.find((p) => p.slug === projectSlug)?.id ?? null,
     [projects, projectSlug]
   );
+
+  const containerLock = useDocumentContainerLock(
+    projectId,
+    documentType,
+    priorContainer,
+  );
+
+  const base = `/${encodeURIComponent(orgSlug)}/projects/${encodeURIComponent(projectSlug)}/documents`;
 
   if (!documentType) {
     return (
@@ -66,12 +86,18 @@ export default function Page() {
     );
   }
 
-  if (isLockedDocumentType(documentType)) {
+  if (
+    containerLock.locked &&
+    containerLock.prerequisiteDocumentType &&
+    containerLock.prerequisiteLabel
+  ) {
     return (
-      <DocumentLockedPage
+      <DocumentContainerLockedPage
         orgSlug={orgSlug}
         projectSlug={projectSlug}
         documentType={documentType}
+        prerequisiteLabel={containerLock.prerequisiteLabel}
+        prerequisiteHref={`${base}/${containerLock.prerequisiteDocumentType}`}
       />
     );
   }

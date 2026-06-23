@@ -16,6 +16,7 @@ import {
   ChevronRight,
   Circle,
   LayoutDashboard,
+  Lock,
   Users,
 } from "lucide-react";
 
@@ -36,7 +37,8 @@ import type {
 } from "@/lib/api/services/fetchDocument";
 import { cn } from "@/lib/utils";
 
-import { isLockedDocumentType } from "@/lib/document/lockedDocumentTypes";
+import { useDocumentContainerLock } from "@/hooks/useDocumentContainerLock";
+import { buildDocumentSectionLockMap, getPriorRegistryContainer, isDocumentSectionAccepted } from "@/lib/document/documentSectionLock";
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
@@ -228,7 +230,7 @@ function SidebarNavLink({
               ? "border-primary/30 bg-(--chart-1)/10 font-medium text-foreground"
               : "text-muted-foreground hover:border-border/50 hover:bg-muted/50 hover:text-foreground"),
         ),
-    disabled && "text-muted-foreground",
+    disabled && "pointer-events-none opacity-45",
   );
 
   const content = (
@@ -296,27 +298,34 @@ function DocumentContainerNav({
   projectSlug,
   projectId,
   container,
+  priorContainer,
   registryItems,
   pathname,
   withDivider,
   exportAction,
-  disabled = false,
 }: {
   orgSlug: string;
   projectSlug: string;
   projectId: string | null;
   container: DocumentRegistryEntry;
+  priorContainer: DocumentRegistryEntry | null;
   registryItems: DocumentRegistryEntry[];
   pathname: string;
   withDivider?: boolean;
   exportAction?: ReactNode;
-  disabled?: boolean;
 }) {
   const queryClient = useQueryClient();
   const documentType = container.artifactType as DocumentType;
   const base = `/${encodeURIComponent(orgSlug)}/projects/${encodeURIComponent(projectSlug)}`;
   const documentHref = `${base}/documents/${documentType}`;
   const ContainerIcon = getDocumentContainerIcon(documentType);
+
+  const containerLock = useDocumentContainerLock(
+    projectId,
+    documentType,
+    priorContainer,
+  );
+  const isContainerLocked = containerLock.locked;
 
   const prefetchItem = useCallback(
     (itemType: string) => {
@@ -327,7 +336,7 @@ function DocumentContainerNav({
   );
 
   const { data: document, isPending } = useDocument(projectId, documentType, {
-    enabled: Boolean(projectId) && !disabled,
+    enabled: Boolean(projectId),
   });
 
   const label = document?.label ?? container.label;
@@ -352,15 +361,16 @@ function DocumentContainerNav({
     });
   }, [container.children, document?.items, registryItems]);
 
-  const acceptedCount = items.filter(
-    (item) => item.status === "accepted",
+  const acceptedCount = items.filter((item) =>
+    isDocumentSectionAccepted(item),
   ).length;
   const totalCount = items.length;
   const isOverviewActive = pathExact(pathname, documentHref);
   const isInDocument = pathActive(pathname, documentHref);
   const isChildActive = isInDocument && !isOverviewActive;
   const documentStarted = Boolean(document?.artifactId);
-  const shouldShowChildren = !disabled && (documentStarted || isChildActive);
+  const shouldShowChildren =
+    totalCount > 0 && !isContainerLocked && (documentStarted || isChildActive);
   const shouldAnimateChildrenReveal = useDocumentChildrenRevealMotion({
     scopeKey: `${projectId ?? "no-project"}:${documentType}`,
     documentKnown: Boolean(document),
@@ -372,26 +382,32 @@ function DocumentContainerNav({
   );
   const childNavId = `document-${documentType}-sections`;
   const childMotion = shouldAnimateChildrenReveal ? "animate" : "instant";
+  const sectionLockByType = useMemo(
+    () => buildDocumentSectionLockMap(container.children, items, documentType),
+    [container.children, documentType, items],
+  );
 
   return (
     <div
       className={cn(
         "min-w-0 shrink-0 space-y-0.5",
         withDivider && "mt-1 border-t border-border/70 pt-3",
-        disabled && "pointer-events-none opacity-45",
       )}
-      aria-disabled={disabled || undefined}
     >
-      <SidebarSectionTitle action={disabled ? undefined : exportAction}>
+      <SidebarSectionTitle action={exportAction}>
         {DOCUMENT_TYPE_SHORT[documentType]}
       </SidebarSectionTitle>
 
       <div className="px-0.5">
-        {disabled ? (
+        {isContainerLocked ? (
           <span
             aria-disabled="true"
-            title="Coming soon"
-            className="flex min-h-11 cursor-not-allowed items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm text-muted-foreground"
+            title={
+              containerLock.prerequisiteLabel
+                ? `Hoàn thành ${containerLock.prerequisiteLabel} trước`
+                : undefined
+            }
+            className="flex min-h-11 cursor-not-allowed items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm text-muted-foreground opacity-45"
           >
             <SidebarIcon
               icon={ContainerIcon}
@@ -399,8 +415,18 @@ function DocumentContainerNav({
             />
             <span className="min-w-0 flex-1 truncate">{label}</span>
             {totalCount > 0 ? (
-              <span className="shrink-0 text-[0.625rem] tabular-nums text-muted-foreground">
-                {acceptedCount}/{totalCount}
+              <span className="flex shrink-0 items-center gap-1 pl-1.5">
+                <span className="text-[0.625rem] tabular-nums text-muted-foreground">
+                  {acceptedCount}/{totalCount}
+                </span>
+                <Lock
+                  className="size-3.5 text-muted-foreground/50"
+                  aria-label={
+                    containerLock.prerequisiteLabel
+                      ? `Locked until ${containerLock.prerequisiteLabel} is complete`
+                      : "Locked"
+                  }
+                />
               </span>
             ) : null}
           </span>
@@ -479,7 +505,9 @@ function DocumentContainerNav({
               items.map((item) => {
                 const href = `${documentHref}/${item.artifactType}`;
                 const Icon = getDocumentItemIcon(item.artifactType);
-                const accepted = item.status === "accepted";
+                const accepted = isDocumentSectionAccepted(item);
+                const lock = sectionLockByType.get(item.artifactType);
+                const isSectionLocked = lock?.locked === true;
 
                 return (
                   <SidebarNavLink
@@ -489,13 +517,24 @@ function DocumentContainerNav({
                     icon={Icon}
                     nested
                     active={pathActive(pathname, href)}
+                    disabled={isSectionLocked}
+                    title={
+                      isSectionLocked && lock?.prerequisiteLabel
+                        ? `Hoàn thành ${lock.prerequisiteLabel} trước`
+                        : undefined
+                    }
                     onPrefetch={
-                      item.artifactId
+                      !isSectionLocked && item.artifactId
                         ? () => prefetchItem(item.artifactType)
                         : undefined
                     }
                     trailing={
-                      accepted ? (
+                      isSectionLocked ? (
+                        <Lock
+                          className="size-3.5 text-muted-foreground/50"
+                          aria-label={`Locked until ${lock?.prerequisiteLabel ?? "previous section"} is accepted`}
+                        />
+                      ) : accepted ? (
                         <CheckCircle2
                           className="size-3.5 text-primary"
                           aria-label="Accepted"
@@ -574,24 +613,22 @@ export function DeliverablesSidebarContent({
           <Skeleton className="ml-2 h-8 rounded-lg border-l border-border/40 pl-2" />
         </div>
       ) : (
-        containers.map((container) => {
-          const documentType = container.artifactType as DocumentType;
-          const isLocked = isLockedDocumentType(documentType);
-
-          return (
-            <DocumentContainerNav
-              key={container.artifactType}
-              orgSlug={orgSlug}
-              projectSlug={projectSlug}
-              projectId={projectId}
-              container={container}
-              registryItems={registryItems}
-              pathname={pathname}
-              withDivider
-              disabled={isLocked}
-            />
-          );
-        })
+        containers.map((container) => (
+          <DocumentContainerNav
+            key={container.artifactType}
+            orgSlug={orgSlug}
+            projectSlug={projectSlug}
+            projectId={projectId}
+            container={container}
+            priorContainer={getPriorRegistryContainer(
+              containers,
+              container.artifactType,
+            )}
+            registryItems={registryItems}
+            pathname={pathname}
+            withDivider
+          />
+        ))
       )}
     </>
   );

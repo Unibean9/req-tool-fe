@@ -13,9 +13,12 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { isDocumentType } from "@/lib/api/services/fetchDocument";
-import { isLockedDocumentType } from "@/lib/document/lockedDocumentTypes";
+import { getDocumentSectionLock, getPriorRegistryContainer } from "@/lib/document/documentSectionLock";
 import type { OrgProject } from "@/lib/api/services/fetchProject";
 import { cn } from "@/lib/utils";
+
+import { useDocumentContainerLock } from "@/hooks/useDocumentContainerLock";
+import { useDocument, useDocumentTypes } from "@/hooks/useDocument";
 
 import { useOrgWorkspace } from "../../../orgWorkspaceContext";
 import { ProjectUpsertDialog } from "../../components/projectUpsertDialog";
@@ -236,9 +239,43 @@ export function ProjectWorkspaceLayout({
           ? (itemRaw[0] ?? null)
           : null;
     if (!documentType || !itemType) return null;
-    if (isLockedDocumentType(documentType)) return null;
     return { documentType, itemType };
   }, [params?.documentType, params?.itemType]);
+
+  const { data: registry } = useDocumentTypes({
+    enabled: Boolean(documentContext),
+  });
+  const { data: documentForLock } = useDocument(
+    projectId,
+    documentContext?.documentType ?? "brd",
+    { enabled: Boolean(projectId && documentContext) },
+  );
+
+  const containers = registry?.containers ?? [];
+  const priorContainer =
+    documentContext && containers.length > 0
+      ? getPriorRegistryContainer(containers, documentContext.documentType)
+      : null;
+
+  const containerLock = useDocumentContainerLock(
+    projectId,
+    documentContext?.documentType ?? null,
+    priorContainer,
+  );
+
+  const isDocumentSectionLocked = useMemo(() => {
+    if (!documentContext || !registry || !documentForLock) return false;
+    const container = registry.containers.find(
+      (entry) => entry.artifactType === documentContext.documentType,
+    );
+    if (!container?.children.length) return false;
+    return getDocumentSectionLock(
+      container.children,
+      documentForLock.items,
+      documentContext.itemType,
+      documentContext.documentType,
+    ).locked;
+  }, [documentContext, documentForLock, registry]);
   const navigateAfterProjectDelete = useCallback(
     (deletedProjectId: string, nextSlugOverride?: string | null) => {
       const subPath = projectSubPathFromPathname(pathname, base);
@@ -368,7 +405,7 @@ export function ProjectWorkspaceLayout({
         {children}
       </ProjectWorkspaceMain>
 
-      {documentContext ? (
+      {documentContext && !containerLock.locked && !isDocumentSectionLocked ? (
         <AgentSessionSidebar
           key={`${projectId ?? "pending"}:${documentContext.documentType}`}
           projectId={projectId}

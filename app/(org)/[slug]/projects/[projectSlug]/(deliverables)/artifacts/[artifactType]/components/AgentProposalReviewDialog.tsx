@@ -215,7 +215,7 @@ function SnapshotValue({
     }
     if (depth >= 5) {
       return (
-        <pre className="overflow-x-auto whitespace-pre-wrap break-words rounded-lg bg-muted/45 p-3 font-mono text-xs leading-relaxed">
+        <pre className="overflow-x-auto whitespace-pre-wrap wrap-break-word rounded-lg bg-muted/45 p-3 font-mono text-xs leading-relaxed">
           {JSON.stringify(sanitizeSnapshotValue(value), null, 2)}
         </pre>
       );
@@ -405,7 +405,7 @@ export function AgentProposalReviewDialog({
         </span>
 
         <span className="flex flex-col gap-1.5">
-          <span className="text-pretty break-words text-sm font-semibold leading-snug text-foreground">
+          <span className="text-pretty wrap-break-word text-sm font-semibold leading-snug text-foreground">
             {proposalTitle}
           </span>
           <span className="text-pretty text-xs leading-relaxed text-muted-foreground">
@@ -436,7 +436,7 @@ export function AgentProposalReviewDialog({
             <Badge variant={status.variant}>{status.label}</Badge>
           </div>
           <div className="flex flex-col gap-1.5">
-            <DialogTitle className="text-balance break-words text-xl font-semibold leading-tight">
+            <DialogTitle className="text-balance wrap-break-word text-xl font-semibold leading-tight">
               {proposalTitle}
             </DialogTitle>
             <DialogDescription className="text-pretty">

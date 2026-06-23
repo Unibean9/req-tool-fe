@@ -1,19 +1,20 @@
 "use client";
 
 import Link from "next/link";
-import { createElement } from "react";
+import { createElement, useMemo } from "react";
 import {
   ArrowRight,
   CheckCircle2,
   Circle,
   Clock3,
   Loader2,
+  Lock,
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useDocument, useEnsureDocument } from "@/hooks/useDocument";
+import { useDocument, useDocumentTypes, useEnsureDocument } from "@/hooks/useDocument";
 import {
   DOCUMENT_TYPE_SHORT,
   getDocumentItemIcon,
@@ -23,6 +24,14 @@ import type {
   DocumentType,
 } from "@/lib/api/services/fetchDocument";
 import { cn } from "@/lib/utils";
+import {
+  buildDocumentSectionLockMap,
+  getDocumentSectionState,
+  getDocumentSectionStatusLabel,
+  isDocumentSectionAccepted,
+  type DocumentSectionLockInfo,
+  type DocumentSectionState,
+} from "@/lib/document/documentSectionLock";
 
 import { BrdExportDialog } from "../../components/BrdExportDialog";
 import {
@@ -39,41 +48,18 @@ type DocumentOverviewPageProps = {
   isProjectsPending: boolean;
 };
 
-type SectionState = "inProgress" | "accepted" | "notStarted";
-
-function slotStatusLabel(status: string | null, hasArtifact: boolean): string {
-  if (!hasArtifact) return "Not started";
-  if (status === "accepted") return "Accepted";
-  if (status === "draft") return "Draft";
-  if (status === "needs_clarification") return "Needs clarification";
-  if (status === "rejected") return "Rejected";
-  return "In progress";
-}
-
-function getSectionState(item: DocumentItemSlot): SectionState {
-  if (!item.artifactId) return "notStarted";
-  if (item.status === "accepted") return "accepted";
-  return "inProgress";
-}
-
-function sectionIconTone(id: SectionState): string {
+function sectionIconTone(id: DocumentSectionState): string {
   if (id === "accepted") return "bg-primary/12 text-brand-mint";
   if (id === "inProgress") return "bg-brand-mint/10 text-brand-mint";
   return "bg-muted/45 text-muted-foreground";
 }
 
-function sectionPriorityRank(item: DocumentItemSlot): number {
-  const state = getSectionState(item);
-  if (state === "inProgress") return 0;
-  if (state === "notStarted") return 1;
-  return 2;
-}
-
 function statusBadgeClass(item: DocumentItemSlot): string {
-  if (!item.artifactId) {
+  const state = getDocumentSectionState(item);
+  if (state === "notStarted") {
     return "border-border/70 bg-background/35 text-muted-foreground";
   }
-  if (item.status === "accepted") {
+  if (state === "accepted") {
     return "border-primary/35 bg-primary/10 text-brand-mint";
   }
   if (item.status === "needs_clarification") {
@@ -218,10 +204,7 @@ function DocumentCommandCenter({
                 statusBadgeClass(nextFocusItem),
               )}
             >
-              {slotStatusLabel(
-                nextFocusItem.status,
-                Boolean(nextFocusItem.artifactId),
-              )}
+              {getDocumentSectionStatusLabel(nextFocusItem)}
             </Badge>
             <span className="inline-flex items-center gap-1 text-xs text-foreground/80">
               Open section
@@ -259,34 +242,38 @@ function DocumentCommandCenter({
 function DocumentSectionCard({
   item,
   href,
+  lock,
 }: {
   item: DocumentItemSlot;
   href: string;
+  lock?: DocumentSectionLockInfo;
 }) {
-  const state = getSectionState(item);
-  const status = slotStatusLabel(item.status, Boolean(item.artifactId));
+  const state = getDocumentSectionState(item);
+  const status = getDocumentSectionStatusLabel(item);
   const isAccepted = state === "accepted";
+  const isLocked = lock?.locked === true;
 
-  return (
-    <Link
-      href={href}
-      className={cn(
-        "group flex flex-col justify-between rounded-lg border transition-[border-color,background-color,transform] duration-200 ease-out",
-        "outline-none focus-visible:ring-2 focus-visible:ring-ring/45",
-        "hover:-translate-y-0.5 hover:bg-card/65 motion-reduce:transform-none",
-        isAccepted ? "min-h-24 p-3" : "min-h-32 p-4",
-        state === "accepted"
-          ? "border-primary/18 bg-background/25 hover:border-primary/30"
-          : state === "inProgress"
-            ? "border-brand-mint/25 bg-card/42 hover:border-brand-mint/45"
-            : "border-border/50 bg-background/20 hover:border-border/80",
-      )}
-    >
+  const cardClassName = cn(
+    "group flex flex-col justify-between rounded-lg border transition-[border-color,background-color,transform] duration-200 ease-out",
+    "outline-none focus-visible:ring-2 focus-visible:ring-ring/45",
+    !isLocked && "hover:-translate-y-0.5 hover:bg-card/65 motion-reduce:transform-none",
+    isAccepted ? "min-h-24 p-3" : "min-h-32 p-4",
+    isLocked
+      ? "cursor-not-allowed border-border/40 bg-muted/15 opacity-60"
+      : state === "accepted"
+        ? "border-primary/18 bg-background/25 hover:border-primary/30"
+        : state === "inProgress"
+          ? "border-brand-mint/25 bg-card/42 hover:border-brand-mint/45"
+          : "border-border/50 bg-background/20 hover:border-border/80",
+  );
+
+  const inner = (
+    <>
       <div className="flex items-start gap-3">
         <div
           className={cn(
             "flex size-8 shrink-0 items-center justify-center rounded-lg",
-            sectionIconTone(state),
+            isLocked ? "bg-muted/40 text-muted-foreground" : sectionIconTone(state),
           )}
           aria-hidden
         >
@@ -297,10 +284,14 @@ function DocumentSectionCard({
             {item.label}
           </h3>
           <p className="mt-1 line-clamp-2 text-pretty text-xs leading-5 text-muted-foreground">
-            {item.description}
+            {isLocked && lock?.prerequisiteLabel
+              ? `Hoàn thành ${lock.prerequisiteLabel} trước`
+              : item.description}
           </p>
         </div>
-        {state === "accepted" ? (
+        {isLocked ? (
+          <Lock className="size-4 shrink-0 text-muted-foreground/60" aria-hidden />
+        ) : state === "accepted" ? (
           <CheckCircle2 className="size-4 shrink-0 text-primary" aria-hidden />
         ) : state === "inProgress" ? (
           <Clock3 className="size-4 shrink-0 text-brand-mint/80" aria-hidden />
@@ -315,18 +306,39 @@ function DocumentSectionCard({
       <div className="mt-3 flex items-center justify-between gap-2">
         <Badge
           variant="outline"
-          className={cn("text-[0.6875rem]", statusBadgeClass(item))}
+          className={cn(
+            "text-[0.6875rem]",
+            isLocked
+              ? "border-border/60 bg-muted/25 text-muted-foreground"
+              : statusBadgeClass(item),
+          )}
         >
-          {status}
+          {isLocked ? "Locked" : status}
         </Badge>
-        <span className="inline-flex items-center gap-1 text-xs text-muted-foreground transition-colors duration-200 group-hover:text-foreground/80">
-          Open
-          <ArrowRight
-            className="size-3 transition-transform duration-200 group-hover:translate-x-0.5 motion-reduce:transform-none"
-            aria-hidden
-          />
-        </span>
+        {!isLocked ? (
+          <span className="inline-flex items-center gap-1 text-xs text-muted-foreground transition-colors duration-200 group-hover:text-foreground/80">
+            Open
+            <ArrowRight
+              className="size-3 transition-transform duration-200 group-hover:translate-x-0.5 motion-reduce:transform-none"
+              aria-hidden
+            />
+          </span>
+        ) : null}
       </div>
+    </>
+  );
+
+  if (isLocked) {
+    return (
+      <div className={cardClassName} aria-disabled="true">
+        {inner}
+      </div>
+    );
+  }
+
+  return (
+    <Link href={href} className={cardClassName}>
+      {inner}
     </Link>
   );
 }
@@ -334,13 +346,25 @@ function DocumentSectionCard({
 function DocumentSectionMatrix({
   items,
   base,
+  sectionOrder,
+  documentType,
 }: {
   items: DocumentItemSlot[];
   base: string;
+  sectionOrder: readonly string[];
+  documentType: DocumentType;
 }) {
-  const sortedItems = [...items].sort(
-    (a, b) => sectionPriorityRank(a) - sectionPriorityRank(b),
+  const lockByType = useMemo(
+    () => buildDocumentSectionLockMap(sectionOrder, items, documentType),
+    [documentType, items, sectionOrder],
   );
+
+  const orderedItems = useMemo(() => {
+    const byType = new Map(items.map((item) => [item.artifactType, item]));
+    return sectionOrder
+      .map((artifactType) => byType.get(artifactType))
+      .filter((item): item is DocumentItemSlot => Boolean(item));
+  }, [items, sectionOrder]);
 
   return (
     <section aria-labelledby="document-section-matrix">
@@ -358,16 +382,17 @@ function DocumentSectionMatrix({
           </p>
         </div>
         <span className="text-xs text-muted-foreground tabular-nums">
-          {items.length} sections
+          {orderedItems.length} sections
         </span>
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-        {sortedItems.map((item) => (
+        {orderedItems.map((item) => (
           <DocumentSectionCard
             key={item.artifactType}
             item={item}
             href={`${base}/${item.artifactType}`}
+            lock={lockByType.get(item.artifactType)}
           />
         ))}
       </div>
@@ -385,6 +410,8 @@ export function DocumentOverviewPage({
   const base = `/${encodeURIComponent(orgSlug)}/projects/${encodeURIComponent(projectSlug)}/documents/${documentType}`;
   const ensureDocument = useEnsureDocument();
 
+  const { data: registry } = useDocumentTypes();
+
   const {
     data: document,
     isPending,
@@ -396,11 +423,67 @@ export function DocumentOverviewPage({
     enabled: Boolean(projectId),
   });
 
+  const sectionOrder = useMemo(() => {
+    const container = registry?.containers.find(
+      (entry) => entry.artifactType === documentType,
+    );
+    if (container?.children.length) return container.children;
+    return document?.items.map((item) => item.artifactType) ?? [];
+  }, [document?.items, documentType, registry?.containers]);
+
+  const sectionLockByType = useMemo(
+    () =>
+      document
+        ? buildDocumentSectionLockMap(sectionOrder, document.items, documentType)
+        : new Map(),
+    [document, documentType, sectionOrder],
+  );
+
+  const inProgressItems = useMemo(
+    () =>
+      document?.items.filter(
+        (item) => getDocumentSectionState(item) === "inProgress",
+      ) ?? [],
+    [document?.items],
+  );
+  const acceptedItems = useMemo(
+    () =>
+      document?.items.filter(
+        (item) => getDocumentSectionState(item) === "accepted",
+      ) ?? [],
+    [document?.items],
+  );
+  const notStartedItems = useMemo(
+    () =>
+      document?.items.filter(
+        (item) => getDocumentSectionState(item) === "notStarted",
+      ) ?? [],
+    [document?.items],
+  );
+  const nextFocusItem = useMemo(() => {
+    if (!document?.artifactId) return null;
+    return (
+      sectionOrder
+        .map(
+          (artifactType) =>
+            document.items.find((item) => item.artifactType === artifactType) ??
+            null,
+        )
+        .find(
+          (item) =>
+            item &&
+            !sectionLockByType.get(item.artifactType)?.locked &&
+            getDocumentSectionState(item) !== "accepted",
+        ) ?? null
+    );
+  }, [document, sectionLockByType, sectionOrder]);
+
   const isInitialLoad =
     isProjectsPending || !projectId || (isPending && !document);
 
   const acceptedCount =
-    document?.items.filter((item) => item.status === "accepted").length ?? 0;
+    document?.items.filter((item) => isDocumentSectionAccepted(item)).length ??
+    0;
   const totalSlots = document?.items.length ?? 0;
 
   if (isInitialLoad) {
@@ -483,17 +566,6 @@ export function DocumentOverviewPage({
     );
   }
 
-  const inProgressItems = document.items.filter(
-    (item) => getSectionState(item) === "inProgress",
-  );
-  const acceptedItems = document.items.filter(
-    (item) => getSectionState(item) === "accepted",
-  );
-  const notStartedItems = document.items.filter(
-    (item) => getSectionState(item) === "notStarted",
-  );
-  const nextFocusItem = inProgressItems[0] ?? notStartedItems[0] ?? null;
-
   return (
     <div className={DOCUMENT_PAGE_SCROLL_CLASS}>
       <div className={DOCUMENT_PAGE_INNER_CLASS}>
@@ -528,7 +600,12 @@ export function DocumentOverviewPage({
           </p>
         ) : null}
 
-        <DocumentSectionMatrix items={document.items} base={base} />
+        <DocumentSectionMatrix
+          items={document.items}
+          base={base}
+          sectionOrder={sectionOrder}
+          documentType={documentType}
+        />
       </div>
     </div>
   );

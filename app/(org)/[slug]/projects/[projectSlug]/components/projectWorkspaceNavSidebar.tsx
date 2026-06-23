@@ -97,7 +97,7 @@ export function ProjectWorkspaceNavSidebar({
       />
       <aside
         className={cn(
-          "flex h-full min-h-0 w-[17rem] shrink-0 flex-col border-r border-border/60 bg-muted/20 xl:w-[17.5rem]",
+          "flex h-full min-h-0 w-68 shrink-0 flex-col border-r border-border/60 bg-muted/20 xl:w-70",
           className,
         )}
         aria-label="Project navigation"
