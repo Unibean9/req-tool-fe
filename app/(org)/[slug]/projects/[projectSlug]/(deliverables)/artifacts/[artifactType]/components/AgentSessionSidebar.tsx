@@ -24,16 +24,15 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { AgentAssistantThread } from "./AgentAssistantThread";
-import {
-  AgentInitialPromptState,
-  useAgentInitialPrompt,
-  type AgentInitialPromptAttempt,
-} from "./AgentInitialPrompt";
+import { AgentAssistantThread, type AgentThreadSendHandler } from "./AgentAssistantThread";
 import { AgentProposalReviewDialog } from "./AgentProposalReviewDialog";
+import {
+  readPersistedAgentMessageModeHint,
+  writePersistedAgentMessageModeHint,
+  type AgentMessageModeHint,
+} from "./agentMessageModeHint";
 import { getApiErrorMessage } from "@/lib/api/getApiErrorMessage";
 import type { DocumentType } from "@/lib/api/services/fetchDocument";
-import { getInitialDocumentItemPrompt } from "@/lib/document/documentItemPrompts";
 import {
   useDocument,
   useEnsureDocument,
@@ -59,6 +58,10 @@ import {
 } from "@/hooks/useAgentSession";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
+
+/** Passes document item validation only; not sent to the agent as a chat message. */
+const DOCUMENT_ITEM_BOOTSTRAP_BODY =
+  "(Workbench slot — content will be drafted here.)";
 
 function formatItemType(itemType: string): string {
   return itemType
@@ -224,7 +227,7 @@ function SessionEmpty({
           <Button
             type="button"
             size="sm"
-            onClick={onStart}
+            onClick={() => onStart()}
             disabled={isLoading}
             className="min-w-38 shadow-[0_0_20px_-6px_color-mix(in_oklab,var(--primary)_55%,transparent)]"
           >
@@ -400,7 +403,7 @@ function ChatBubble({
 }: {
   message: AgentMessage;
   animate: boolean;
-  onQuickAction: (value: string) => void;
+  onQuickAction: AgentThreadSendHandler;
   showOptions?: boolean;
 }) {
   const isAgent = message.role === "agent";
@@ -476,10 +479,12 @@ function ChatView({
   agentRole,
   realtimeMode,
   realtimeSnapshotCount,
+  modeHint,
+  onModeHintChange,
 }: {
   projectId: string;
   sessionId: string;
-  onSend: (content: string) => void;
+  onSend: AgentThreadSendHandler;
   isSending: boolean;
   isInitialTurn: boolean;
   isAgentResponding?: boolean;
@@ -487,6 +492,8 @@ function ChatView({
   agentRole?: string | null;
   realtimeMode: AgentSessionRealtimeMode;
   realtimeSnapshotCount: number;
+  modeHint: AgentMessageModeHint | null;
+  onModeHintChange: (value: AgentMessageModeHint | null) => void;
 }) {
   const {
     data: messages = [],
@@ -564,6 +571,8 @@ function ChatView({
           agentRole={agentRole}
           realtimeSnapshotCount={realtimeSnapshotCount}
           decisionOptions={decisionOptions}
+          modeHint={modeHint}
+          onModeHintChange={onModeHintChange}
         />
       )}
     </div>
@@ -607,7 +616,7 @@ function ProposalsView({
   documentType: DocumentType;
   itemType: string;
   realtimeMode: AgentSessionRealtimeMode;
-  onSend: (content: string) => void;
+  onSend: AgentThreadSendHandler;
 }) {
   const { data: messages = [] } = useAgentSessionMessages(
     projectId,
@@ -1037,11 +1046,10 @@ function AgentSessionBody({
   realtimeMode,
   realtimeSnapshotCount,
   isSending,
-  initialPromptAttempt,
-  isSendingInitialPrompt,
+  modeHint,
+  onModeHintChange,
   onStart,
   onRetry,
-  onRetryInitialPrompt,
   onReset,
   onCancel,
   onSend,
@@ -1054,29 +1062,17 @@ function AgentSessionBody({
   realtimeMode: AgentSessionRealtimeMode;
   realtimeSnapshotCount: number;
   isSending: boolean;
-  initialPromptAttempt: AgentInitialPromptAttempt | null;
-  isSendingInitialPrompt: boolean;
+  modeHint: AgentMessageModeHint | null;
+  onModeHintChange: (value: AgentMessageModeHint | null) => void;
   onStart: () => void;
   onRetry: () => void;
-  onRetryInitialPrompt: () => void;
   onReset: () => void;
   onCancel: () => void;
-  onSend: (content: string) => void;
+  onSend: AgentThreadSendHandler;
 }) {
   let content: React.ReactNode;
 
-  if (initialPromptAttempt) {
-    content = (
-      <AgentInitialPromptState
-        itemType={itemType}
-        prompt={initialPromptAttempt.content}
-        error={initialPromptAttempt.error}
-        isSending={isSendingInitialPrompt}
-        onRetry={onRetryInitialPrompt}
-      />
-    );
-  } else
-    switch (view.kind) {
+  switch (view.kind) {
       case "empty":
         content = (
           <SessionEmpty
@@ -1119,6 +1115,8 @@ function AgentSessionBody({
             agentRole={view.agentRole}
             realtimeMode={realtimeMode}
             realtimeSnapshotCount={realtimeSnapshotCount}
+            modeHint={modeHint}
+            onModeHintChange={onModeHintChange}
           />
         );
         break;
@@ -1134,6 +1132,8 @@ function AgentSessionBody({
             agentRole={view.agentRole}
             realtimeMode={realtimeMode}
             realtimeSnapshotCount={realtimeSnapshotCount}
+            modeHint={modeHint}
+            onModeHintChange={onModeHintChange}
           />
         );
         break;
@@ -1167,14 +1167,10 @@ function AgentSessionBody({
   return (
     <div
       key={
-        initialPromptAttempt
-          ? "initial-prompt"
-          : view.kind === "active" || view.kind === "chat"
-            ? "chat"
-            : view.kind
+        view.kind === "active" || view.kind === "chat" ? "chat" : view.kind
       }
       className="agent-session-state-enter flex min-h-0 flex-1 flex-col"
-      aria-busy={view.kind === "active" || isSendingInitialPrompt}
+      aria-busy={view.kind === "active"}
     >
       {content}
     </div>
@@ -1211,18 +1207,14 @@ export function AgentSessionSidebar({
       ? `agent-session:${currentUser.id}:${projectId}:${documentType}:${itemType}`
       : null;
 
-  const {
-    attempt: initialPromptAttempt,
-    isSending: isSendingInitialPrompt,
-    send: sendInitialPrompt,
-    retry: retryInitialPrompt,
-    clear: clearInitialPrompt,
-  } = useAgentInitialPrompt();
-
   const [trackedSessionStorageKey, setTrackedSessionStorageKey] =
     useState(sessionStorageKey);
   const [sessionId, setSessionIdState] = useState<string | null>(() =>
     readPersistedSessionId(sessionStorageKey),
+  );
+  const [trackedSessionId, setTrackedSessionId] = useState(sessionId);
+  const [modeHint, setModeHintState] = useState<AgentMessageModeHint | null>(
+    () => readPersistedAgentMessageModeHint(readPersistedSessionId(sessionStorageKey)),
   );
   const [missingContext, setMissingContext] = useState<string[]>([]);
   const [startError, setStartError] = useState<string | null>(null);
@@ -1232,12 +1224,27 @@ export function AgentSessionSidebar({
 
   if (trackedSessionStorageKey !== sessionStorageKey) {
     setTrackedSessionStorageKey(sessionStorageKey);
-    setSessionIdState(readPersistedSessionId(sessionStorageKey));
+    const nextSessionId = readPersistedSessionId(sessionStorageKey);
+    setSessionIdState(nextSessionId);
+    setTrackedSessionId(nextSessionId);
+    setModeHintState(readPersistedAgentMessageModeHint(nextSessionId));
     setMissingContext([]);
     setStartError(null);
     setSessionNotice(null);
-    clearInitialPrompt();
   }
+
+  if (trackedSessionId !== sessionId) {
+    setTrackedSessionId(sessionId);
+    setModeHintState(readPersistedAgentMessageModeHint(sessionId));
+  }
+
+  const setModeHint = useCallback(
+    (value: AgentMessageModeHint | null) => {
+      setModeHintState(value);
+      writePersistedAgentMessageModeHint(sessionId, value);
+    },
+    [sessionId],
+  );
 
   const { data: document } = useDocument(projectId, documentType, {
     enabled: Boolean(projectId),
@@ -1299,19 +1306,16 @@ export function AgentSessionSidebar({
   const sendMessage = useSendAgentMessage();
 
   const createSession = useCreateAgentSession({
-    onSuccess: (res, variables) => {
-      const initialPrompt = getInitialDocumentItemPrompt(itemType, slot?.label);
+    onSuccess: (res) => {
       setStartError(null);
       setSessionNotice(null);
       setSessionId(res.data.sessionId);
       setMissingContext(res.data.missingContext);
-      sendInitialPrompt(variables.projectId, res.data.sessionId, initialPrompt);
     },
     onError: (error) => {
       const conflictId = extractConflictSessionId(error);
       if (conflictId) {
         setStartError(null);
-        clearInitialPrompt();
         setSessionNotice("Reopened your active drafting session.");
         setSessionId(conflictId);
         return;
@@ -1327,7 +1331,6 @@ export function AgentSessionSidebar({
       setCancelDialogOpen(false);
       setSessionId(null);
       setMissingContext([]);
-      clearInitialPrompt();
       setSessionNotice("The drafting session was ended.");
     },
   });
@@ -1336,7 +1339,6 @@ export function AgentSessionSidebar({
     if (!projectId) return;
     setStartError(null);
     setSessionNotice(null);
-    clearInitialPrompt();
     setIsBootstrapping(true);
 
     const run = async () => {
@@ -1352,10 +1354,6 @@ export function AgentSessionSidebar({
 
         const currentSlot =
           docView.items.find((item) => item.artifactType === itemType) ?? slot;
-        const initialPrompt = getInitialDocumentItemPrompt(
-          itemType,
-          currentSlot?.label,
-        );
 
         let focusedArtifactId = currentSlot?.artifactId ?? null;
         if (!focusedArtifactId) {
@@ -1365,9 +1363,9 @@ export function AgentSessionSidebar({
             itemType,
             req: {
               title: currentSlot?.label ?? null,
-              body: initialPrompt,
-              change_source: "manual",
-              change_summary: "Prepared section for agent drafting",
+              body: DOCUMENT_ITEM_BOOTSTRAP_BODY,
+              change_source: "system",
+              change_summary: "Reserved section slot for workbench",
             },
           });
           focusedArtifactId = createdItem.data.artifactId;
@@ -1401,16 +1399,10 @@ export function AgentSessionSidebar({
     itemType,
     slot,
     activeConfig,
-    clearInitialPrompt,
     createSession,
     ensureDocument,
     upsertItem,
   ]);
-
-  const handleRetryInitialPrompt = useCallback(() => {
-    if (!projectId) return;
-    retryInitialPrompt(projectId);
-  }, [projectId, retryInitialPrompt]);
 
   const handleConfirmCancel = useCallback(() => {
     if (!projectId || !sessionId) return;
@@ -1418,7 +1410,7 @@ export function AgentSessionSidebar({
   }, [projectId, sessionId, deleteSession]);
 
   const handleSendMessage = useCallback(
-    (content: string) => {
+    (content: string, modeHint?: AgentMessageModeHint | null) => {
       if (
         !projectId ||
         !sessionId ||
@@ -1429,7 +1421,14 @@ export function AgentSessionSidebar({
         void refetchSession();
         return;
       }
-      sendMessage.mutate({ projectId, sessionId, req: { content } });
+      sendMessage.mutate({
+        projectId,
+        sessionId,
+        req: {
+          content,
+          ...(modeHint ? { mode_hint: modeHint } : {}),
+        },
+      });
     },
     [projectId, refetchSession, sendMessage, session, sessionId],
   );
@@ -1439,8 +1438,7 @@ export function AgentSessionSidebar({
     setMissingContext([]);
     setStartError(null);
     setSessionNotice(null);
-    clearInitialPrompt();
-  }, [clearInitialPrompt, setSessionId]);
+  }, [setSessionId]);
 
   const status = session?.status ?? null;
   const restoredMissingContext = formatMissingContext(
@@ -1451,8 +1449,6 @@ export function AgentSessionSidebar({
 
   const isCreating = createSession.isPending || isBootstrapping;
   const isDeleting = deleteSession.isPending;
-  const visibleInitialPromptAttempt =
-    initialPromptAttempt?.sessionId === sessionId ? initialPromptAttempt : null;
   const view = resolveAgentSessionView({
     sessionId,
     session,
@@ -1501,11 +1497,10 @@ export function AgentSessionSidebar({
           realtimeMode={realtime.mode}
           realtimeSnapshotCount={realtime.snapshotCount}
           isSending={sendMessage.isPending}
-          initialPromptAttempt={visibleInitialPromptAttempt}
-          isSendingInitialPrompt={isSendingInitialPrompt}
+          modeHint={modeHint}
+          onModeHintChange={setModeHint}
           onStart={handleStart}
           onRetry={() => void refetchSession()}
-          onRetryInitialPrompt={handleRetryInitialPrompt}
           onReset={handleReset}
           onCancel={() => setCancelDialogOpen(true)}
           onSend={handleSendMessage}

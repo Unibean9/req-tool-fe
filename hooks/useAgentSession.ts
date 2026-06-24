@@ -213,6 +213,47 @@ function refreshSessionSnapshotAfterAction(
   }, 2000);
 }
 
+function syncCacheAfterToolCallAction(
+  queryClient: QueryClient,
+  variables: {
+    projectId: string;
+    sessionId: string;
+    documentType: DocumentType;
+    itemType: string;
+  },
+  toolCall: AgentToolCall
+) {
+  upsertToolCall(
+    queryClient,
+    variables.projectId,
+    variables.sessionId,
+    toolCall
+  );
+  refreshSessionSnapshotAfterAction(
+    queryClient,
+    variables.projectId,
+    variables.sessionId
+  );
+  invalidateToolCalls(queryClient, variables.projectId, variables.sessionId);
+  invalidateSession(queryClient, variables.projectId, variables.sessionId);
+  refreshDocumentItemAfterExternalChange(
+    queryClient,
+    variables.projectId,
+    variables.documentType,
+    variables.itemType
+  );
+  invalidateBrdExport(queryClient, variables.projectId);
+}
+
+function syncCacheAfterToolCallActionError(
+  queryClient: QueryClient,
+  projectId: string,
+  sessionId: string
+) {
+  invalidateToolCalls(queryClient, projectId, sessionId);
+  invalidateSession(queryClient, projectId, sessionId);
+}
+
 function applyStreamEvent(
   queryClient: QueryClient,
   projectId: string,
@@ -594,31 +635,15 @@ export function useApproveToolCall(
     mutationFn: ({ projectId, toolCallId }: ToolCallActionVariables) =>
       fetchAgentSession.approve(projectId, toolCallId),
     onSuccess: (data, variables, onMutateResult, context) => {
-      upsertToolCall(
-        queryClient,
-        variables.projectId,
-        variables.sessionId,
-        data.data
-      );
-      refreshSessionSnapshotAfterAction(
+      syncCacheAfterToolCallAction(queryClient, variables, data.data);
+      userOnSuccess?.(data, variables, onMutateResult, context);
+    },
+    onError: (error, variables, onMutateResult, context) => {
+      syncCacheAfterToolCallActionError(
         queryClient,
         variables.projectId,
         variables.sessionId
       );
-      invalidateToolCalls(queryClient, variables.projectId, variables.sessionId);
-      invalidateSession(queryClient, variables.projectId, variables.sessionId);
-      refreshDocumentItemAfterExternalChange(
-        queryClient,
-        variables.projectId,
-        variables.documentType,
-        variables.itemType
-      );
-      invalidateBrdExport(queryClient, variables.projectId);
-      userOnSuccess?.(data, variables, onMutateResult, context);
-    },
-    onError: (error, variables, onMutateResult, context) => {
-      invalidateToolCalls(queryClient, variables.projectId, variables.sessionId);
-      invalidateSession(queryClient, variables.projectId, variables.sessionId);
       toast.error(getApiErrorMessage(error, "Could not approve proposal"));
       userOnError?.(error, variables, onMutateResult, context);
     },
@@ -639,31 +664,15 @@ export function useRejectToolCall(
     mutationFn: ({ projectId, toolCallId }: ToolCallActionVariables) =>
       fetchAgentSession.reject(projectId, toolCallId),
     onSuccess: (data, variables, onMutateResult, context) => {
-      upsertToolCall(
-        queryClient,
-        variables.projectId,
-        variables.sessionId,
-        data.data
-      );
-      refreshSessionSnapshotAfterAction(
+      syncCacheAfterToolCallAction(queryClient, variables, data.data);
+      userOnSuccess?.(data, variables, onMutateResult, context);
+    },
+    onError: (error, variables, onMutateResult, context) => {
+      syncCacheAfterToolCallActionError(
         queryClient,
         variables.projectId,
         variables.sessionId
       );
-      invalidateToolCalls(queryClient, variables.projectId, variables.sessionId);
-      invalidateSession(queryClient, variables.projectId, variables.sessionId);
-      refreshDocumentItemAfterExternalChange(
-        queryClient,
-        variables.projectId,
-        variables.documentType,
-        variables.itemType
-      );
-      invalidateBrdExport(queryClient, variables.projectId);
-      userOnSuccess?.(data, variables, onMutateResult, context);
-    },
-    onError: (error, variables, onMutateResult, context) => {
-      invalidateToolCalls(queryClient, variables.projectId, variables.sessionId);
-      invalidateSession(queryClient, variables.projectId, variables.sessionId);
       toast.error(getApiErrorMessage(error, "Could not reject proposal"));
       userOnError?.(error, variables, onMutateResult, context);
     },
@@ -689,30 +698,15 @@ export function useRequestEditToolCall(
     }: RequestEditVariables) =>
       fetchAgentSession.requestEdit(projectId, toolCallId, req),
     onSuccess: (data, variables, onMutateResult, context) => {
-      upsertToolCall(
-        queryClient,
-        variables.projectId,
-        variables.sessionId,
-        data.data
-      );
-      refreshSessionSnapshotAfterAction(
+      syncCacheAfterToolCallAction(queryClient, variables, data.data);
+      userOnSuccess?.(data, variables, onMutateResult, context);
+    },
+    onError: (error, variables, onMutateResult, context) => {
+      syncCacheAfterToolCallActionError(
         queryClient,
         variables.projectId,
         variables.sessionId
       );
-      invalidateToolCalls(queryClient, variables.projectId, variables.sessionId);
-      invalidateSession(queryClient, variables.projectId, variables.sessionId);
-      refreshDocumentItemAfterExternalChange(
-        queryClient,
-        variables.projectId,
-        variables.documentType,
-        variables.itemType
-      );
-      userOnSuccess?.(data, variables, onMutateResult, context);
-    },
-    onError: (error, variables, onMutateResult, context) => {
-      invalidateToolCalls(queryClient, variables.projectId, variables.sessionId);
-      invalidateSession(queryClient, variables.projectId, variables.sessionId);
       toast.error(getApiErrorMessage(error, "Could not request a revision"));
       userOnError?.(error, variables, onMutateResult, context);
     },
