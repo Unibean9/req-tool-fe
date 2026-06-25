@@ -24,16 +24,20 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { AgentAssistantThread } from "./AgentAssistantThread";
-import {
-  AgentInitialPromptState,
-  getInitialArtifactPrompt,
-  useAgentInitialPrompt,
-  type AgentInitialPromptAttempt,
-} from "./AgentInitialPrompt";
+import { AgentAssistantThread, type AgentThreadSendHandler } from "./AgentAssistantThread";
 import { AgentProposalReviewDialog } from "./AgentProposalReviewDialog";
+import {
+  readPersistedAgentMessageModeHint,
+  writePersistedAgentMessageModeHint,
+  type AgentMessageModeHint,
+} from "./agentMessageModeHint";
 import { getApiErrorMessage } from "@/lib/api/getApiErrorMessage";
-import type { ArtifactType } from "@/lib/api/services/fetchArtifact";
+import type { DocumentType } from "@/lib/api/services/fetchDocument";
+import {
+  useDocument,
+  useEnsureDocument,
+  useUpsertDocumentItem,
+} from "@/hooks/useDocument";
 import { useAppSelector } from "@/lib/redux/hooks";
 import { selectUser } from "@/lib/redux/slices/authSlice";
 import { cn } from "@/lib/utils";
@@ -55,8 +59,12 @@ import {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function formatArtifactType(artifactType: string): string {
-  return artifactType
+/** Passes document item validation only; not sent to the agent as a chat message. */
+const DOCUMENT_ITEM_BOOTSTRAP_BODY =
+  "(Workbench slot — content will be drafted here.)";
+
+function formatItemType(itemType: string): string {
+  return itemType
     .replace(/_/g, " ")
     .replace(/\b\w/g, (character) => character.toUpperCase());
 }
@@ -69,7 +77,7 @@ function extractConflictSessionId(error: unknown): string | null {
     (data as { session_id?: unknown }).session_id ??
     ((data as { detail?: unknown }).detail &&
     typeof (data as { detail?: unknown }).detail === "object"
-      ? ((data as { detail: { session_id?: unknown } }).detail).session_id
+      ? (data as { detail: { session_id?: unknown } }).detail.session_id
       : null);
   return typeof id === "string" && id ? id : null;
 }
@@ -98,7 +106,7 @@ function formatMissingContext(value: AgentMissingContext): string[] {
     if (Array.isArray(item)) {
       const labels = item.filter(
         (entry): entry is string =>
-          typeof entry === "string" && Boolean(entry.trim())
+          typeof entry === "string" && Boolean(entry.trim()),
       );
       return labels.length ? [`${key}: ${labels.join(", ")}`] : [key];
     }
@@ -118,15 +126,14 @@ function MissingContextBanner({ items }: { items: string[] }) {
     >
       <AlertTriangle className="mt-0.5 size-3.5 shrink-0" aria-hidden />
       <span className="text-pretty">
-        <span className="font-medium">Context needed:</span>{" "}
-        {items.join(", ")}
+        <span className="font-medium">Context needed:</span> {items.join(", ")}
       </span>
     </div>
   );
 }
 
-function SessionChatPreview({ artifactType }: { artifactType: ArtifactType }) {
-  const artifactLabel = formatArtifactType(artifactType);
+function SessionChatPreview({ itemType }: { itemType: string }) {
+  const artifactLabel = formatItemType(itemType);
 
   return (
     <div
@@ -174,21 +181,21 @@ function SessionChatPreview({ artifactType }: { artifactType: ArtifactType }) {
 }
 
 function SessionEmpty({
-  artifactType,
+  itemType,
   onStart,
   isLoading,
   message,
 }: {
-  artifactType: ArtifactType;
+  itemType: string;
   onStart: () => void;
   isLoading: boolean;
   message?: string | null;
 }) {
-  const artifactLabel = formatArtifactType(artifactType);
+  const artifactLabel = formatItemType(itemType);
 
   return (
     <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden">
-      <SessionChatPreview artifactType={artifactType} />
+      <SessionChatPreview itemType={itemType} />
 
       <div className="absolute inset-0 flex items-center justify-center bg-background/72 px-5 backdrop-blur-[3px] supports-backdrop-filter:bg-background/58">
         <div
@@ -220,7 +227,7 @@ function SessionEmpty({
           <Button
             type="button"
             size="sm"
-            onClick={onStart}
+            onClick={() => onStart()}
             disabled={isLoading}
             className="min-w-38 shadow-[0_0_20px_-6px_color-mix(in_oklab,var(--primary)_55%,transparent)]"
           >
@@ -242,11 +249,11 @@ function SessionEmpty({
 }
 
 function SessionActive({
-  artifactType,
+  itemType,
   onCancel,
   isCancelling,
 }: {
-  artifactType: ArtifactType;
+  itemType: string;
   onCancel: () => void;
   isCancelling: boolean;
 }) {
@@ -262,7 +269,7 @@ function SessionActive({
           </div>
           <div className="min-w-0 flex-1">
             <p className="text-pretty text-sm font-semibold text-foreground">
-              Preparing {formatArtifactType(artifactType)}
+              Preparing {formatItemType(itemType)}
             </p>
             <p className="mt-1 text-pretty text-xs leading-5 text-muted-foreground">
               The workbench is connecting and will place progress here as it
@@ -396,7 +403,7 @@ function ChatBubble({
 }: {
   message: AgentMessage;
   animate: boolean;
-  onQuickAction: (value: string) => void;
+  onQuickAction: AgentThreadSendHandler;
   showOptions?: boolean;
 }) {
   const isAgent = message.role === "agent";
@@ -404,7 +411,7 @@ function ChatBubble({
   const payloadLabel = payload?.kind ? formatPayloadKind(payload.kind) : null;
   const localeLabel = payload?.locale ? payload.locale.toUpperCase() : null;
   const isQueued = payload?.queued === true;
-  const options = isAgent ? payload?.options ?? [] : [];
+  const options = isAgent ? (payload?.options ?? []) : [];
 
   return (
     <article
@@ -414,7 +421,7 @@ function ChatBubble({
           ? "py-1"
           : "ml-auto w-fit max-w-[85%] rounded-lg border border-border/60 bg-muted/35 px-3 py-2.5",
         isQueued && "opacity-65",
-        animate && "agent-message-enter"
+        animate && "agent-message-enter",
       )}
     >
       <p className="whitespace-pre-wrap wrap-break-word text-pretty text-sm leading-6 text-foreground">
@@ -468,21 +475,25 @@ function ChatView({
   isSending,
   isInitialTurn,
   isAgentResponding = false,
-  artifactType,
+  itemType,
   agentRole,
   realtimeMode,
   realtimeSnapshotCount,
+  modeHint,
+  onModeHintChange,
 }: {
   projectId: string;
   sessionId: string;
-  onSend: (content: string) => void;
+  onSend: AgentThreadSendHandler;
   isSending: boolean;
   isInitialTurn: boolean;
   isAgentResponding?: boolean;
-  artifactType: ArtifactType;
+  itemType: string;
   agentRole?: string | null;
   realtimeMode: AgentSessionRealtimeMode;
   realtimeSnapshotCount: number;
+  modeHint: AgentMessageModeHint | null;
+  onModeHintChange: (value: AgentMessageModeHint | null) => void;
 }) {
   const {
     data: messages = [],
@@ -528,7 +539,10 @@ function ChatView({
         <div className="flex-1 overflow-y-auto px-4 py-4">
           <div className="flex h-full flex-col items-center justify-center gap-3 text-center">
             <p className="text-pretty text-xs text-destructive">
-              {getApiErrorMessage(error, "Could not load the workbench history")}
+              {getApiErrorMessage(
+                error,
+                "Could not load the workbench history",
+              )}
             </p>
             <Button
               type="button"
@@ -553,10 +567,12 @@ function ChatView({
           isSending={isSending}
           isInitialTurn={isInitialTurn}
           isAwaitingAgentReply={isAwaitingAgentReply}
-          artifactType={artifactType}
+          itemType={itemType}
           agentRole={agentRole}
           realtimeSnapshotCount={realtimeSnapshotCount}
           decisionOptions={decisionOptions}
+          modeHint={modeHint}
+          onModeHintChange={onModeHintChange}
         />
       )}
     </div>
@@ -567,19 +583,22 @@ function ProposalCard({
   toolCall,
   projectId,
   sessionId,
-  artifactType,
+  documentType,
+  itemType,
 }: {
   toolCall: AgentToolCall;
   projectId: string;
   sessionId: string;
-  artifactType: ArtifactType;
+  documentType: DocumentType;
+  itemType: string;
 }) {
   return (
     <AgentProposalReviewDialog
       toolCall={toolCall}
       projectId={projectId}
       sessionId={sessionId}
-      artifactType={artifactType}
+      documentType={documentType}
+      itemType={itemType}
     />
   );
 }
@@ -587,19 +606,25 @@ function ProposalCard({
 function ProposalsView({
   projectId,
   sessionId,
-  artifactType,
+  documentType,
+  itemType,
   realtimeMode,
   onSend,
 }: {
   projectId: string;
   sessionId: string;
-  artifactType: ArtifactType;
+  documentType: DocumentType;
+  itemType: string;
   realtimeMode: AgentSessionRealtimeMode;
-  onSend: (content: string) => void;
+  onSend: AgentThreadSendHandler;
 }) {
-  const { data: messages = [] } = useAgentSessionMessages(projectId, sessionId, {
-    enabled: realtimeMode === "fallback",
-  });
+  const { data: messages = [] } = useAgentSessionMessages(
+    projectId,
+    sessionId,
+    {
+      enabled: realtimeMode === "fallback",
+    },
+  );
   const {
     data: toolCalls = [],
     isPending,
@@ -617,7 +642,7 @@ function ProposalsView({
     (message) =>
       message.role === "agent" &&
       (message.payload?.kind === "proposal" ||
-        message.payload?.kind === "confirm")
+        message.payload?.kind === "confirm"),
   );
 
   if (isPending) {
@@ -691,8 +716,8 @@ function ProposalsView({
               Review queue ({proposed.length})
             </h2>
             <p className="text-pretty text-xs leading-relaxed text-muted-foreground">
-              Inspect each draft before approving, rejecting, or sending it
-              back for revision.
+              Inspect each draft before approving, rejecting, or sending it back
+              for revision.
             </p>
           </div>
           <div className="flex flex-col gap-2">
@@ -702,7 +727,8 @@ function ProposalsView({
                 toolCall={tc}
                 projectId={projectId}
                 sessionId={sessionId}
-                artifactType={artifactType}
+                documentType={documentType}
+                itemType={itemType}
               />
             ))}
           </div>
@@ -720,7 +746,8 @@ function ProposalsView({
                 toolCall={tc}
                 projectId={projectId}
                 sessionId={sessionId}
-                artifactType={artifactType}
+                documentType={documentType}
+                itemType={itemType}
               />
             ))}
           </div>
@@ -730,11 +757,7 @@ function ProposalsView({
   );
 }
 
-function SessionDone({
-  onReset,
-}: {
-  onReset: () => void;
-}) {
+function SessionDone({ onReset }: { onReset: () => void }) {
   return (
     <div className="flex flex-1 items-center px-4 py-8">
       <div className="w-full rounded-xl border border-primary/25 bg-primary/8 p-4">
@@ -780,7 +803,7 @@ function SessionFailed({
   const { data: messages = [] } = useAgentSessionMessages(
     projectId,
     sessionId,
-    { enabled: realtimeMode === "fallback" }
+    { enabled: realtimeMode === "fallback" },
   );
   const lastAgentMsg = [...messages].reverse().find((m) => m.role === "agent");
 
@@ -829,14 +852,14 @@ function SessionFailed({
 }
 
 function AgentSessionHeader({
-  artifactType,
+  itemType,
   status,
   realtimeMode,
   isStreaming,
   isDeleting,
   onCancel,
 }: {
-  artifactType: ArtifactType;
+  itemType: string;
   status: AgentSession["status"] | null;
   realtimeMode: AgentSessionRealtimeMode;
   isStreaming: boolean;
@@ -882,7 +905,7 @@ function AgentSessionHeader({
           Artifact workbench
         </p>
         <p className="truncate text-xs text-muted-foreground">
-          {formatArtifactType(artifactType)}
+          {formatItemType(itemType)}
         </p>
       </div>
       <span
@@ -899,7 +922,7 @@ function AgentSessionHeader({
                 ? "bg-amber-400"
                 : "bg-muted-foreground/60",
             realtimeMode === "connecting" &&
-              "animate-pulse motion-reduce:animate-none"
+              "animate-pulse motion-reduce:animate-none",
           )}
         />
         {connectionLabel}
@@ -983,7 +1006,7 @@ function resolveAgentSessionView({
           ? "The drafting service is not ready yet. Wait a moment and try again."
           : getApiErrorMessage(
               sessionError,
-              "Could not load the drafting session status"
+              "Could not load the drafting session status",
             ),
     };
   }
@@ -1017,190 +1040,218 @@ function resolveAgentSessionView({
 function AgentSessionBody({
   projectId,
   sessionId,
-  artifactType,
+  documentType,
+  itemType,
   view,
   realtimeMode,
   realtimeSnapshotCount,
   isSending,
-  initialPromptAttempt,
-  isSendingInitialPrompt,
+  modeHint,
+  onModeHintChange,
   onStart,
   onRetry,
-  onRetryInitialPrompt,
   onReset,
   onCancel,
   onSend,
 }: {
   projectId: string | null;
   sessionId: string | null;
-  artifactType: ArtifactType;
+  documentType: DocumentType;
+  itemType: string;
   view: AgentSessionView;
   realtimeMode: AgentSessionRealtimeMode;
   realtimeSnapshotCount: number;
   isSending: boolean;
-  initialPromptAttempt: AgentInitialPromptAttempt | null;
-  isSendingInitialPrompt: boolean;
+  modeHint: AgentMessageModeHint | null;
+  onModeHintChange: (value: AgentMessageModeHint | null) => void;
   onStart: () => void;
   onRetry: () => void;
-  onRetryInitialPrompt: () => void;
   onReset: () => void;
   onCancel: () => void;
-  onSend: (content: string) => void;
+  onSend: AgentThreadSendHandler;
 }) {
   let content: React.ReactNode;
 
-  if (initialPromptAttempt) {
-    content = (
-      <AgentInitialPromptState
-        artifactType={artifactType}
-        prompt={initialPromptAttempt.content}
-        error={initialPromptAttempt.error}
-        isSending={isSendingInitialPrompt}
-        onRetry={onRetryInitialPrompt}
-      />
-    );
-  } else switch (view.kind) {
-    case "empty":
-      content = (
-        <SessionEmpty
-          artifactType={artifactType}
-          onStart={onStart}
-          isLoading={view.isCreating}
-          message={view.message}
-        />
-      );
-      break;
-    case "error":
-      content = (
-        <SessionError
-          message={view.message}
-          onRetry={onRetry}
-          onReset={onReset}
-          isRetrying={view.isRetrying}
-        />
-      );
-      break;
-    case "connecting":
-      content = (
-        <SessionActive
-          artifactType={artifactType}
-          onCancel={onCancel}
-          isCancelling={view.isDeleting}
-        />
-      );
-      break;
-    case "active":
-      content = (
-        <ChatView
-          projectId={projectId!}
-          sessionId={sessionId!}
-          onSend={onSend}
-          isSending={isSending}
-          isInitialTurn={false}
-          isAgentResponding
-          artifactType={artifactType}
-          agentRole={view.agentRole}
-          realtimeMode={realtimeMode}
-          realtimeSnapshotCount={realtimeSnapshotCount}
-        />
-      );
-      break;
-    case "chat":
-      content = (
-        <ChatView
-          projectId={projectId!}
-          sessionId={sessionId!}
-          onSend={onSend}
-          isSending={isSending}
-          isInitialTurn={view.isInitialTurn}
-          artifactType={artifactType}
-          agentRole={view.agentRole}
-          realtimeMode={realtimeMode}
-          realtimeSnapshotCount={realtimeSnapshotCount}
-        />
-      );
-      break;
-    case "proposals":
-      content = (
-        <ProposalsView
-          projectId={projectId!}
-          sessionId={sessionId!}
-          artifactType={artifactType}
-          realtimeMode={realtimeMode}
-          onSend={onSend}
-        />
-      );
-      break;
-    case "completed":
-      content = <SessionDone onReset={onReset} />;
-      break;
-    case "failed":
-      content = (
-        <SessionFailed
-          projectId={projectId!}
-          sessionId={sessionId!}
-          onReset={onReset}
-          realtimeMode={realtimeMode}
-        />
-      );
-      break;
-  }
+  switch (view.kind) {
+      case "empty":
+        content = (
+          <SessionEmpty
+            itemType={itemType}
+            onStart={onStart}
+            isLoading={view.isCreating}
+            message={view.message}
+          />
+        );
+        break;
+      case "error":
+        content = (
+          <SessionError
+            message={view.message}
+            onRetry={onRetry}
+            onReset={onReset}
+            isRetrying={view.isRetrying}
+          />
+        );
+        break;
+      case "connecting":
+        content = (
+          <SessionActive
+            itemType={itemType}
+            onCancel={onCancel}
+            isCancelling={view.isDeleting}
+          />
+        );
+        break;
+      case "active":
+        content = (
+          <ChatView
+            projectId={projectId!}
+            sessionId={sessionId!}
+            onSend={onSend}
+            isSending={isSending}
+            isInitialTurn={false}
+            isAgentResponding
+            itemType={itemType}
+            agentRole={view.agentRole}
+            realtimeMode={realtimeMode}
+            realtimeSnapshotCount={realtimeSnapshotCount}
+            modeHint={modeHint}
+            onModeHintChange={onModeHintChange}
+          />
+        );
+        break;
+      case "chat":
+        content = (
+          <ChatView
+            projectId={projectId!}
+            sessionId={sessionId!}
+            onSend={onSend}
+            isSending={isSending}
+            isInitialTurn={view.isInitialTurn}
+            itemType={itemType}
+            agentRole={view.agentRole}
+            realtimeMode={realtimeMode}
+            realtimeSnapshotCount={realtimeSnapshotCount}
+            modeHint={modeHint}
+            onModeHintChange={onModeHintChange}
+          />
+        );
+        break;
+      case "proposals":
+        content = (
+          <ProposalsView
+            projectId={projectId!}
+            sessionId={sessionId!}
+            documentType={documentType}
+            itemType={itemType}
+            realtimeMode={realtimeMode}
+            onSend={onSend}
+          />
+        );
+        break;
+      case "completed":
+        content = <SessionDone onReset={onReset} />;
+        break;
+      case "failed":
+        content = (
+          <SessionFailed
+            projectId={projectId!}
+            sessionId={sessionId!}
+            onReset={onReset}
+            realtimeMode={realtimeMode}
+          />
+        );
+        break;
+    }
 
   return (
     <div
       key={
-        initialPromptAttempt
-          ? "initial-prompt"
-          : view.kind === "active" || view.kind === "chat"
-            ? "chat"
-            : view.kind
+        view.kind === "active" || view.kind === "chat" ? "chat" : view.kind
       }
       className="agent-session-state-enter flex min-h-0 flex-1 flex-col"
-      aria-busy={view.kind === "active" || isSendingInitialPrompt}
+      aria-busy={view.kind === "active"}
     >
       {content}
     </div>
   );
 }
 
+function readPersistedSessionId(
+  sessionStorageKey: string | null,
+): string | null {
+  if (!sessionStorageKey) return null;
+  try {
+    return sessionStorage.getItem(sessionStorageKey);
+  } catch {
+    return null;
+  }
+}
+
 // ─── Main component ───────────────────────────────────────────────────────────
 
 type AgentSessionSidebarProps = {
   projectId: string | null;
-  artifactType: ArtifactType;
+  documentType: DocumentType;
+  itemType: string;
 };
 
 export function AgentSessionSidebar({
   projectId,
-  artifactType,
+  documentType,
+  itemType,
 }: AgentSessionSidebarProps) {
   const currentUser = useAppSelector(selectUser);
-  const [sessionId, setSessionIdState] = useState<string | null>(null);
+  const sessionStorageKey =
+    projectId && currentUser?.id
+      ? `agent-session:${currentUser.id}:${projectId}:${documentType}:${itemType}`
+      : null;
+
+  const [trackedSessionStorageKey, setTrackedSessionStorageKey] =
+    useState(sessionStorageKey);
+  const [sessionId, setSessionIdState] = useState<string | null>(() =>
+    readPersistedSessionId(sessionStorageKey),
+  );
+  const [trackedSessionId, setTrackedSessionId] = useState(sessionId);
+  const [modeHint, setModeHintState] = useState<AgentMessageModeHint | null>(
+    () => readPersistedAgentMessageModeHint(readPersistedSessionId(sessionStorageKey)),
+  );
   const [missingContext, setMissingContext] = useState<string[]>([]);
   const [startError, setStartError] = useState<string | null>(null);
   const [sessionNotice, setSessionNotice] = useState<string | null>(null);
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
-  const sessionStorageKey = projectId && currentUser?.id
-    ? `agent-session:${currentUser.id}:${projectId}:${artifactType}`
-    : null;
+  const [isBootstrapping, setIsBootstrapping] = useState(false);
 
-  // Restore the session for the exact project + artifact pair.
-  useEffect(() => {
-    if (!sessionStorageKey) return;
-    let cancelled = false;
-    try {
-      const saved = sessionStorage.getItem(sessionStorageKey);
-      if (!saved) return;
-      queueMicrotask(() => {
-        if (!cancelled) setSessionIdState(saved);
-      });
-    } catch {
-      // Storage can be unavailable in restricted browser contexts.
-    }
-    return () => {
-      cancelled = true;
-    };
-  }, [sessionStorageKey]);
+  if (trackedSessionStorageKey !== sessionStorageKey) {
+    setTrackedSessionStorageKey(sessionStorageKey);
+    const nextSessionId = readPersistedSessionId(sessionStorageKey);
+    setSessionIdState(nextSessionId);
+    setTrackedSessionId(nextSessionId);
+    setModeHintState(readPersistedAgentMessageModeHint(nextSessionId));
+    setMissingContext([]);
+    setStartError(null);
+    setSessionNotice(null);
+  }
+
+  if (trackedSessionId !== sessionId) {
+    setTrackedSessionId(sessionId);
+    setModeHintState(readPersistedAgentMessageModeHint(sessionId));
+  }
+
+  const setModeHint = useCallback(
+    (value: AgentMessageModeHint | null) => {
+      setModeHintState(value);
+      writePersistedAgentMessageModeHint(sessionId, value);
+    },
+    [sessionId],
+  );
+
+  const { data: document } = useDocument(projectId, documentType, {
+    enabled: Boolean(projectId),
+  });
+  const slot = document?.items.find((item) => item.artifactType === itemType);
+  const ensureDocument = useEnsureDocument();
+  const upsertItem = useUpsertDocumentItem();
 
   const setSessionId = useCallback(
     (id: string | null) => {
@@ -1213,7 +1264,7 @@ export function AgentSessionSidebar({
         // Session persistence is a convenience; in-memory state still works.
       }
     },
-    [sessionStorageKey]
+    [sessionStorageKey],
   );
 
   const { data: activeConfig } = useActiveLlmProviderConfig();
@@ -1243,7 +1294,7 @@ export function AgentSessionSidebar({
       setSessionId(null);
       setMissingContext([]);
       setSessionNotice(
-        "This drafting session no longer exists or you no longer have access. You can start a new session."
+        "This drafting session no longer exists or you no longer have access. You can start a new session.",
       );
     });
 
@@ -1253,38 +1304,24 @@ export function AgentSessionSidebar({
   }, [isSessionError, sessionErrorCode, sessionId, setSessionId]);
 
   const sendMessage = useSendAgentMessage();
-  const {
-    attempt: initialPromptAttempt,
-    isSending: isSendingInitialPrompt,
-    send: sendInitialPrompt,
-    retry: retryInitialPrompt,
-    clear: clearInitialPrompt,
-  } = useAgentInitialPrompt();
 
   const createSession = useCreateAgentSession({
-    onSuccess: (res, variables) => {
-      const initialPrompt = getInitialArtifactPrompt(artifactType);
+    onSuccess: (res) => {
       setStartError(null);
       setSessionNotice(null);
       setSessionId(res.data.sessionId);
       setMissingContext(res.data.missingContext);
-      sendInitialPrompt(
-        variables.projectId,
-        res.data.sessionId,
-        initialPrompt
-      );
     },
     onError: (error) => {
       const conflictId = extractConflictSessionId(error);
       if (conflictId) {
         setStartError(null);
-        clearInitialPrompt();
         setSessionNotice("Reopened your active drafting session.");
         setSessionId(conflictId);
         return;
       }
       setStartError(
-        getApiErrorMessage(error, "Could not create drafting session")
+        getApiErrorMessage(error, "Could not create drafting session"),
       );
     },
   });
@@ -1294,7 +1331,6 @@ export function AgentSessionSidebar({
       setCancelDialogOpen(false);
       setSessionId(null);
       setMissingContext([]);
-      clearInitialPrompt();
       setSessionNotice("The drafting session was ended.");
     },
   });
@@ -1303,29 +1339,70 @@ export function AgentSessionSidebar({
     if (!projectId) return;
     setStartError(null);
     setSessionNotice(null);
-    clearInitialPrompt();
-    createSession.mutate({
-      projectId,
-      req: {
-        artifact_type: artifactType,
-        step_key: null,
-        workflow_area: "analysis",
-        agent_role: null,
-        provider_config_id: activeConfig?.id ?? null,
-      },
-    });
+    setIsBootstrapping(true);
+
+    const run = async () => {
+      try {
+        let docView = document;
+        if (!docView?.artifactId) {
+          const created = await ensureDocument.mutateAsync({
+            projectId,
+            documentType,
+          });
+          docView = created.data;
+        }
+
+        const currentSlot =
+          docView.items.find((item) => item.artifactType === itemType) ?? slot;
+
+        let focusedArtifactId = currentSlot?.artifactId ?? null;
+        if (!focusedArtifactId) {
+          const createdItem = await upsertItem.mutateAsync({
+            projectId,
+            documentType,
+            itemType,
+            req: {
+              title: currentSlot?.label ?? null,
+              body: DOCUMENT_ITEM_BOOTSTRAP_BODY,
+              change_source: "system",
+              change_summary: "Reserved section slot for workbench",
+            },
+          });
+          focusedArtifactId = createdItem.data.artifactId;
+        }
+
+        createSession.mutate({
+          projectId,
+          req: {
+            artifact_type: itemType,
+            focused_artifact_id: focusedArtifactId,
+            step_key: null,
+            workflow_area: "analysis",
+            agent_role: null,
+            provider_config_id: activeConfig?.id ?? null,
+          },
+        });
+      } catch (error) {
+        setStartError(
+          getApiErrorMessage(error, "Could not prepare document section"),
+        );
+      } finally {
+        setIsBootstrapping(false);
+      }
+    };
+
+    void run();
   }, [
     projectId,
-    artifactType,
+    document,
+    documentType,
+    itemType,
+    slot,
     activeConfig,
-    clearInitialPrompt,
     createSession,
+    ensureDocument,
+    upsertItem,
   ]);
-
-  const handleRetryInitialPrompt = useCallback(() => {
-    if (!projectId) return;
-    retryInitialPrompt(projectId);
-  }, [projectId, retryInitialPrompt]);
 
   const handleConfirmCancel = useCallback(() => {
     if (!projectId || !sessionId) return;
@@ -1333,7 +1410,7 @@ export function AgentSessionSidebar({
   }, [projectId, sessionId, deleteSession]);
 
   const handleSendMessage = useCallback(
-    (content: string) => {
+    (content: string, modeHint?: AgentMessageModeHint | null) => {
       if (
         !projectId ||
         !sessionId ||
@@ -1344,9 +1421,16 @@ export function AgentSessionSidebar({
         void refetchSession();
         return;
       }
-      sendMessage.mutate({ projectId, sessionId, req: { content } });
+      sendMessage.mutate({
+        projectId,
+        sessionId,
+        req: {
+          content,
+          ...(modeHint ? { mode_hint: modeHint } : {}),
+        },
+      });
     },
-    [projectId, refetchSession, sendMessage, session, sessionId]
+    [projectId, refetchSession, sendMessage, session, sessionId],
   );
 
   const handleReset = useCallback(() => {
@@ -1354,24 +1438,17 @@ export function AgentSessionSidebar({
     setMissingContext([]);
     setStartError(null);
     setSessionNotice(null);
-    clearInitialPrompt();
-  }, [clearInitialPrompt, setSessionId]);
+  }, [setSessionId]);
 
   const status = session?.status ?? null;
   const restoredMissingContext = formatMissingContext(
-    session?.missingContext ?? null
+    session?.missingContext ?? null,
   );
   const visibleMissingContext =
-    restoredMissingContext.length > 0
-      ? restoredMissingContext
-      : missingContext;
+    restoredMissingContext.length > 0 ? restoredMissingContext : missingContext;
 
-  const isCreating = createSession.isPending;
+  const isCreating = createSession.isPending || isBootstrapping;
   const isDeleting = deleteSession.isPending;
-  const visibleInitialPromptAttempt =
-    initialPromptAttempt?.sessionId === sessionId
-      ? initialPromptAttempt
-      : null;
   const view = resolveAgentSessionView({
     sessionId,
     session,
@@ -1390,12 +1467,12 @@ export function AgentSessionSidebar({
   return (
     <>
       <aside
-        className="flex h-full min-h-0 w-96 shrink-0 flex-col overflow-hidden border-l border-border/70 bg-sidebar"
+        className="flex h-full min-h-0 w-[clamp(15rem,21vw,23rem)] shrink-0 flex-col overflow-hidden border-l border-border/70 bg-sidebar"
         aria-label="Artifact workbench"
       >
         {/* Header */}
         <AgentSessionHeader
-          artifactType={artifactType}
+          itemType={itemType}
           status={status}
           realtimeMode={realtime.mode}
           isStreaming={realtime.isStreaming}
@@ -1414,16 +1491,16 @@ export function AgentSessionSidebar({
         <AgentSessionBody
           projectId={projectId}
           sessionId={sessionId}
-          artifactType={artifactType}
+          documentType={documentType}
+          itemType={itemType}
           view={view}
           realtimeMode={realtime.mode}
           realtimeSnapshotCount={realtime.snapshotCount}
           isSending={sendMessage.isPending}
-          initialPromptAttempt={visibleInitialPromptAttempt}
-          isSendingInitialPrompt={isSendingInitialPrompt}
+          modeHint={modeHint}
+          onModeHintChange={setModeHint}
           onStart={handleStart}
           onRetry={() => void refetchSession()}
-          onRetryInitialPrompt={handleRetryInitialPrompt}
           onReset={handleReset}
           onCancel={() => setCancelDialogOpen(true)}
           onSend={handleSendMessage}

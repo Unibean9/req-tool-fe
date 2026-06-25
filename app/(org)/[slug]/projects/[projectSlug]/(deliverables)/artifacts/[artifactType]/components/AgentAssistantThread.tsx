@@ -17,19 +17,26 @@ import { ArrowDown, ArrowRight, Loader2, Send } from "lucide-react";
 
 import { MarkdownContent } from "@/components/shared/markdownContent";
 import { Button, buttonVariants } from "@/components/ui/button";
-import type { ArtifactType } from "@/lib/api/services/fetchArtifact";
 import { cn } from "@/lib/utils";
 import type {
   AgentMessage,
   AgentMessagePayload,
   AgentMessagePayloadOption,
 } from "@/hooks/useAgentSession";
+import type { AgentMessageModeHint } from "@/lib/api/services/fetchAgentSession";
+
+import { AgentMessageModeHintPicker } from "./agentMessageModeHintPicker";
 
 const MAX_AGENT_INPUT_LENGTH = 8000;
 
+export type AgentThreadSendHandler = (
+  content: string,
+  modeHint?: AgentMessageModeHint | null,
+) => void;
+
 type AgentThreadContextValue = {
   agentRole?: string | null;
-  onSend: (content: string) => void;
+  onSend: AgentThreadSendHandler;
 };
 
 const AgentThreadContext = createContext<AgentThreadContextValue | null>(null);
@@ -44,8 +51,8 @@ function useAgentThreadContext() {
   return context;
 }
 
-function formatArtifactType(artifactType: string): string {
-  return artifactType
+function formatItemType(itemType: string): string {
+  return itemType
     .replace(/_/g, " ")
     .replace(/\b\w/g, (character) => character.toUpperCase());
 }
@@ -76,7 +83,7 @@ function AgentThinkingIndicator() {
       className="agent-message-enter flex h-8 items-center gap-1 py-2"
       aria-label={
         agentRole
-          ? `${formatArtifactType(agentRole)} is preparing a response`
+          ? `${formatItemType(agentRole)} is preparing a response`
           : "Preparing a response"
       }
     >
@@ -236,10 +243,14 @@ function AgentComposer({
   isAwaitingAgentReply,
   isInitialTurn,
   isSending,
+  modeHint,
+  onModeHintChange,
 }: {
   isAwaitingAgentReply: boolean;
   isInitialTurn: boolean;
   isSending: boolean;
+  modeHint: AgentMessageModeHint | null;
+  onModeHintChange: (value: AgentMessageModeHint | null) => void;
 }) {
   const text = useAuiState((state) => state.composer.text);
   const showCharacterCount =
@@ -251,6 +262,13 @@ function AgentComposer({
         className="rounded-xl border border-border/80 bg-background/78 shadow-sm transition-[border-color,box-shadow] duration-150 focus-within:border-ring focus-within:ring-[3px] focus-within:ring-ring/25"
         aria-busy={isSending}
       >
+        <div className="border-b border-border/50 px-2.5 pt-2.5 pb-2">
+          <AgentMessageModeHintPicker
+            value={modeHint}
+            onChange={onModeHintChange}
+            disabled={isSending}
+          />
+        </div>
         <ComposerPrimitive.Input
           placeholder={
             isAwaitingAgentReply
@@ -318,7 +336,7 @@ function AgentDecisionFooter({
 }: {
   decisionOptions: AgentMessagePayloadOption[];
   isSending: boolean;
-  onSend: (content: string) => void;
+  onSend: AgentThreadSendHandler;
 }) {
   return (
     <div
@@ -351,20 +369,24 @@ export function AgentAssistantThread({
   isSending,
   isInitialTurn,
   isAwaitingAgentReply,
-  artifactType,
+  itemType,
   agentRole,
   realtimeSnapshotCount,
   decisionOptions,
+  modeHint,
+  onModeHintChange,
 }: {
   messages: AgentMessage[];
-  onSend: (content: string) => void;
+  onSend: AgentThreadSendHandler;
   isSending: boolean;
   isInitialTurn: boolean;
   isAwaitingAgentReply: boolean;
-  artifactType: ArtifactType;
+  itemType: string;
   agentRole?: string | null;
   realtimeSnapshotCount: number;
   decisionOptions: AgentMessagePayloadOption[];
+  modeHint: AgentMessageModeHint | null;
+  onModeHintChange: (value: AgentMessageModeHint | null) => void;
 }) {
   const latestMessageId = messages.at(-1)?.id ?? null;
   const isDecisionMode = decisionOptions.length > 0;
@@ -372,9 +394,10 @@ export function AgentAssistantThread({
   const sendAppendMessage = useCallback(
     (message: AppendMessage) => {
       const content = getAppendMessageText(message);
-      if (content) onSend(content);
+      if (!content) return;
+      onSend(content, modeHint);
     },
-    [onSend]
+    [modeHint, onSend]
   );
 
   const queue = useMemo<ExternalThreadQueueAdapter>(
@@ -449,7 +472,7 @@ export function AgentAssistantThread({
                 </p>
                 <p className="mt-1.5 text-pretty text-xs leading-5 text-muted-foreground">
                   Describe the outcome you need for{" "}
-                  {formatArtifactType(artifactType)}. The workbench will use it
+                  {formatItemType(itemType)}. The workbench will use it
                   as the drafting direction.
                 </p>
               </div>
@@ -482,6 +505,8 @@ export function AgentAssistantThread({
               isAwaitingAgentReply={isAwaitingAgentReply}
               isInitialTurn={isInitialTurn}
               isSending={isSending}
+              modeHint={modeHint}
+              onModeHintChange={onModeHintChange}
             />
           )}
         </ThreadPrimitive.Root>

@@ -46,7 +46,7 @@ function nameToInitials(fullName: string | undefined): string {
 
 function userInitials(
   email: string | undefined,
-  fullName: string | undefined
+  fullName: string | undefined,
 ): string {
   const fromName = nameToInitials(fullName);
   if (fromName) return fromName;
@@ -91,11 +91,14 @@ export function ProjectWorkspaceNavSidebar({
 
   return (
     <>
-      <LlmProviderConfigDialog open={llmConfigOpen} onOpenChange={setLlmConfigOpen} />
+      <LlmProviderConfigDialog
+        open={llmConfigOpen}
+        onOpenChange={setLlmConfigOpen}
+      />
       <aside
         className={cn(
-          "flex h-full min-h-0 w-70 shrink-0 flex-col border-r border-border/60 bg-muted/20",
-          className
+          "flex h-full min-h-0 w-68 shrink-0 flex-col border-r border-border/60 bg-muted/20 xl:w-70",
+          className,
         )}
         aria-label="Project navigation"
       >
@@ -112,7 +115,7 @@ export function ProjectWorkspaceNavSidebar({
                     "flex-1 truncate rounded-md px-1.5 py-1.5 text-xs font-medium transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring/45",
                     mode === m.value
                       ? "bg-background text-foreground shadow-sm"
-                      : "text-muted-foreground hover:text-foreground"
+                      : "text-muted-foreground hover:text-foreground",
                   )}
                 >
                   {m.label}
@@ -135,7 +138,7 @@ export function ProjectWorkspaceNavSidebar({
             <DropdownMenuTrigger
               className={cn(
                 "flex w-full items-center gap-2.5 rounded-lg border border-border/50 bg-card/50 px-2 py-2 outline-none transition-colors hover:bg-muted/60",
-                "focus-visible:ring-2 focus-visible:ring-ring/45 data-popup-open:bg-muted/60"
+                "focus-visible:ring-2 focus-visible:ring-ring/45 data-popup-open:bg-muted/60",
               )}
             >
               <Avatar className="size-9 shrink-0 border border-border/60">
@@ -145,7 +148,7 @@ export function ProjectWorkspaceNavSidebar({
                 <AvatarFallback
                   className={cn(
                     "text-xs font-bold",
-                    isProfilePending && "animate-pulse"
+                    isProfilePending && "animate-pulse",
                   )}
                 >
                   {initials}

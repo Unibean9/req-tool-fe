@@ -1,9 +1,10 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { Fragment, useMemo, useState } from "react";
 import {
   Braces,
   CheckCircle2,
+  ChevronDown,
   Eye,
   FileText,
   Loader2,
@@ -29,6 +30,11 @@ import {
   FieldDescription,
   FieldLabel,
 } from "@/components/ui/field";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { AgentAutoResizeTextarea } from "./AgentAutoResizeTextarea";
 import {
@@ -40,10 +46,11 @@ import {
 } from "@/hooks/useAgentSession";
 import { MarkdownContent } from "@/components/shared/markdownContent";
 import { getApiErrorMessage } from "@/lib/api/getApiErrorMessage";
-import type { ArtifactType } from "@/lib/api/services/fetchArtifact";
+import type { DocumentType } from "@/lib/api/services/fetchDocument";
 import { cn } from "@/lib/utils";
 
 const MAX_AGENT_INPUT_LENGTH = 8000;
+const ACTION_SPINNER_CLASS = "animate-spin motion-reduce:animate-none";
 const PRIMARY_CONTENT_KEYS = ["body", "content", "description"] as const;
 const SNAPSHOT_LABELS: Record<string, string> = {
   acceptance_criteria: "Acceptance criteria",
@@ -65,12 +72,41 @@ const SNAPSHOT_LABELS: Record<string, string> = {
   step_key: "Workflow step",
   title: "Title",
   workflow_area: "Workflow area",
+  synthesis_metadata: "Synthesis metadata",
+  synthesis_source: "Synthesis source",
+  contract_version: "Contract version",
+  inference_level: "Inference level",
+  evidence_refs: "Evidence references",
+  pending_assumptions: "Pending assumptions",
+  confirmed_assumptions: "Confirmed assumptions",
 };
+
+const METADATA_OBJECT_KEYS = new Set(["synthesis_metadata"]);
 
 type ReviewMode = "review" | "request-edit";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
+
+function snapshotListItemKey(item: unknown, index: number): string {
+  if (isRecord(item)) {
+    const stableId = item.id ?? item.key ?? item.slug ?? item.title;
+    if (typeof stableId === "string" && stableId.length > 0) {
+      return `record-${stableId}`;
+    }
+    if (typeof stableId === "number") {
+      return `record-${stableId}`;
+    }
+  }
+  if (
+    typeof item === "string" ||
+    typeof item === "number" ||
+    typeof item === "boolean"
+  ) {
+    return `scalar-${index}-${String(item)}`;
+  }
+  return `index-${index}`;
 }
 
 function snapshotString(
@@ -100,6 +136,68 @@ function shouldHideSnapshotKey(key: string): boolean {
     normalized === "tool_name" ||
     normalized === "tool_call"
   );
+}
+
+function isFlatMetadataObject(value: unknown): boolean {
+  if (!isRecord(value)) return false;
+  return Object.values(value).every(
+    (entry) =>
+      entry === null ||
+      entry === undefined ||
+      typeof entry === "string" ||
+      typeof entry === "number" ||
+      typeof entry === "boolean" ||
+      (Array.isArray(entry) &&
+        entry.every(
+          (item) =>
+            typeof item === "string" ||
+            typeof item === "number" ||
+            typeof item === "boolean"
+        ))
+  );
+}
+
+function shouldShowMetadataRow(value: unknown): boolean {
+  if (value === null || value === undefined || value === "") return false;
+  if (Array.isArray(value) && value.length === 0) return false;
+  if (isRecord(value) && Object.keys(value).length === 0) return false;
+  return true;
+}
+
+function isEvidenceRefField(key: string): boolean {
+  const normalized = key.trim().toLowerCase().replace(/-/g, "_");
+  return normalized === "evidence_refs" || normalized.endsWith("_refs");
+}
+
+function formatArtifactTypeLabel(value: string): string {
+  return value
+    .split(/[_-]+/)
+    .filter(Boolean)
+    .map((part) => `${part.charAt(0).toUpperCase()}${part.slice(1)}`)
+    .join(" ");
+}
+
+function flattenMetadataEntries(
+  entries: Array<[string, unknown]>
+): Array<[string, unknown]> {
+  const rows: Array<[string, unknown]> = [];
+  for (const [key, value] of entries) {
+    if (METADATA_OBJECT_KEYS.has(key) && isRecord(value)) {
+      for (const [nestedKey, nestedValue] of Object.entries(value)) {
+        if (
+          !shouldHideSnapshotKey(nestedKey) &&
+          shouldShowMetadataRow(nestedValue)
+        ) {
+          rows.push([nestedKey, nestedValue]);
+        }
+      }
+      continue;
+    }
+    if (shouldShowMetadataRow(value)) {
+      rows.push([key, value]);
+    }
+  }
+  return rows;
 }
 
 function sanitizeSnapshotValue(value: unknown): unknown {
@@ -174,7 +272,7 @@ function SnapshotValue({
     return (
       <ol className="flex list-decimal flex-col gap-2 pl-5">
         {value.map((item, index) => (
-          <li key={index} className="pl-1">
+          <li key={snapshotListItemKey(item, index)} className="pl-1">
             <SnapshotValue
               value={item}
               depth={depth + 1}
@@ -195,7 +293,7 @@ function SnapshotValue({
     }
     if (depth >= 5) {
       return (
-        <pre className="overflow-x-auto whitespace-pre-wrap break-words rounded-lg bg-muted/45 p-3 font-mono text-xs leading-relaxed">
+        <pre className="overflow-x-auto whitespace-pre-wrap wrap-break-word rounded-lg bg-muted/45 p-3 font-mono text-xs leading-relaxed">
           {JSON.stringify(sanitizeSnapshotValue(value), null, 2)}
         </pre>
       );
@@ -225,6 +323,175 @@ function SnapshotValue({
   );
 }
 
+function InferenceLevelBadge({ level }: { level: string }) {
+  const normalized = level.trim().toLowerCase();
+  const variant =
+    normalized === "high"
+      ? "destructive"
+      : normalized === "medium"
+        ? "secondary"
+        : "outline";
+
+  return (
+    <Badge variant={variant} className="capitalize">
+      {level}
+    </Badge>
+  );
+}
+
+function EvidenceRefList({ refs }: { refs: string[] }) {
+  return (
+    <ul className="flex flex-col gap-1.5">
+      {refs.map((ref) => (
+        <li key={ref}>
+          <code className="block rounded-md border border-border/55 bg-muted/35 px-2.5 py-1.5 font-mono text-[0.6875rem] leading-relaxed wrap-break-word text-foreground/90">
+            {ref}
+          </code>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function MetadataValueDisplay({
+  fieldKey,
+  value,
+}: {
+  fieldKey: string;
+  value: unknown;
+}) {
+  if (value === null || value === undefined || value === "") {
+    return <span className="text-muted-foreground">—</span>;
+  }
+
+  if (typeof value === "boolean") {
+    return <span>{value ? "Yes" : "No"}</span>;
+  }
+
+  if (typeof value === "number") {
+    return <span className="tabular-nums">{value}</span>;
+  }
+
+  if (typeof value === "string") {
+    if (fieldKey === "inference_level") {
+      return <InferenceLevelBadge level={value} />;
+    }
+    if (fieldKey === "artifact_type") {
+      return (
+        <Badge variant="outline">{formatArtifactTypeLabel(value)}</Badge>
+      );
+    }
+    if (fieldKey === "synthesis_source") {
+      return (
+        <Badge variant="secondary" className="font-mono font-normal">
+          {value}
+        </Badge>
+      );
+    }
+    return <span className="text-pretty leading-relaxed">{value}</span>;
+  }
+
+  if (Array.isArray(value)) {
+    const stringItems = value.filter(
+      (item): item is string => typeof item === "string" && item.length > 0
+    );
+    if (!stringItems.length) {
+      return <span className="text-muted-foreground">—</span>;
+    }
+    if (isEvidenceRefField(fieldKey)) {
+      return <EvidenceRefList refs={stringItems} />;
+    }
+    return (
+      <ul className="flex flex-wrap gap-1.5">
+        {stringItems.map((item) => (
+          <li key={item}>
+            <Badge variant="outline" className="max-w-full whitespace-normal">
+              {item}
+            </Badge>
+          </li>
+        ))}
+      </ul>
+    );
+  }
+
+  return (
+    <pre className="overflow-x-auto whitespace-pre-wrap wrap-break-word rounded-md bg-muted/35 p-2.5 font-mono text-xs leading-relaxed">
+      {JSON.stringify(sanitizeSnapshotValue(value), null, 2)}
+    </pre>
+  );
+}
+
+function ProposalMetadataPanel({
+  entries,
+}: {
+  entries: Array<[string, unknown]>;
+}) {
+  const rows = useMemo(() => flattenMetadataEntries(entries), [entries]);
+  if (!rows.length) return null;
+
+  return (
+    <div className="overflow-hidden rounded-xl border border-border/55 bg-card/40">
+      <dl className="grid sm:grid-cols-[minmax(9.5rem,32%)_1fr]">
+        {rows.map(([key, value]) => (
+          <Fragment key={key}>
+            <dt className="border-t border-border/45 bg-muted/20 px-3 py-2.5 text-xs font-medium text-muted-foreground first:border-t-0 sm:px-4 sm:py-3">
+              {formatSnapshotLabel(key)}
+            </dt>
+            <dd className="border-t border-border/45 px-3 py-2.5 text-sm text-foreground/90 first:border-t-0 sm:border-l sm:px-4 sm:py-3">
+              <MetadataValueDisplay fieldKey={key} value={value} />
+            </dd>
+          </Fragment>
+        ))}
+      </dl>
+    </div>
+  );
+}
+
+function ProposalMetadataSection({
+  entries,
+}: {
+  entries: Array<[string, unknown]>;
+}) {
+  const [open, setOpen] = useState(true);
+  const rowCount = useMemo(
+    () => flattenMetadataEntries(entries).length,
+    [entries]
+  );
+
+  if (!rowCount) return null;
+
+  return (
+    <Collapsible open={open} onOpenChange={setOpen}>
+      <CollapsibleTrigger
+        type="button"
+        className={cn(
+          "flex w-full items-center justify-between gap-3 rounded-xl border border-border/55 bg-muted/20 px-3.5 py-2.5 text-left outline-none",
+          "transition-[background-color,border-color] duration-150 ease-out",
+          "hover:border-border hover:bg-muted/35 focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/40",
+          "motion-reduce:transition-none",
+        )}
+      >
+        <span className="text-sm font-medium text-foreground">
+          Agent metadata
+        </span>
+        <span className="flex items-center gap-2 text-xs text-muted-foreground">
+          {rowCount} {rowCount === 1 ? "field" : "fields"}
+          <ChevronDown
+            className={cn(
+              "size-4 shrink-0 transition-transform duration-200 ease-out motion-reduce:transition-none",
+              open && "rotate-180",
+            )}
+            aria-hidden
+          />
+        </span>
+      </CollapsibleTrigger>
+      <CollapsibleContent className="pt-3">
+        <ProposalMetadataPanel entries={entries} />
+      </CollapsibleContent>
+    </Collapsible>
+  );
+}
+
 function ProposalDetailField({
   label,
   value,
@@ -233,10 +500,8 @@ function ProposalDetailField({
   value: unknown;
 }) {
   return (
-    <section className="flex flex-col gap-2 border-b border-border/45 pb-5 last:border-b-0 last:pb-0">
-      <h3 className="text-[0.6875rem] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-        {label}
-      </h3>
+    <section className="flex flex-col gap-2 rounded-xl border border-border/50 bg-card/35 px-4 py-3.5">
+      <h3 className="text-sm font-medium text-foreground">{label}</h3>
       <div className="text-pretty text-sm leading-6 text-foreground/90">
         <SnapshotValue value={value} />
       </div>
@@ -248,12 +513,14 @@ export function AgentProposalReviewDialog({
   toolCall,
   projectId,
   sessionId,
-  artifactType,
+  documentType,
+  itemType,
 }: {
   toolCall: AgentToolCall;
   projectId: string;
   sessionId: string;
-  artifactType: ArtifactType;
+  documentType: DocumentType;
+  itemType: string;
 }) {
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState<ReviewMode>("review");
@@ -267,10 +534,10 @@ export function AgentProposalReviewDialog({
   const proposalTitle =
     snapshotString(snapshot, "title") ??
     `Proposed ${formatSnapshotLabel(
-      snapshotString(snapshot, "artifact_type") ?? artifactType
+      snapshotString(snapshot, "artifact_type") ?? itemType
     )}`;
   const artifactLabel =
-    snapshotString(snapshot, "artifact_type") ?? artifactType;
+    snapshotString(snapshot, "artifact_type") ?? itemType;
   const primaryContentKey = PRIMARY_CONTENT_KEYS.find(
     (key) => snapshot[key] !== undefined && snapshot[key] !== null
   );
@@ -288,6 +555,25 @@ export function AgentProposalReviewDialog({
       ),
     [primaryContentKey, snapshot]
   );
+  const { contentDetailEntries, metadataDetailEntries } = useMemo(() => {
+    const content: Array<[string, unknown]> = [];
+    const metadata: Array<[string, unknown]> = [];
+    for (const entry of detailEntries) {
+      const [key, value] = entry;
+      if (
+        METADATA_OBJECT_KEYS.has(key) ||
+        (isRecord(value) && isFlatMetadataObject(value))
+      ) {
+        metadata.push(entry);
+      } else {
+        content.push(entry);
+      }
+    }
+    return {
+      contentDetailEntries: content,
+      metadataDetailEntries: metadata,
+    };
+  }, [detailEntries]);
   const status = formatStatus(toolCall.status);
   const isResolved = toolCall.status !== "proposed";
   const isBusy =
@@ -324,7 +610,8 @@ export function AgentProposalReviewDialog({
         projectId,
         sessionId,
         toolCallId: toolCall.id,
-        artifactType,
+        documentType,
+        itemType,
       },
       { onSuccess: closeAfterSuccess }
     );
@@ -336,7 +623,8 @@ export function AgentProposalReviewDialog({
         projectId,
         sessionId,
         toolCallId: toolCall.id,
-        artifactType,
+        documentType,
+        itemType,
       },
       { onSuccess: closeAfterSuccess }
     );
@@ -350,7 +638,8 @@ export function AgentProposalReviewDialog({
         projectId,
         sessionId,
         toolCallId: toolCall.id,
-        artifactType,
+        documentType,
+        itemType,
         req: { note },
       },
       { onSuccess: closeAfterSuccess }
@@ -380,7 +669,7 @@ export function AgentProposalReviewDialog({
         </span>
 
         <span className="flex flex-col gap-1.5">
-          <span className="text-pretty break-words text-sm font-semibold leading-snug text-foreground">
+          <span className="text-pretty wrap-break-word text-sm font-semibold leading-snug text-foreground">
             {proposalTitle}
           </span>
           <span className="text-pretty text-xs leading-relaxed text-muted-foreground">
@@ -400,6 +689,7 @@ export function AgentProposalReviewDialog({
       <DialogContent
         className="top-2 h-[calc(100dvh-1rem)] max-h-[calc(100dvh-1rem)] w-[calc(100vw-1rem)] max-w-none -translate-y-0 overflow-hidden rounded-xl sm:top-4 sm:h-[calc(100dvh-2rem)] sm:max-h-[calc(100dvh-2rem)] sm:w-[min(100vw-2rem,72rem)] sm:max-w-[min(100vw-2rem,72rem)]"
         contentClassName="relative flex h-full min-h-0 flex-col overflow-hidden"
+        aria-busy={isBusy}
         showCloseButton
       >
         <DialogHeader className="shrink-0 gap-3 border-b border-border/70 px-5 py-4 pr-14 text-left sm:px-7 sm:py-5">
@@ -411,7 +701,7 @@ export function AgentProposalReviewDialog({
             <Badge variant={status.variant}>{status.label}</Badge>
           </div>
           <div className="flex flex-col gap-1.5">
-            <DialogTitle className="text-balance break-words text-xl font-semibold leading-tight">
+            <DialogTitle className="text-balance wrap-break-word text-xl font-semibold leading-tight">
               {proposalTitle}
             </DialogTitle>
             <DialogDescription className="text-pretty">
@@ -421,7 +711,12 @@ export function AgentProposalReviewDialog({
           </div>
         </DialogHeader>
 
-        <ScrollArea className="min-h-0 flex-1">
+        <ScrollArea
+          className={cn(
+            "min-h-0 flex-1 transition-opacity duration-150",
+            isBusy && "pointer-events-none opacity-55",
+          )}
+        >
           <div className="flex w-full flex-col gap-8 px-5 py-6 sm:px-7 sm:py-8">
             {primaryContentKey ? (
               <SnapshotValue
@@ -442,37 +737,50 @@ export function AgentProposalReviewDialog({
             )}
 
             {detailEntries.length ? (
-              <section className="flex flex-col gap-5 border-t border-border/45 pt-8">
+              <section className="flex flex-col gap-4 border-t border-border/45 pt-8">
                 <div className="flex flex-col gap-1">
-                  <h2 className="text-balance text-sm font-semibold uppercase tracking-[0.12em] text-foreground">
-                    Supporting fields
+                  <h2 className="text-balance text-sm font-semibold text-foreground">
+                    Supporting details
                   </h2>
                   <p className="text-pretty text-sm leading-relaxed text-muted-foreground">
-                    Extra metadata supplied alongside the main proposal body.
+                    Extra context supplied alongside the main proposal body.
                   </p>
                 </div>
-                <div className="flex flex-col gap-5">
-                  {detailEntries.map(([key, value]) => (
-                    <ProposalDetailField
-                      key={key}
-                      label={formatSnapshotLabel(key)}
-                      value={value}
-                    />
-                  ))}
-                </div>
+
+                {contentDetailEntries.length ? (
+                  <div className="flex flex-col gap-3">
+                    {contentDetailEntries.map(([key, value]) => (
+                      <ProposalDetailField
+                        key={key}
+                        label={formatSnapshotLabel(key)}
+                        value={value}
+                      />
+                    ))}
+                  </div>
+                ) : null}
+
+                {metadataDetailEntries.length ? (
+                  <ProposalMetadataSection entries={metadataDetailEntries} />
+                ) : null}
               </section>
             ) : null}
           </div>
         </ScrollArea>
 
-        <footer className="shrink-0 border-t border-border/70 bg-popover px-5 py-4 sm:px-7">
+        <footer
+          className="shrink-0 border-t border-border/70 bg-popover px-5 py-4 sm:px-7"
+          aria-busy={isBusy}
+        >
           {mode === "request-edit" && !isResolved ? (
             <div className="flex flex-col gap-4">
               <Field>
                 <FieldLabel htmlFor={editFieldId}>
                   What should the agent revise?
                 </FieldLabel>
-                <div className="rounded-2xl border border-border/70 bg-muted/35 shadow-sm focus-within:border-ring focus-within:ring-[3px] focus-within:ring-ring/30">
+                <div
+                  className="rounded-2xl border border-border/70 bg-muted/35 shadow-sm focus-within:border-ring focus-within:ring-[3px] focus-within:ring-ring/30"
+                  aria-busy={requestEdit.isPending}
+                >
                   <AgentAutoResizeTextarea
                     id={editFieldId}
                     value={editNote}
@@ -493,13 +801,26 @@ export function AgentProposalReviewDialog({
                     className="rounded-none border-0 bg-transparent px-4 pt-3.5 pb-2 text-sm leading-6 shadow-none transition-none focus-visible:border-transparent focus-visible:ring-0"
                   />
                   <div className="flex flex-col gap-3 border-t border-border/50 px-3 py-3 sm:flex-row sm:items-center sm:justify-between">
-                    <FieldDescription
-                      id={editHelpId}
-                      className="tabular-nums"
-                    >
-                      {editNote.length.toLocaleString()}/
-                      {MAX_AGENT_INPUT_LENGTH.toLocaleString()}
-                    </FieldDescription>
+                    {requestEdit.isPending ? (
+                      <output
+                        id={editHelpId}
+                        className="flex items-center gap-2 text-xs text-muted-foreground"
+                      >
+                        <Loader2
+                          className={cn("size-3.5", ACTION_SPINNER_CLASS)}
+                          aria-hidden
+                        />
+                        Sending revision request…
+                      </output>
+                    ) : (
+                      <FieldDescription
+                        id={editHelpId}
+                        className="tabular-nums"
+                      >
+                        {editNote.length.toLocaleString()}/
+                        {MAX_AGENT_INPUT_LENGTH.toLocaleString()}
+                      </FieldDescription>
+                    )}
                     <Button
                       type="button"
                       size="sm"
@@ -514,7 +835,7 @@ export function AgentProposalReviewDialog({
                       {requestEdit.isPending ? (
                         <Loader2
                           data-icon="inline-start"
-                          className="animate-spin"
+                          className={ACTION_SPINNER_CLASS}
                         />
                       ) : (
                         <Send data-icon="inline-start" />
@@ -611,7 +932,7 @@ export function AgentProposalReviewDialog({
                         {reject.isPending ? (
                           <Loader2
                             data-icon="inline-start"
-                            className="animate-spin"
+                            className={ACTION_SPINNER_CLASS}
                           />
                         ) : (
                           <ThumbsDown data-icon="inline-start" />
@@ -626,7 +947,7 @@ export function AgentProposalReviewDialog({
                         {approve.isPending ? (
                           <Loader2
                             data-icon="inline-start"
-                            className="animate-spin"
+                            className={ACTION_SPINNER_CLASS}
                           />
                         ) : (
                           <ThumbsUp data-icon="inline-start" />

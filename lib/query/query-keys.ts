@@ -278,6 +278,34 @@ export function projectArtifactGraphQueryKey(projectId: string) {
   return [...PROJECTS_ROOT, projectId, "artifact-graph"] as const;
 }
 
+/** Key document registry types (global). */
+export function documentTypesQueryKey() {
+  return ["documents", "types"] as const;
+}
+
+/** Key document container theo `project_id` + `document_type`. */
+export function projectDocumentQueryKey(
+  projectId: string,
+  documentType: string
+) {
+  return [...PROJECTS_ROOT, projectId, "documents", documentType] as const;
+}
+
+/** Key document item theo `project_id` + `document_type` + `item_type`. */
+export function projectDocumentItemQueryKey(
+  projectId: string,
+  documentType: string,
+  itemType: string
+) {
+  return [
+    ...PROJECTS_ROOT,
+    projectId,
+    "documents",
+    documentType,
+    itemType,
+  ] as const;
+}
+
 /** Key chi tiết một agent session. */
 export function projectAgentSessionQueryKey(projectId: string, sessionId: string) {
   return [...PROJECTS_ROOT, projectId, "agent-sessions", sessionId] as const;
@@ -423,6 +451,9 @@ export const queryKeys = {
     artifact: projectArtifactQueryKey,
     artifactEvidence: projectArtifactEvidenceQueryKey,
     artifactGraph: projectArtifactGraphQueryKey,
+    documentTypes: documentTypesQueryKey,
+    document: projectDocumentQueryKey,
+    documentItem: projectDocumentItemQueryKey,
     workflowRunCurrent: projectWorkflowRunCurrentQueryKey,
     workflowSteps: projectWorkflowStepsQueryKey,
     workflowProgress: projectWorkflowProgressQueryKey,

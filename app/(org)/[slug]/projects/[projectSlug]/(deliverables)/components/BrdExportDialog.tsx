@@ -32,9 +32,11 @@ import { useProjectBrdExport } from "@/hooks/useProjectExport";
 import { getApiErrorMessage } from "@/lib/api/getApiErrorMessage";
 import { cn } from "@/lib/utils";
 
+const BRD_EXPORT_PREVIEW_CLASS = "w-full px-5 py-6 sm:px-6";
+
 function BrdExportLoading() {
   return (
-    <div className="mx-auto flex w-full max-w-5xl flex-col gap-4 px-5 py-8 sm:px-8 lg:px-10">
+    <div className={cn(BRD_EXPORT_PREVIEW_CLASS, "flex flex-col gap-4")}>
       <Skeleton className="h-8 w-2/3 max-w-md motion-reduce:animate-none" />
       <Skeleton className="h-4 w-1/3 max-w-52 motion-reduce:animate-none" />
       <div className="mt-3 flex flex-col gap-2.5">
@@ -84,9 +86,11 @@ function downloadMarkdown(
 export function BrdExportDialog({
   projectId,
   projectSlug,
+  trigger = "button",
 }: {
   projectId: string | null;
   projectSlug: string;
+  trigger?: "button" | "icon";
 }) {
   const [open, setOpen] = useState(false);
   const [includeWont, setIncludeWont] = useState(false);
@@ -101,8 +105,10 @@ export function BrdExportDialog({
 
   const hasMarkdown = Boolean(markdown?.trim());
 
-  return (
-    <>
+  const openDialog = () => setOpen(true);
+
+  const triggerNode =
+    trigger === "icon" ? (
       <Tooltip>
         <TooltipTrigger
           render={
@@ -113,7 +119,7 @@ export function BrdExportDialog({
               className="group/export size-7 text-muted-foreground hover:bg-primary/10 hover:text-brand-mint"
               aria-label="Export BRD"
               disabled={!projectId}
-              onClick={() => setOpen(true)}
+              onClick={openDialog}
             >
               <FileDown
                 className="transition-transform duration-150 ease-out group-hover/export:translate-y-0.5 motion-reduce:transition-none motion-reduce:group-hover/export:translate-y-0"
@@ -126,6 +132,22 @@ export function BrdExportDialog({
           {projectId ? "Preview and export BRD" : "Project is loading"}
         </TooltipContent>
       </Tooltip>
+    ) : (
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        disabled={!projectId}
+        onClick={openDialog}
+      >
+        <FileDown data-icon="inline-start" aria-hidden />
+        Export BRD
+      </Button>
+    );
+
+  return (
+    <>
+      {triggerNode}
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent
@@ -201,7 +223,7 @@ export function BrdExportDialog({
             {isPending ? <BrdExportLoading /> : null}
 
             {isError ? (
-              <div className="mx-auto w-full max-w-5xl px-5 py-8 sm:px-8 lg:px-10">
+              <div className={BRD_EXPORT_PREVIEW_CLASS}>
                 <Alert variant="destructive">
                   <AlertCircle aria-hidden />
                   <AlertTitle>Could not generate the BRD preview</AlertTitle>
@@ -237,10 +259,10 @@ export function BrdExportDialog({
                   Create or approve artifacts, then refresh this preview.
                 </p>
               </div>
-            ) : null}
+            ) : null}   
 
             {!isPending && !isError && hasMarkdown && markdown ? (
-              <article className="mx-auto w-full max-w-5xl px-5 py-8 sm:px-8 sm:py-10 lg:px-10">
+              <article className={BRD_EXPORT_PREVIEW_CLASS}>
                 <MarkdownContent content={markdown} variant="document" />
               </article>
             ) : null}
