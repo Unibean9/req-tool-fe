@@ -15,7 +15,7 @@ export const AGENT_SESSION_STATUSES = [
 ] as const;
 export type AgentSessionStatus = (typeof AGENT_SESSION_STATUSES)[number];
 
-export const AGENT_INTERRUPT_TYPES = ["ask_human", "propose_artifacts"] as const;
+export const AGENT_INTERRUPT_TYPES = ["ask_human", "propose_artifacts", "stream_response"] as const;
 export type AgentInterruptType = (typeof AGENT_INTERRUPT_TYPES)[number] | null;
 
 export const AGENT_MESSAGE_ROLES = ["user", "agent"] as const;
@@ -299,7 +299,9 @@ export interface RequestEditRequest {
 function mapSession(s: AgentSessionApi): AgentSession {
   const fallbackUiStatus: AgentSessionUiStatus =
     s.status === "active"
-      ? "processing"
+      ? s.interrupt_type === "stream_response"
+        ? "waiting_input"
+        : "processing"
       : s.status === "failed"
         ? "error"
         : s.status === "completed"
