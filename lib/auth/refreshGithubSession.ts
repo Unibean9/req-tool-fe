@@ -67,5 +67,6 @@ export function persistAccessTokenCookie(accessToken: string): void {
 }
 
 export function clearAuthTokenCookies(): void {
-  deleteCookie(AUTH_COOKIE, { path: "/" });
+  const config = getAuthCookieConfig();
+  deleteCookie(AUTH_COOKIE, { path: config.path, domain: config.domain });
 }
