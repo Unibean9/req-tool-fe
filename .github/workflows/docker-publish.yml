@@ -6,6 +6,12 @@ on:
 
 env:
   IMAGE_NAME: req-tool-fe
+  NEXT_PUBLIC_API_URL: https://api.req-tool.example.com
+  NEXT_PUBLIC_APP_URL: https://req-tool.example.com
+  NEXT_PUBLIC_COOKIE_DOMAIN: .req-tool.example.com
+  NEXT_PUBLIC_ENV: production
+  NEXT_PUBLIC_POST_LOGIN_PATH: /dashboard
+  NEXT_PUBLIC_SEO_SUBJECTS_PATH: /subjects
 
 jobs:
   validate:
@@ -48,12 +54,12 @@ jobs:
           context: .
           push: true
           build-args: |
-            NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL }}
-            NEXT_PUBLIC_APP_URL=${{ secrets.NEXT_PUBLIC_APP_URL }}
-            NEXT_PUBLIC_COOKIE_DOMAIN=${{ secrets.NEXT_PUBLIC_COOKIE_DOMAIN }}
-            NEXT_PUBLIC_ENV=production
-            NEXT_PUBLIC_POST_LOGIN_PATH=${{ secrets.NEXT_PUBLIC_POST_LOGIN_PATH }}
-            NEXT_PUBLIC_SEO_SUBJECTS_PATH=${{ secrets.NEXT_PUBLIC_SEO_SUBJECTS_PATH }}
+            NEXT_PUBLIC_API_URL=${{ env.NEXT_PUBLIC_API_URL }}
+            NEXT_PUBLIC_APP_URL=${{ env.NEXT_PUBLIC_APP_URL }}
+            NEXT_PUBLIC_COOKIE_DOMAIN=${{ env.NEXT_PUBLIC_COOKIE_DOMAIN }}
+            NEXT_PUBLIC_ENV=${{ env.NEXT_PUBLIC_ENV }}
+            NEXT_PUBLIC_POST_LOGIN_PATH=${{ env.NEXT_PUBLIC_POST_LOGIN_PATH }}
+            NEXT_PUBLIC_SEO_SUBJECTS_PATH=${{ env.NEXT_PUBLIC_SEO_SUBJECTS_PATH }}
           tags: |
             ${{ secrets.DOCKER_USERNAME }}/${{ env.IMAGE_NAME }}:latest
             ${{ secrets.DOCKER_USERNAME }}/${{ env.IMAGE_NAME }}:${{ steps.vars.outputs.sha_short }}
@@ -67,12 +73,12 @@ jobs:
           context: .
           push: true
           build-args: |
-            NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL }}
-            NEXT_PUBLIC_APP_URL=${{ secrets.NEXT_PUBLIC_APP_URL }}
-            NEXT_PUBLIC_COOKIE_DOMAIN=${{ secrets.NEXT_PUBLIC_COOKIE_DOMAIN }}
-            NEXT_PUBLIC_ENV=production
-            NEXT_PUBLIC_POST_LOGIN_PATH=${{ secrets.NEXT_PUBLIC_POST_LOGIN_PATH }}
-            NEXT_PUBLIC_SEO_SUBJECTS_PATH=${{ secrets.NEXT_PUBLIC_SEO_SUBJECTS_PATH }}
+            NEXT_PUBLIC_API_URL=${{ env.NEXT_PUBLIC_API_URL }}
+            NEXT_PUBLIC_APP_URL=${{ env.NEXT_PUBLIC_APP_URL }}
+            NEXT_PUBLIC_COOKIE_DOMAIN=${{ env.NEXT_PUBLIC_COOKIE_DOMAIN }}
+            NEXT_PUBLIC_ENV=${{ env.NEXT_PUBLIC_ENV }}
+            NEXT_PUBLIC_POST_LOGIN_PATH=${{ env.NEXT_PUBLIC_POST_LOGIN_PATH }}
+            NEXT_PUBLIC_SEO_SUBJECTS_PATH=${{ env.NEXT_PUBLIC_SEO_SUBJECTS_PATH }}
           tags: |
             ${{ secrets.DOCKER_USERNAME }}/${{ env.IMAGE_NAME }}:latest
             ${{ secrets.DOCKER_USERNAME }}/${{ env.IMAGE_NAME }}:${{ steps.vars.outputs.sha_short }}

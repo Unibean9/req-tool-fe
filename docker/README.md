@@ -26,13 +26,21 @@ NEXT_PUBLIC_SEO_SUBJECTS_PATH=
 |---|---|
 | `DOCKER_USERNAME` | DockerHub login + image namespace |
 | `DOCKER_PASSWORD` | DockerHub access token (not account password) |
-| `NEXT_PUBLIC_API_URL` | Inlined into the build (Next.js `NEXT_PUBLIC_*` vars are baked in at build time) |
-| `NEXT_PUBLIC_APP_URL` | Same as above |
-| `NEXT_PUBLIC_COOKIE_DOMAIN` | Same as above |
-| `NEXT_PUBLIC_POST_LOGIN_PATH` | Same as above |
-| `NEXT_PUBLIC_SEO_SUBJECTS_PATH` | Same as above |
 
 No `DOKPLOY_*` secrets are needed — this pipeline does not call the Dokploy API.
+
+## Build-time env vars (plain `env`, not secrets)
+
+`NEXT_PUBLIC_*` values are public (shipped to the browser) and not sensitive, so they're set directly in the `env:` block of [.github/workflows/docker-publish.yml](../.github/workflows/docker-publish.yml) rather than as GitHub Secrets:
+
+- `NEXT_PUBLIC_API_URL`
+- `NEXT_PUBLIC_APP_URL`
+- `NEXT_PUBLIC_COOKIE_DOMAIN`
+- `NEXT_PUBLIC_ENV`
+- `NEXT_PUBLIC_POST_LOGIN_PATH`
+- `NEXT_PUBLIC_SEO_SUBJECTS_PATH`
+
+Edit those values in the workflow file directly when the real production URLs are known — the current values are placeholders.
 
 ## Deploying (manual)
 
