@@ -1,7 +1,7 @@
 /**
  * GitHub OAuth **bắt đầu** từ backend — phải dùng **điều hướng trình duyệt**
  * (`window.open` / `location.assign`), không gọi axios/fetch: XHR không follow
- * chuỗi redirect cross-origin như navigation, dễ dính CORS.
+ * redirect cross-origin như navigation, dễ dính CORS.
  */
 export const GITHUB_OAUTH_API_PATH = "/api/v1/auth/github" as const;
 
