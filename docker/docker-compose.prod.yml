@@ -14,6 +14,13 @@ services:
     mem_limit: ${REQ_TOOL_FE_MEM_LIMIT:-512m}
     cpus: 1.0
     env_file: .env
+    environment:
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:?NEXT_PUBLIC_API_URL is required}
+      NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:?NEXT_PUBLIC_APP_URL is required}
+      NEXT_PUBLIC_COOKIE_DOMAIN: ${NEXT_PUBLIC_COOKIE_DOMAIN:?NEXT_PUBLIC_COOKIE_DOMAIN is required}
+      NEXT_PUBLIC_ENV: ${NEXT_PUBLIC_ENV:-production}
+      NEXT_PUBLIC_POST_LOGIN_PATH: ${NEXT_PUBLIC_POST_LOGIN_PATH:-/dashboard}
+      NEXT_PUBLIC_SEO_SUBJECTS_PATH: ${NEXT_PUBLIC_SEO_SUBJECTS_PATH:-/subjects}
     ports:
       - '${APP_PORT:-5174}:5174'
     healthcheck:
