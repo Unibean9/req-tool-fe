@@ -66,9 +66,10 @@ Never roll back by just redeploying `latest` — by the time you need to roll ba
 
 ## Production env vars (Dokploy app)
 
-Set these as environment variables on the Dokploy app (consumed by `docker/docker-compose.prod.yml`):
+See [.env.production.example](.env.production.example) — paste its contents into the Dokploy UI's "Environment" tab for this app, then fill in `DOCKER_USERNAME`. It's consumed by `docker/docker-compose.prod.yml` at container runtime:
 
 - `DOCKER_USERNAME`
 - `IMAGE_TAG` (optional, defaults to `latest`)
 - `REQ_TOOL_FE_MEM_LIMIT` (optional, defaults to `512m`)
-- Any server-side env vars the app reads at runtime (the `NEXT_PUBLIC_*` ones are already baked into the image at build time and don't need to be repeated here)
+
+Do not add `NEXT_PUBLIC_*` vars here — see the build-time note above.
