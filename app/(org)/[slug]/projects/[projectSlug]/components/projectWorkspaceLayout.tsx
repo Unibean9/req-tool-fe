@@ -12,9 +12,13 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { ARTIFACT_TYPES, type ArtifactType } from "@/lib/api/services/fetchArtifact";
+import { isDocumentType } from "@/lib/api/services/fetchDocument";
+import { getDocumentSectionLock, getPriorRegistryContainer } from "@/lib/document/documentSectionLock";
 import type { OrgProject } from "@/lib/api/services/fetchProject";
 import { cn } from "@/lib/utils";
+
+import { useDocumentContainerLock } from "@/hooks/useDocumentContainerLock";
+import { useDocument, useDocumentTypes } from "@/hooks/useDocument";
 
 import { useOrgWorkspace } from "../../../orgWorkspaceContext";
 import { ProjectUpsertDialog } from "../../components/projectUpsertDialog";
@@ -34,13 +38,13 @@ import { ArtifactLinkPageContent } from "../artifact-link/ArtifactLinkPageConten
 import { AgentSessionSidebar } from "../(deliverables)/artifacts/[artifactType]/components/AgentSessionSidebar";
 
 const PROJECT_RAIL_GRADIENTS = [
-  "from-orange-400 to-rose-600",
-  "from-violet-500 to-indigo-700",
-  "from-cyan-400 to-teal-600",
-  "from-amber-400 to-orange-600",
-  "from-fuchsia-500 to-pink-600",
-  "from-emerald-400 to-green-700",
-  "from-sky-400 to-blue-700",
+  "from-stone-500 to-stone-700",
+  "from-amber-600 to-orange-700",
+  "from-emerald-600 to-teal-800",
+  "from-rose-600 to-red-800",
+  "from-slate-600 to-slate-800",
+  "from-orange-500 to-amber-700",
+  "from-teal-700 to-emerald-900",
 ] as const;
 
 /** Only animate scale — round ↔ square instantly when hover/active. */
@@ -187,7 +191,7 @@ function ProjectWorkspaceMain({
       data-project-scroll-gutter
       className={cn(
         "flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-background",
-        isMembersView && mode === "deliverables" ? "p-0" : "p-4 sm:p-6"
+        isMembersView && mode === "deliverables" ? "p-0" : "px-2 py-4 sm:px-3 sm:py-6"
       )}
     >
       {mode === "artifact-link" && <ArtifactLinkPageContent />}
@@ -223,11 +227,55 @@ export function ProjectWorkspaceLayout({
   const currentProject = projects.find((p) => p.slug === projectSlug);
   const projectId = currentProject?.id ?? null;
 
-  const validArtifactType: ArtifactType | null = useMemo(() => {
-    const raw = params?.artifactType;
-    const s = typeof raw === "string" ? raw : null;
-    return s && (ARTIFACT_TYPES as readonly string[]).includes(s) ? (s as ArtifactType) : null;
-  }, [params?.artifactType]);
+  const documentContext = useMemo(() => {
+    const docRaw = params?.documentType;
+    const itemRaw = params?.itemType;
+    const documentType =
+      typeof docRaw === "string" && isDocumentType(docRaw) ? docRaw : null;
+    const itemType =
+      typeof itemRaw === "string"
+        ? itemRaw
+        : Array.isArray(itemRaw)
+          ? (itemRaw[0] ?? null)
+          : null;
+    if (!documentType || !itemType) return null;
+    return { documentType, itemType };
+  }, [params?.documentType, params?.itemType]);
+
+  const { data: registry } = useDocumentTypes({
+    enabled: Boolean(documentContext),
+  });
+  const { data: documentForLock } = useDocument(
+    projectId,
+    documentContext?.documentType ?? "brd",
+    { enabled: Boolean(projectId && documentContext) },
+  );
+
+  const containers = registry?.containers ?? [];
+  const priorContainer =
+    documentContext && containers.length > 0
+      ? getPriorRegistryContainer(containers, documentContext.documentType)
+      : null;
+
+  const containerLock = useDocumentContainerLock(
+    projectId,
+    documentContext?.documentType ?? null,
+    priorContainer,
+  );
+
+  const isDocumentSectionLocked = useMemo(() => {
+    if (!documentContext || !registry || !documentForLock) return false;
+    const container = registry.containers.find(
+      (entry) => entry.artifactType === documentContext.documentType,
+    );
+    if (!container?.children.length) return false;
+    return getDocumentSectionLock(
+      container.children,
+      documentForLock.items,
+      documentContext.itemType,
+      documentContext.documentType,
+    ).locked;
+  }, [documentContext, documentForLock, registry]);
   const navigateAfterProjectDelete = useCallback(
     (deletedProjectId: string, nextSlugOverride?: string | null) => {
       const subPath = projectSubPathFromPathname(pathname, base);
@@ -279,7 +327,7 @@ export function ProjectWorkspaceLayout({
     <div className="flex h-full min-h-0 w-full flex-1 flex-row overflow-hidden bg-background">
       {/* Rail 1 — project list (Discord style) */}
       <aside
-        className="flex w-21 shrink-0 flex-col items-center bg-sidebar py-3"
+        className="flex w-20 shrink-0 flex-col items-center bg-sidebar py-3"
         aria-label="Organization and projects"
       >
         <ProjectWorkspaceOrgRailSwitcher />
@@ -357,13 +405,14 @@ export function ProjectWorkspaceLayout({
         {children}
       </ProjectWorkspaceMain>
 
-      {validArtifactType && (
+      {documentContext && !containerLock.locked && !isDocumentSectionLocked ? (
         <AgentSessionSidebar
-          key={`${projectId ?? "pending"}:${validArtifactType}`}
+          key={`${projectId ?? "pending"}:${documentContext.documentType}`}
           projectId={projectId}
-          artifactType={validArtifactType}
+          documentType={documentContext.documentType}
+          itemType={documentContext.itemType}
         />
-      )}
+      ) : null}
     </div>
     </ProjectWorkspaceNavProvider>
     </ProjectWorkspaceModeProvider>

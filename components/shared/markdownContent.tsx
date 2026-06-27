@@ -71,7 +71,7 @@ export function MarkdownContent({
               className={cn(
                 "text-balance font-semibold text-foreground not-first:mt-6",
                 isDocument
-                  ? "flex items-center gap-2.5 border-b border-border/45 pb-2 text-[0.8125rem] uppercase tracking-[0.14em] text-primary not-first:mt-8 before:h-px before:w-6 before:shrink-0 before:bg-primary/55 before:content-['']"
+                  ? "border-b border-border/45 pb-2 text-[0.8125rem] uppercase tracking-[0.14em] text-primary not-first:mt-8"
                   : "text-sm not-first:mt-4"
               )}
             >
@@ -117,7 +117,7 @@ export function MarkdownContent({
               className={cn(
                 "flex flex-col text-foreground/90",
                 isDocument
-                  ? "mt-3.5 list-decimal gap-2.5 pl-5 text-[0.9375rem] leading-7 marker:text-primary/80"
+                  ? "mt-3.5 list-decimal gap-2.5 pl-0 text-[0.9375rem] leading-7 marker:text-primary/80 [&>li]:pl-5 [&>li]:marker:font-medium"
                   : "mt-3 list-decimal gap-1.5 pl-5 text-sm leading-6"
               )}
             >
@@ -186,8 +186,25 @@ export function MarkdownContent({
             />
           ),
           table: ({ children }) => (
-            <div className="mt-3 overflow-x-auto rounded-lg border border-border/70">
-              <table className="w-full min-w-md border-collapse text-left text-sm">
+            <div className="mt-3 w-full overflow-x-auto rounded-lg border border-border/70">
+              <table
+                className={cn(
+                  "w-full border-collapse text-left text-sm",
+                  isDocument &&
+                    [
+                      // 2-column: balanced label / value layout
+                      "[&:has(thead_th:nth-child(2):last-child)]:table-fixed",
+                      "[&_th:first-child:nth-last-child(2)]:w-[38%] sm:[&_th:first-child:nth-last-child(2)]:w-[40%]",
+                      "[&_th:first-child:nth-last-child(2)]:border-r [&_th:first-child:nth-last-child(2)]:border-border/50 [&_th:first-child:nth-last-child(2)]:pr-5",
+                      "[&_th:last-child:nth-child(2)]:pl-5",
+                      "[&_td:first-child:nth-last-child(2)]:border-r [&_td:first-child:nth-last-child(2)]:border-border/40 [&_td:first-child:nth-last-child(2)]:pr-5 [&_td:first-child:nth-last-child(2)]:font-medium [&_td:first-child:nth-last-child(2)]:text-foreground",
+                      "[&_td:last-child:nth-child(2)]:pl-5 [&_td:last-child:nth-child(2)]:leading-relaxed [&_td:last-child:nth-child(2)]:text-foreground/85",
+                      // 3+ columns: keep ID / code column from crushing
+                      "[&_th:first-child:nth-last-child(n+3)]:w-[1%] [&_th:first-child:nth-last-child(n+3)]:min-w-13 [&_th:first-child:nth-last-child(n+3)]:whitespace-nowrap [&_th:first-child:nth-last-child(n+3)]:pr-4",
+                      "[&_td:first-child:nth-last-child(n+3)]:w-[1%] [&_td:first-child:nth-last-child(n+3)]:min-w-13 [&_td:first-child:nth-last-child(n+3)]:whitespace-nowrap [&_td:first-child:nth-last-child(n+3)]:pr-4 [&_td:first-child:nth-last-child(n+3)]:font-medium [&_td:first-child:nth-last-child(n+3)]:tabular-nums [&_td:first-child:nth-last-child(n+3)]:text-foreground",
+                    ].join(" "),
+                )}
+              >
                 {children}
               </table>
             </div>

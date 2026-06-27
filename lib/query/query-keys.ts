@@ -202,9 +202,20 @@ export function projectSetupProgressQueryKey(projectId: string) {
   return [...PROJECTS_ROOT, projectId, "setup-progress"] as const;
 }
 
-/** Key nội dung BRD export theo `project_id`. */
-export function projectBrdExportQueryKey(projectId: string) {
-  return [...PROJECTS_ROOT, projectId, "brd", "export"] as const;
+/** Prefix cache của toàn bộ biến thể BRD Markdown export theo `project_id`. */
+export function projectBrdExportQueryRoot(projectId: string) {
+  return [...PROJECTS_ROOT, projectId, "exports", "brd.md"] as const;
+}
+
+/** Key nội dung BRD Markdown export theo `project_id` + `include_wont`. */
+export function projectBrdExportQueryKey(
+  projectId: string,
+  params?: { includeWont?: boolean }
+) {
+  return [
+    ...projectBrdExportQueryRoot(projectId),
+    params?.includeWont ?? false,
+  ] as const;
 }
 
 /** Root cache của toàn bộ artifact list theo `project_id`. */
@@ -265,6 +276,34 @@ export function projectArtifactEvidenceQueryKey(
 /** Key artifact graph theo `project_id`. */
 export function projectArtifactGraphQueryKey(projectId: string) {
   return [...PROJECTS_ROOT, projectId, "artifact-graph"] as const;
+}
+
+/** Key document registry types (global). */
+export function documentTypesQueryKey() {
+  return ["documents", "types"] as const;
+}
+
+/** Key document container theo `project_id` + `document_type`. */
+export function projectDocumentQueryKey(
+  projectId: string,
+  documentType: string
+) {
+  return [...PROJECTS_ROOT, projectId, "documents", documentType] as const;
+}
+
+/** Key document item theo `project_id` + `document_type` + `item_type`. */
+export function projectDocumentItemQueryKey(
+  projectId: string,
+  documentType: string,
+  itemType: string
+) {
+  return [
+    ...PROJECTS_ROOT,
+    projectId,
+    "documents",
+    documentType,
+    itemType,
+  ] as const;
 }
 
 /** Key chi tiết một agent session. */
@@ -412,6 +451,9 @@ export const queryKeys = {
     artifact: projectArtifactQueryKey,
     artifactEvidence: projectArtifactEvidenceQueryKey,
     artifactGraph: projectArtifactGraphQueryKey,
+    documentTypes: documentTypesQueryKey,
+    document: projectDocumentQueryKey,
+    documentItem: projectDocumentItemQueryKey,
     workflowRunCurrent: projectWorkflowRunCurrentQueryKey,
     workflowSteps: projectWorkflowStepsQueryKey,
     workflowProgress: projectWorkflowProgressQueryKey,
