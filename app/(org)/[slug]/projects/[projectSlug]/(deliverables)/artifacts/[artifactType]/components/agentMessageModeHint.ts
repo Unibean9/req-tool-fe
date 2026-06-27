@@ -3,6 +3,9 @@ import {
   type AgentMessageModeHint,
 } from "@/lib/api/services/fetchAgentSession";
 
+/** Temporary: hide mode picker in agent sidebar until UX is finalized. */
+export const SHOW_AGENT_MESSAGE_MODE_HINT_UI = false;
+
 export const AGENT_MESSAGE_MODE_HINT_LABELS: Record<
   AgentMessageModeHint,
   { label: string; description: string }

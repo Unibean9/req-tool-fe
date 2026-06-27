@@ -42,6 +42,7 @@ interface HealthCheckApiResponse {
     config: LLMProviderConfigApi;
     response_time_ms: number;
     provider_reply: string | null;
+    tool_calling_supported: boolean | null;
   };
   message: string | null;
 }
@@ -83,6 +84,7 @@ export interface HealthCheckResult {
   config: LLMProviderConfig;
   responseTimeMs: number;
   providerReply: string | null;
+  toolCallingSupported: boolean | null;
 }
 
 export interface HealthCheckResponse {
@@ -91,13 +93,22 @@ export interface HealthCheckResponse {
   message: string | null;
 }
 
-export interface UpsertLLMProviderConfigBody {
+export interface CreateLLMProviderConfigBody {
   provider_type?: LLMProviderType;
   api_key: string;
   secret_key?: string | null;
   region?: string | null;
   model_name?: string;
   strong_model_name?: string;
+}
+
+/** @deprecated use CreateLLMProviderConfigBody */
+export type UpsertLLMProviderConfigBody = CreateLLMProviderConfigBody;
+
+export interface UpdateLLMProviderConfigBody {
+  region?: string | null;
+  model_name?: string | null;
+  strong_model_name?: string | null;
 }
 
 // ─── Mapping ─────────────────────────────────────────────────────────────────
@@ -150,8 +161,8 @@ export const fetchLlmProviderConfig = {
     };
   },
 
-  /** POST /api/v1/users/me/llm-provider-configs — upsert (tạo mới hoặc cập nhật in-place) */
-  upsert: async (body: UpsertLLMProviderConfigBody): Promise<LLMProviderConfigResponse> => {
+  /** POST /api/v1/users/me/llm-provider-configs */
+  create: async (body: CreateLLMProviderConfigBody): Promise<LLMProviderConfigResponse> => {
     const res = await apiService.post<LLMProviderConfigSingleApiResponse>(
       "/api/v1/users/me/llm-provider-configs",
       body
@@ -163,10 +174,23 @@ export const fetchLlmProviderConfig = {
     };
   },
 
-  /** PATCH /api/v1/users/me/llm-provider-configs/{config_id} */
+  /** @deprecated use create */
+  upsert: async (body: CreateLLMProviderConfigBody): Promise<LLMProviderConfigResponse> => {
+    const res = await apiService.post<LLMProviderConfigSingleApiResponse>(
+      "/api/v1/users/me/llm-provider-configs",
+      body
+    );
+    return {
+      success: res.data.success,
+      message: res.data.message ?? null,
+      data: mapConfig(res.data.data),
+    };
+  },
+
+  /** PATCH /api/v1/users/me/llm-provider-configs/{config_id} — model fields only */
   update: async (
     configId: string,
-    body: UpsertLLMProviderConfigBody
+    body: UpdateLLMProviderConfigBody
   ): Promise<LLMProviderConfigResponse> => {
     const res = await apiService.patch<LLMProviderConfigSingleApiResponse>(
       `/api/v1/users/me/llm-provider-configs/${encodeURIComponent(configId)}`,
@@ -199,6 +223,7 @@ export const fetchLlmProviderConfig = {
         config: mapConfig(res.data.data.config),
         responseTimeMs: res.data.data.response_time_ms,
         providerReply: res.data.data.provider_reply,
+        toolCallingSupported: res.data.data.tool_calling_supported,
       },
     };
   },
