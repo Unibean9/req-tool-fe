@@ -1,0 +1,15 @@
+.git
+.github
+.claude
+.frontend-os
+.agents
+node_modules
+.next
+out
+coverage
+*.tsbuildinfo
+npm-debug.log*
+.env*
+!*.env.example
+.DS_Store
+docker

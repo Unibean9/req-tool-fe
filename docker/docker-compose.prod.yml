@@ -1,0 +1,27 @@
+services:
+  req-tool-fe:
+    image: ${DOCKER_USERNAME}/req-tool-fe:${IMAGE_TAG:-latest}
+    pull_policy: always
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      NEXT_PUBLIC_ENV: production
+    env_file:
+      - .env
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    deploy:
+      resources:
+        limits:
+          memory: ${REQ_TOOL_FE_MEM_LIMIT:-512m}
+    restart: unless-stopped
