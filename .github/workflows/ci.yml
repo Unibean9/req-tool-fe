@@ -16,8 +16,8 @@ concurrency:
 
 env:
   DOCKER_IMAGE_NAME: req-tool-fe
-  NEXT_PUBLIC_API_URL: http://api-req.bean9.net/
-  NEXT_PUBLIC_APP_URL: https://req.bean9.net/
+  NEXT_PUBLIC_API_URL: http://api-req.bean9.net
+  NEXT_PUBLIC_APP_URL: https://req.bean9.net
   NEXT_PUBLIC_COOKIE_DOMAIN: .bean9.net
   NEXT_PUBLIC_ENV: production
   NEXT_PUBLIC_POST_LOGIN_PATH: /dashboard
