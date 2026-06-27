@@ -25,6 +25,9 @@ import type {
 } from "@/hooks/useAgentSession";
 import type { AgentMessageModeHint } from "@/lib/api/services/fetchAgentSession";
 
+import {
+  SHOW_AGENT_MESSAGE_MODE_HINT_UI,
+} from "./agentMessageModeHint";
 import { AgentMessageModeHintPicker } from "./agentMessageModeHintPicker";
 
 const MAX_AGENT_INPUT_LENGTH = 8000;
@@ -255,24 +258,27 @@ function AgentComposer({
   const text = useAuiState((state) => state.composer.text);
   const showCharacterCount =
     text.length >= MAX_AGENT_INPUT_LENGTH * 0.8;
+  const isComposerLocked = isSending || isAwaitingAgentReply;
 
   return (
     <div className="shrink-0 border-t border-border/60 bg-sidebar p-3">
       <ComposerPrimitive.Root
         className="rounded-xl border border-border/80 bg-background/78 shadow-sm transition-[border-color,box-shadow] duration-150 focus-within:border-ring focus-within:ring-[3px] focus-within:ring-ring/25"
-        aria-busy={isSending}
+        aria-busy={isComposerLocked}
       >
-        <div className="border-b border-border/50 px-2.5 pt-2.5 pb-2">
-          <AgentMessageModeHintPicker
-            value={modeHint}
-            onChange={onModeHintChange}
-            disabled={isSending}
-          />
-        </div>
+        {SHOW_AGENT_MESSAGE_MODE_HINT_UI ? (
+          <div className="border-b border-border/50 px-2.5 pt-2.5 pb-2">
+            <AgentMessageModeHintPicker
+              value={modeHint}
+              onChange={onModeHintChange}
+              disabled={isComposerLocked}
+            />
+          </div>
+        ) : null}
         <ComposerPrimitive.Input
           placeholder={
             isAwaitingAgentReply
-              ? "Add a note; it will queue…"
+              ? "Waiting for the workbench to finish…"
               : isInitialTurn
                 ? "Describe the outcome you need…"
                 : "Add direction or clarification…"
@@ -285,7 +291,7 @@ function AgentComposer({
           maxLength={MAX_AGENT_INPUT_LENGTH}
           minRows={2}
           maxRows={9}
-          disabled={isSending}
+          disabled={isComposerLocked}
           submitMode="enter"
           className="block min-h-14 w-full resize-none bg-transparent px-3.5 pt-3 pb-2 text-sm leading-5 text-foreground outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-55"
         />
@@ -297,7 +303,7 @@ function AgentComposer({
             </p>
           ) : (
             <p className="mr-auto pl-1 text-[0.6875rem] text-muted-foreground/75">
-              Enter to send
+              {isAwaitingAgentReply ? "Reply when the workbench is ready" : "Enter to send"}
             </p>
           )}
           <ComposerPrimitive.Send
@@ -305,10 +311,10 @@ function AgentComposer({
               buttonVariants({ size: "icon-xs" }),
               "rounded-xl"
             )}
-            disabled={isSending}
+            disabled={isComposerLocked}
             aria-label={
               isAwaitingAgentReply
-                ? "Queue message while workbench is preparing an update"
+                ? "Send disabled while the workbench is responding"
                 : isSending
                   ? "Sending message"
                   : "Send message"
@@ -395,7 +401,10 @@ export function AgentAssistantThread({
     (message: AppendMessage) => {
       const content = getAppendMessageText(message);
       if (!content) return;
-      onSend(content, modeHint);
+      onSend(
+        content,
+        SHOW_AGENT_MESSAGE_MODE_HINT_UI ? modeHint : null,
+      );
     },
     [modeHint, onSend]
   );
@@ -441,7 +450,7 @@ export function AgentAssistantThread({
     messages,
     convertMessage,
     isRunning: isAwaitingAgentReply,
-    isSendDisabled: isSending,
+    isSendDisabled: isSending || isAwaitingAgentReply,
     queue,
     onNew: async (message) => {
       sendAppendMessage(message);

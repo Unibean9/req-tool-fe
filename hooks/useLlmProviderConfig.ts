@@ -11,6 +11,8 @@ import {
   type LLMProviderConfigListResponse,
   type LLMProviderConfigResponse,
   type HealthCheckResponse,
+  type CreateLLMProviderConfigBody,
+  type UpdateLLMProviderConfigBody,
   type UpsertLLMProviderConfigBody,
 } from "@/lib/api/services/fetchLlmProviderConfig";
 import { queryKeys } from "@/lib/query/query-keys";
@@ -35,10 +37,10 @@ export function useActiveLlmProviderConfig(options?: { enabled?: boolean }) {
   });
 }
 
-/** POST /api/v1/users/me/llm-provider-configs — upsert (tạo mới hoặc update in-place). */
-export function useUpsertLlmProviderConfig(
+/** POST /api/v1/users/me/llm-provider-configs */
+export function useCreateLlmProviderConfig(
   options?: Omit<
-    UseMutationOptions<LLMProviderConfigResponse, Error, UpsertLLMProviderConfigBody>,
+    UseMutationOptions<LLMProviderConfigResponse, Error, CreateLLMProviderConfigBody>,
     "mutationFn"
   >
 ) {
@@ -47,8 +49,8 @@ export function useUpsertLlmProviderConfig(
 
   return useMutation({
     ...rest,
-    mutationFn: async (body: UpsertLLMProviderConfigBody): Promise<LLMProviderConfigResponse> => {
-      const result = await fetchLlmProviderConfig.upsert(body);
+    mutationFn: async (body: CreateLLMProviderConfigBody): Promise<LLMProviderConfigResponse> => {
+      const result = await fetchLlmProviderConfig.create(body);
       if (!result.success) throw new Error(result.message ?? "Failed to save LLM config");
       return result;
     },
@@ -59,6 +61,58 @@ export function useUpsertLlmProviderConfig(
     },
     onError: (error, variables, context, meta) => {
       toast.error(getApiErrorMessage(error, "Failed to save LLM config"));
+      userOnError?.(error, variables, context, meta);
+    },
+  });
+}
+
+/** @deprecated use useCreateLlmProviderConfig */
+export function useUpsertLlmProviderConfig(
+  options?: Omit<
+    UseMutationOptions<LLMProviderConfigResponse, Error, UpsertLLMProviderConfigBody>,
+    "mutationFn"
+  >
+) {
+  return useCreateLlmProviderConfig(options);
+}
+
+/** PATCH /api/v1/users/me/llm-provider-configs/{config_id} — model fields only */
+export function useUpdateLlmProviderConfig(
+  options?: Omit<
+    UseMutationOptions<
+      LLMProviderConfigResponse,
+      Error,
+      { configId: string; body: UpdateLLMProviderConfigBody }
+    >,
+    "mutationFn"
+  >
+) {
+  const queryClient = useQueryClient();
+  const { onSuccess: userOnSuccess, onError: userOnError, ...rest } = options ?? {};
+
+  return useMutation({
+    ...rest,
+    mutationFn: async ({
+      configId,
+      body,
+    }: {
+      configId: string;
+      body: UpdateLLMProviderConfigBody;
+    }): Promise<LLMProviderConfigResponse> => {
+      const result = await fetchLlmProviderConfig.update(configId, body);
+      if (!result.success) throw new Error(result.message ?? "Failed to update LLM config");
+      return result;
+    },
+    onSuccess: (data, variables, context, meta) => {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.llmProviderConfigs.list() });
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.llmProviderConfigs.detail(variables.configId),
+      });
+      toast.success("Model settings updated — run health check to revalidate");
+      userOnSuccess?.(data, variables, context, meta);
+    },
+    onError: (error, variables, context, meta) => {
+      toast.error(getApiErrorMessage(error, "Failed to update LLM config"));
       userOnError?.(error, variables, context, meta);
     },
   });
@@ -105,10 +159,12 @@ export function useHealthCheckLlmProviderConfig(
     },
     onSuccess: (data, configId, context, meta) => {
       void queryClient.invalidateQueries({ queryKey: queryKeys.llmProviderConfigs.list() });
-      const { responseTimeMs, providerReply } = data.data;
-      toast.success(
-        `Connection OK — ${responseTimeMs}ms${providerReply ? ` · "${providerReply}"` : ""}`
-      );
+      const { responseTimeMs, providerReply, toolCallingSupported } = data.data;
+      const parts = [`Connection OK — ${responseTimeMs}ms`];
+      if (providerReply) parts.push(`"${providerReply}"`);
+      if (toolCallingSupported != null)
+        parts.push(`Tool calling: ${toolCallingSupported ? "supported" : "not supported"}`);
+      toast.success(parts.join(" · "));
       userOnSuccess?.(data, configId, context, meta);
     },
     onError: (error, variables, context, meta) => {
@@ -124,6 +180,8 @@ export type {
   LLMProviderConfigListResponse,
   LLMProviderConfigResponse,
   HealthCheckResponse,
+  CreateLLMProviderConfigBody,
+  UpdateLLMProviderConfigBody,
   UpsertLLMProviderConfigBody,
 } from "@/lib/api/services/fetchLlmProviderConfig";
 

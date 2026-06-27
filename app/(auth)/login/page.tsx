@@ -36,8 +36,8 @@ export default function LoginPage() {
           setPopupBusy(true);
           const ok = openOAuth();
           if (!ok) {
-            toast.error("Không mở được cửa sổ đăng nhập.", {
-              description: "Cho phép popup cho site này rồi thử lại.",
+            toast.error("Couldn't open the sign-in window.", {
+              description: "Allow pop-ups for this site, then try again.",
             });
           }
           window.setTimeout(() => setPopupBusy(false), 800);
@@ -48,7 +48,7 @@ export default function LoginPage() {
         ) : (
           <GitHubMark className="size-[1.05rem] shrink-0" />
         )}
-        {popupBusy ? "Đang mở…" : "Tiếp tục với GitHub"}
+        {popupBusy ? "Opening…" : "Continue with GitHub"}
       </Button>
     </LoginCard>
   );
