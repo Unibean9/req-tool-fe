@@ -36,7 +36,16 @@ No `DOKPLOY_*` secrets are needed — this pipeline does not call the Dokploy AP
 - `NEXT_PUBLIC_POST_LOGIN_PATH`
 - `NEXT_PUBLIC_SEO_SUBJECTS_PATH`
 
-`NEXT_PUBLIC_API_URL` is already set to the production backend, `http://api-req.bean9.net/`. The remaining values (`NEXT_PUBLIC_APP_URL`, `NEXT_PUBLIC_COOKIE_DOMAIN`, `NEXT_PUBLIC_POST_LOGIN_PATH`, `NEXT_PUBLIC_SEO_SUBJECTS_PATH`) are still placeholders — edit them in the workflow file once the real production frontend domain/paths are known.
+Production values currently set:
+- `NEXT_PUBLIC_API_URL` → `http://api-req.bean9.net/` (BE domain)
+- `NEXT_PUBLIC_APP_URL` → `https://req.bean9.net/` (FE domain)
+- `NEXT_PUBLIC_COOKIE_DOMAIN` → `.bean9.net` (shared root domain so the auth cookie set by the API is readable on the FE subdomain)
+
+`NEXT_PUBLIC_POST_LOGIN_PATH` and `NEXT_PUBLIC_SEO_SUBJECTS_PATH` are still placeholders (app-internal paths, not domains) — edit them in the workflow file if they need to differ from `/dashboard` and `/subjects`.
+
+**Important — these are build-time, not runtime, values.** Next.js inlines every `NEXT_PUBLIC_*` variable into the JS bundle when `npm run build` runs in the `publish` job. Once the image is built, those values are frozen inside it. A `.env` file set in the Dokploy UI is injected into the container at **runtime** — it has no effect on `NEXT_PUBLIC_*` values, since the bundle is already compiled. If a `NEXT_PUBLIC_*` value needs to change, edit it in `.github/workflows/docker-publish.yml` and rebuild/republish the image; don't expect a Dokploy-UI `.env` change to take effect for these.
+
+A Dokploy-UI `.env` *is* the right place for genuinely runtime/server-side values (see the next section) — just not for anything prefixed `NEXT_PUBLIC_`.
 
 ## Deploying (manual)
 
