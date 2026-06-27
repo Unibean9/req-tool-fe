@@ -34,6 +34,7 @@ import {
 } from "@/lib/document/documentSectionLock";
 
 import { BrdExportDialog } from "../../components/BrdExportDialog";
+import { PrdExportDialog } from "../../components/prdExportDialog";
 import {
   DocumentPageHeader,
   DOCUMENT_PAGE_INNER_CLASS,
@@ -577,6 +578,12 @@ export function DocumentOverviewPage({
           action={
             documentType === "brd" ? (
               <BrdExportDialog
+                projectId={projectId}
+                projectSlug={projectSlug}
+                trigger="button"
+              />
+            ) : documentType === "prd" ? (
+              <PrdExportDialog
                 projectId={projectId}
                 projectSlug={projectSlug}
                 trigger="button"

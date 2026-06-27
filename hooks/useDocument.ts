@@ -28,6 +28,7 @@ import { DEFAULT_QUERY_STALE_MS } from "@/lib/query/defaults";
 import {
   documentTypesQueryKey,
   projectBrdExportQueryRoot,
+  projectPrdExportQueryRoot,
   projectDocumentItemQueryKey,
   projectDocumentQueryKey,
 } from "@/lib/query/query-keys";
@@ -73,6 +74,14 @@ export function refreshDocumentItemAfterExternalChange(
 function invalidateBrdExport(queryClient: QueryClient, projectId: string) {
   void queryClient.invalidateQueries({
     queryKey: projectBrdExportQueryRoot(projectId),
+    exact: false,
+    refetchType: "active",
+  });
+}
+
+function invalidatePrdExport(queryClient: QueryClient, projectId: string) {
+  void queryClient.invalidateQueries({
+    queryKey: projectPrdExportQueryRoot(projectId),
     exact: false,
     refetchType: "active",
   });
@@ -268,6 +277,7 @@ export function useUpsertDocumentItem(
         variables.documentType
       );
       invalidateBrdExport(queryClient, variables.projectId);
+      invalidatePrdExport(queryClient, variables.projectId);
       userOnSuccess?.(data, variables, onMutateResult, context);
     },
     onError: (error, variables, onMutateResult, context) => {

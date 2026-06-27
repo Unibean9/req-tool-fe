@@ -36,6 +36,7 @@ import {
   projectAgentSessionQueryKey,
   projectAgentSessionToolCallsQueryKey,
   projectBrdExportQueryRoot,
+  projectPrdExportQueryRoot,
 } from "@/lib/query/query-keys";
 import type { DocumentType } from "@/lib/api/services/fetchDocument";
 
@@ -93,6 +94,14 @@ function invalidateToolCalls(
 function invalidateBrdExport(queryClient: QueryClient, projectId: string) {
   void queryClient.invalidateQueries({
     queryKey: projectBrdExportQueryRoot(projectId),
+    exact: false,
+    refetchType: "active",
+  });
+}
+
+function invalidatePrdExport(queryClient: QueryClient, projectId: string) {
+  void queryClient.invalidateQueries({
+    queryKey: projectPrdExportQueryRoot(projectId),
     exact: false,
     refetchType: "active",
   });
@@ -243,6 +252,7 @@ function syncCacheAfterToolCallAction(
     variables.itemType
   );
   invalidateBrdExport(queryClient, variables.projectId);
+  invalidatePrdExport(queryClient, variables.projectId);
 }
 
 function syncCacheAfterToolCallActionError(
@@ -323,6 +333,7 @@ function applyStreamEvent(
         focusedItem.artifactType
       );
       invalidateBrdExport(queryClient, projectId);
+      invalidatePrdExport(queryClient, projectId);
     }
   }
 }

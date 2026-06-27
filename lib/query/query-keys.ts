@@ -218,6 +218,16 @@ export function projectBrdExportQueryKey(
   ] as const;
 }
 
+/** Prefix cache của toàn bộ biến thể PRD Markdown export theo `project_id`. */
+export function projectPrdExportQueryRoot(projectId: string) {
+  return [...PROJECTS_ROOT, projectId, "exports", "prd.md"] as const;
+}
+
+/** Key nội dung PRD Markdown export theo `project_id`. */
+export function projectPrdExportQueryKey(projectId: string) {
+  return [...projectPrdExportQueryRoot(projectId)] as const;
+}
+
 /** Root cache của toàn bộ artifact list theo `project_id`. */
 export function projectArtifactsQueryRoot(projectId: string) {
   return [...PROJECTS_ROOT, "artifacts", projectId] as const;
@@ -446,6 +456,7 @@ export const queryKeys = {
     story: projectStoryQueryKey,
     setupProgress: projectSetupProgressQueryKey,
     brdExport: projectBrdExportQueryKey,
+    prdExport: projectPrdExportQueryKey,
     contextDiagram: projectContextDiagramQueryKey,
     artifacts: projectArtifactsQueryKey,
     artifact: projectArtifactQueryKey,
