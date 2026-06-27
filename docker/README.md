@@ -4,6 +4,13 @@ Flow: push to `main` → GitHub Actions validates (lint + build) → builds & pu
 
 There is no auto-deploy step in this pipeline. After a successful push, a human deploys via the Dokploy dashboard when ready.
 
+The workflow's only job is to build and push the image. Bringing the container up is entirely `docker/docker-compose.prod.yml` + the runtime `.env` set in the Dokploy UI — two separate concerns, two separate env files:
+
+| File | Used by | When | Contains |
+|---|---|---|---|
+| `docker/.env.build` | `.github/workflows/docker-publish.yml` | CI build time | `NEXT_PUBLIC_*` — inlined into the JS bundle |
+| `docker/.env.production.example` (→ Dokploy UI `.env`) | `docker/docker-compose.prod.yml` | Container runtime on the VPS | `DOCKER_USERNAME`, `IMAGE_TAG`, `REQ_TOOL_FE_MEM_LIMIT` |
+
 ## Local development
 
 ```bash
@@ -25,25 +32,20 @@ cp .env.example .env
 
 No `DOKPLOY_*` secrets are needed — this pipeline does not call the Dokploy API.
 
-## Build-time env vars (plain `env`, not secrets)
+## Build-time env vars — `docker/.env.build`
 
-`NEXT_PUBLIC_*` values are public (shipped to the browser) and not sensitive, so they're set directly in the `env:` block of [.github/workflows/docker-publish.yml](../.github/workflows/docker-publish.yml) rather than as GitHub Secrets:
+`NEXT_PUBLIC_*` values are public (shipped to the browser) and not sensitive, so they live in [docker/.env.build](.env.build) — a plain, committed file, not a GitHub Secret. The `publish` job's "Load build-time env vars" step reads it into `$GITHUB_ENV`, then passes each value as a `--build-arg`:
 
-- `NEXT_PUBLIC_API_URL`
-- `NEXT_PUBLIC_APP_URL`
-- `NEXT_PUBLIC_COOKIE_DOMAIN`
-- `NEXT_PUBLIC_ENV`
-- `NEXT_PUBLIC_POST_LOGIN_PATH`
-- `NEXT_PUBLIC_SEO_SUBJECTS_PATH`
-
-Production values currently set:
 - `NEXT_PUBLIC_API_URL` → `http://api-req.bean9.net/` (BE domain)
 - `NEXT_PUBLIC_APP_URL` → `https://req.bean9.net/` (FE domain)
 - `NEXT_PUBLIC_COOKIE_DOMAIN` → `.bean9.net` (shared root domain so the auth cookie set by the API is readable on the FE subdomain)
+- `NEXT_PUBLIC_ENV` → `production`
+- `NEXT_PUBLIC_POST_LOGIN_PATH` → `/dashboard` (placeholder — edit if it differs)
+- `NEXT_PUBLIC_SEO_SUBJECTS_PATH` → `/subjects` (placeholder — edit if it differs)
 
-`NEXT_PUBLIC_POST_LOGIN_PATH` and `NEXT_PUBLIC_SEO_SUBJECTS_PATH` are still placeholders (app-internal paths, not domains) — edit them in the workflow file if they need to differ from `/dashboard` and `/subjects`.
+To change any of these, edit `docker/.env.build` directly and push to `main` — no workflow YAML edit needed.
 
-**Important — these are build-time, not runtime, values.** Next.js inlines every `NEXT_PUBLIC_*` variable into the JS bundle when `npm run build` runs in the `publish` job. Once the image is built, those values are frozen inside it. A `.env` file set in the Dokploy UI is injected into the container at **runtime** — it has no effect on `NEXT_PUBLIC_*` values, since the bundle is already compiled. If a `NEXT_PUBLIC_*` value needs to change, edit it in `.github/workflows/docker-publish.yml` and rebuild/republish the image; don't expect a Dokploy-UI `.env` change to take effect for these.
+**Important — these are build-time, not runtime, values.** Next.js inlines every `NEXT_PUBLIC_*` variable into the JS bundle when `npm run build` runs in the `publish` job. Once the image is built, those values are frozen inside it. A `.env` file set in the Dokploy UI is injected into the container at **runtime** — it has no effect on `NEXT_PUBLIC_*` values, since the bundle is already compiled. If a `NEXT_PUBLIC_*` value needs to change, edit `docker/.env.build` and push to rebuild/republish the image; don't expect a Dokploy-UI `.env` change to take effect for these.
 
 A Dokploy-UI `.env` *is* the right place for genuinely runtime/server-side values (see the next section) — just not for anything prefixed `NEXT_PUBLIC_`.
 

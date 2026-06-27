@@ -6,12 +6,6 @@ on:
 
 env:
   IMAGE_NAME: req-tool-fe
-  NEXT_PUBLIC_API_URL: http://api-req.bean9.net/
-  NEXT_PUBLIC_APP_URL: https://req.bean9.net/
-  NEXT_PUBLIC_COOKIE_DOMAIN: .bean9.net
-  NEXT_PUBLIC_ENV: production
-  NEXT_PUBLIC_POST_LOGIN_PATH: /dashboard
-  NEXT_PUBLIC_SEO_SUBJECTS_PATH: /subjects
 
 jobs:
   validate:
@@ -37,6 +31,9 @@ jobs:
       - name: Set short SHA
         id: vars
         run: echo "sha_short=$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
+
+      - name: Load build-time env vars
+        run: grep -v '^#' docker/.env.build | grep -v '^$' >> "$GITHUB_ENV"
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
