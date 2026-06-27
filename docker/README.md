@@ -10,14 +10,10 @@ There is no auto-deploy step in this pipeline. After a successful push, a human 
 docker compose -f docker/docker-compose.dev.yml up --build
 ```
 
-Requires a `.env` file at the repo root with at least:
+Requires a `.env` file at the repo root — copy `.env.example` and adjust:
 
-```
-NEXT_PUBLIC_API_URL=
-NEXT_PUBLIC_APP_URL=
-NEXT_PUBLIC_COOKIE_DOMAIN=
-NEXT_PUBLIC_POST_LOGIN_PATH=
-NEXT_PUBLIC_SEO_SUBJECTS_PATH=
+```bash
+cp .env.example .env
 ```
 
 ## GitHub Secrets required
@@ -40,7 +36,7 @@ No `DOKPLOY_*` secrets are needed — this pipeline does not call the Dokploy AP
 - `NEXT_PUBLIC_POST_LOGIN_PATH`
 - `NEXT_PUBLIC_SEO_SUBJECTS_PATH`
 
-Edit those values in the workflow file directly when the real production URLs are known — the current values are placeholders.
+`NEXT_PUBLIC_API_URL` is already set to the production backend, `http://api-req.bean9.net/`. The remaining values (`NEXT_PUBLIC_APP_URL`, `NEXT_PUBLIC_COOKIE_DOMAIN`, `NEXT_PUBLIC_POST_LOGIN_PATH`, `NEXT_PUBLIC_SEO_SUBJECTS_PATH`) are still placeholders — edit them in the workflow file once the real production frontend domain/paths are known.
 
 ## Deploying (manual)
 
