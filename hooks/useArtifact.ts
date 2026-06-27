@@ -31,6 +31,7 @@ import {
   projectArtifactsQueryKey,
   projectArtifactsQueryRoot,
   projectBrdExportQueryRoot,
+  projectPrdExportQueryRoot,
 } from "@/lib/query/query-keys";
 
 // ─── Invalidation helpers ─────────────────────────────────────────────────────
@@ -45,6 +46,14 @@ function invalidateArtifacts(queryClient: QueryClient, projectId: string) {
 function invalidateBrdExport(queryClient: QueryClient, projectId: string) {
   void queryClient.invalidateQueries({
     queryKey: projectBrdExportQueryRoot(projectId),
+    exact: false,
+    refetchType: "active",
+  });
+}
+
+function invalidatePrdExport(queryClient: QueryClient, projectId: string) {
+  void queryClient.invalidateQueries({
+    queryKey: projectPrdExportQueryRoot(projectId),
     exact: false,
     refetchType: "active",
   });
@@ -123,6 +132,7 @@ export function useCreateArtifact(
     onSuccess: (data, variables, onMutateResult, context) => {
       invalidateArtifacts(queryClient, variables.projectId);
       invalidateBrdExport(queryClient, variables.projectId);
+      invalidatePrdExport(queryClient, variables.projectId);
       toast.success("Artifact đã được tạo");
       userOnSuccess?.(data, variables, onMutateResult, context);
     },
