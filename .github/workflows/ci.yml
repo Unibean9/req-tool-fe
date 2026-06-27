@@ -16,12 +16,7 @@ concurrency:
 
 env:
   DOCKER_IMAGE_NAME: req-tool-fe
-  NEXT_PUBLIC_API_URL: https://api-req.bean9.net
   NEXT_PUBLIC_APP_URL: https://req.bean9.net
-  NEXT_PUBLIC_COOKIE_DOMAIN: .bean9.net
-  NEXT_PUBLIC_ENV: production
-  NEXT_PUBLIC_POST_LOGIN_PATH: /dashboard
-  NEXT_PUBLIC_SEO_SUBJECTS_PATH: /subjects
 
 jobs:
   docker-validate:
@@ -42,12 +37,7 @@ jobs:
           file: docker/Dockerfile
           push: false
           build-args: |
-            NEXT_PUBLIC_API_URL=${{ env.NEXT_PUBLIC_API_URL }}
             NEXT_PUBLIC_APP_URL=${{ env.NEXT_PUBLIC_APP_URL }}
-            NEXT_PUBLIC_COOKIE_DOMAIN=${{ env.NEXT_PUBLIC_COOKIE_DOMAIN }}
-            NEXT_PUBLIC_ENV=${{ env.NEXT_PUBLIC_ENV }}
-            NEXT_PUBLIC_POST_LOGIN_PATH=${{ env.NEXT_PUBLIC_POST_LOGIN_PATH }}
-            NEXT_PUBLIC_SEO_SUBJECTS_PATH=${{ env.NEXT_PUBLIC_SEO_SUBJECTS_PATH }}
           tags: ${{ env.DOCKER_IMAGE_NAME }}:ci-${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max,ignore-error=true
@@ -88,12 +78,7 @@ jobs:
           pull: true
           push: true
           build-args: |
-            NEXT_PUBLIC_API_URL=${{ env.NEXT_PUBLIC_API_URL }}
             NEXT_PUBLIC_APP_URL=${{ env.NEXT_PUBLIC_APP_URL }}
-            NEXT_PUBLIC_COOKIE_DOMAIN=${{ env.NEXT_PUBLIC_COOKIE_DOMAIN }}
-            NEXT_PUBLIC_ENV=${{ env.NEXT_PUBLIC_ENV }}
-            NEXT_PUBLIC_POST_LOGIN_PATH=${{ env.NEXT_PUBLIC_POST_LOGIN_PATH }}
-            NEXT_PUBLIC_SEO_SUBJECTS_PATH=${{ env.NEXT_PUBLIC_SEO_SUBJECTS_PATH }}
           tags: |
             ${{ env.DOCKER_USERNAME }}/${{ env.DOCKER_IMAGE_NAME }}:latest
             ${{ env.DOCKER_USERNAME }}/${{ env.DOCKER_IMAGE_NAME }}:${{ github.sha }}
