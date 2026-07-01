@@ -7,6 +7,7 @@ import {
 
 const UNLOCKED_SECTION: DocumentSectionLockInfo = {
   locked: false,
+  hasPendingPrerequisite: false,
   prerequisiteItemType: null,
   prerequisiteLabel: null,
 };
@@ -68,17 +69,20 @@ export function areAllDocumentSectionsAccepted(
 
 const UNLOCKED_CONTAINER: DocumentContainerLockInfo = {
   locked: false,
+  hasPendingPrerequisite: false,
   prerequisiteDocumentType: null,
   prerequisiteLabel: null,
 };
 
 export type DocumentContainerLockInfo = {
+  /** Always false — containers are never hard-blocked, only flagged with a warning. */
   locked: boolean;
+  hasPendingPrerequisite: boolean;
   prerequisiteDocumentType: string | null;
   prerequisiteLabel: string | null;
 };
 
-/** Khóa container khi document trước (theo registry) chưa accept hết sections. */
+/** Soft gate: container stays open, but flags a warning when the prior document isn't fully accepted. */
 export function getDocumentContainerLock(
   priorSectionOrder: readonly string[],
   priorItems: readonly DocumentItemSlot[],
@@ -89,31 +93,50 @@ export function getDocumentContainerLock(
     return UNLOCKED_CONTAINER;
   }
   return {
-    locked: true,
+    locked: false,
+    hasPendingPrerequisite: true,
     prerequisiteDocumentType: priorDocumentType,
     prerequisiteLabel: priorDocumentLabel ?? priorDocumentType.toUpperCase(),
   };
 }
 
 export type DocumentSectionLockInfo = {
+  /** Always false — sections are never hard-blocked, only flagged with a warning. */
   locked: boolean;
+  hasPendingPrerequisite: boolean;
   prerequisiteItemType: string | null;
   prerequisiteLabel: string | null;
 };
 
+/**
+ * Soft gate: section stays open, but flags a warning when a predecessor section isn't
+ * accepted yet, or when `containerLock` reports the prior document isn't done — that
+ * warning cascades to every section of this document, including the first one.
+ */
 export function getDocumentSectionLock(
   sectionOrder: readonly string[],
   items: readonly DocumentItemSlot[],
   itemType: string,
-  documentType?: DocumentType | null
+  documentType?: DocumentType | null,
+  containerLock?: DocumentContainerLockInfo | null
 ): DocumentSectionLockInfo {
+  const containerWarning: DocumentSectionLockInfo | null =
+    containerLock?.hasPendingPrerequisite
+      ? {
+          locked: false,
+          hasPendingPrerequisite: true,
+          prerequisiteItemType: null,
+          prerequisiteLabel: containerLock.prerequisiteLabel,
+        }
+      : null;
+
   if (!isSequentialSectionLockEnabled(documentType)) {
-    return UNLOCKED_SECTION;
+    return containerWarning ?? UNLOCKED_SECTION;
   }
 
   const index = sectionOrder.indexOf(itemType);
   if (index <= 0) {
-    return UNLOCKED_SECTION;
+    return containerWarning ?? UNLOCKED_SECTION;
   }
 
   const slotByType = new Map(items.map((item) => [item.artifactType, item]));
@@ -123,7 +146,8 @@ export function getDocumentSectionLock(
     const priorSlot = slotByType.get(priorType);
     if (!priorSlot || !isDocumentSectionAccepted(priorSlot)) {
       return {
-        locked: true,
+        locked: false,
+        hasPendingPrerequisite: true,
         prerequisiteItemType: priorType,
         prerequisiteLabel:
           priorSlot?.label ??
@@ -132,19 +156,20 @@ export function getDocumentSectionLock(
     }
   }
 
-  return UNLOCKED_SECTION;
+  return containerWarning ?? UNLOCKED_SECTION;
 }
 
 export function buildDocumentSectionLockMap(
   sectionOrder: readonly string[],
   items: readonly DocumentItemSlot[],
-  documentType?: DocumentType | null
+  documentType?: DocumentType | null,
+  containerLock?: DocumentContainerLockInfo | null
 ): Map<string, DocumentSectionLockInfo> {
   const map = new Map<string, DocumentSectionLockInfo>();
   for (const itemType of sectionOrder) {
     map.set(
       itemType,
-      getDocumentSectionLock(sectionOrder, items, itemType, documentType)
+      getDocumentSectionLock(sectionOrder, items, itemType, documentType, containerLock)
     );
   }
   return map;

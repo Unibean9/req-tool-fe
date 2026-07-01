@@ -16,7 +16,7 @@ import {
   ChevronRight,
   Circle,
   LayoutDashboard,
-  Lock,
+  TriangleAlert,
   Users,
 } from "lucide-react";
 
@@ -325,7 +325,6 @@ function DocumentContainerNav({
     documentType,
     priorContainer,
   );
-  const isContainerLocked = containerLock.locked;
 
   const prefetchItem = useCallback(
     (itemType: string) => {
@@ -370,7 +369,7 @@ function DocumentContainerNav({
   const isChildActive = isInDocument && !isOverviewActive;
   const documentStarted = Boolean(document?.artifactId);
   const shouldShowChildren =
-    totalCount > 0 && !isContainerLocked && (documentStarted || isChildActive);
+    totalCount > 0 && (documentStarted || isChildActive);
   const shouldAnimateChildrenReveal = useDocumentChildrenRevealMotion({
     scopeKey: `${projectId ?? "no-project"}:${documentType}`,
     documentKnown: Boolean(document),
@@ -383,8 +382,14 @@ function DocumentContainerNav({
   const childNavId = `document-${documentType}-sections`;
   const childMotion = shouldAnimateChildrenReveal ? "animate" : "instant";
   const sectionLockByType = useMemo(
-    () => buildDocumentSectionLockMap(container.children, items, documentType),
-    [container.children, documentType, items],
+    () =>
+      buildDocumentSectionLockMap(
+        container.children,
+        items,
+        documentType,
+        containerLock,
+      ),
+    [container.children, containerLock, documentType, items],
   );
 
   return (
@@ -399,86 +404,53 @@ function DocumentContainerNav({
       </SidebarSectionTitle>
 
       <div className="px-0.5">
-        {isContainerLocked ? (
-          <span
-            aria-disabled="true"
-            title={
-              containerLock.prerequisiteLabel
-                ? `Hoàn thành ${containerLock.prerequisiteLabel} trước`
-                : undefined
-            }
-            className="flex min-h-11 cursor-not-allowed items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm text-muted-foreground opacity-45"
-          >
-            <SidebarIcon
-              icon={ContainerIcon}
-              className="size-4 shrink-0 opacity-85"
-            />
-            <span className="min-w-0 flex-1 truncate">{label}</span>
-            {totalCount > 0 ? (
-              <span className="flex shrink-0 items-center gap-1 pl-1.5">
-                <span className="text-[0.625rem] tabular-nums text-muted-foreground">
-                  {acceptedCount}/{totalCount}
-                </span>
-                <Lock
-                  className="size-3.5 text-muted-foreground/50"
-                  aria-label={
-                    containerLock.prerequisiteLabel
-                      ? `Locked until ${containerLock.prerequisiteLabel} is complete`
-                      : "Locked"
-                  }
-                />
-              </span>
-            ) : null}
-          </span>
-        ) : (
-          <Link
-            href={documentHref}
-            title={label}
-            aria-current={
-              isOverviewActive ? "page" : isChildActive ? "true" : undefined
-            }
-            aria-expanded={totalCount > 0 ? shouldShowChildren : undefined}
-            aria-controls={shouldShowChildren ? childNavId : undefined}
+        <Link
+          href={documentHref}
+          title={label}
+          aria-current={
+            isOverviewActive ? "page" : isChildActive ? "true" : undefined
+          }
+          aria-expanded={totalCount > 0 ? shouldShowChildren : undefined}
+          aria-controls={shouldShowChildren ? childNavId : undefined}
+          className={cn(
+            "flex min-h-11 min-w-0 items-center gap-2 rounded-lg overflow-hidden px-2.5 py-2 text-left text-sm transition-[color,background-color,box-shadow] duration-200 outline-none focus-visible:ring-2 focus-visible:ring-ring/45",
+            isOverviewActive
+              ? "border border-primary/30 bg-(--chart-1)/10 font-medium text-foreground"
+              : isChildActive
+                ? "bg-muted/30 font-medium text-foreground"
+                : "text-muted-foreground hover:bg-muted/40 hover:text-foreground",
+          )}
+        >
+          <SidebarIcon
+            icon={ContainerIcon}
             className={cn(
-              "flex min-h-11 min-w-0 items-center gap-2 rounded-lg overflow-hidden px-2.5 py-2 text-left text-sm transition-[color,background-color,box-shadow] duration-200 outline-none focus-visible:ring-2 focus-visible:ring-ring/45",
-              isOverviewActive
-                ? "border border-primary/30 bg-(--chart-1)/10 font-medium text-foreground"
-                : isChildActive
-                  ? "bg-muted/30 font-medium text-foreground"
-                  : "text-muted-foreground hover:bg-muted/40 hover:text-foreground",
+              "size-4 shrink-0",
+              isOverviewActive ? "text-brand-mint opacity-100" : "opacity-85",
             )}
-          >
-            <SidebarIcon
-              icon={ContainerIcon}
-              className={cn(
-                "size-4 shrink-0",
-                isOverviewActive ? "text-brand-mint opacity-100" : "opacity-85",
-              )}
-            />
-            <span className="min-w-0 flex-1 truncate">{label}</span>
-            {totalCount > 0 ? (
-              <span className="flex shrink-0 items-center gap-1 pl-1.5">
-                <span
-                  className={cn(
-                    "text-[0.625rem] tabular-nums",
-                    isChildActive
-                      ? "text-foreground/80"
-                      : "text-muted-foreground",
-                  )}
-                >
-                  {acceptedCount}/{totalCount}
-                </span>
-                <ChevronRight
-                  className={cn(
-                    "size-3 text-muted-foreground/70 transition-transform duration-200 motion-reduce:transition-none",
-                    shouldShowChildren && "rotate-90 text-brand-mint/80",
-                  )}
-                  aria-hidden
-                />
+          />
+          <span className="min-w-0 flex-1 truncate">{label}</span>
+          {totalCount > 0 ? (
+            <span className="flex shrink-0 items-center gap-1 pl-1.5">
+              <span
+                className={cn(
+                  "text-[0.625rem] tabular-nums",
+                  isChildActive
+                    ? "text-foreground/80"
+                    : "text-muted-foreground",
+                )}
+              >
+                {acceptedCount}/{totalCount}
               </span>
-            ) : null}
-          </Link>
-        )}
+              <ChevronRight
+                className={cn(
+                  "size-3 text-muted-foreground/70 transition-transform duration-200 motion-reduce:transition-none",
+                  shouldShowChildren && "rotate-90 text-brand-mint/80",
+                )}
+                aria-hidden
+              />
+            </span>
+          ) : null}
+        </Link>
       </div>
 
       {isChildrenPresent ? (
@@ -507,7 +479,7 @@ function DocumentContainerNav({
                 const Icon = getDocumentItemIcon(item.artifactType);
                 const accepted = isDocumentSectionAccepted(item);
                 const lock = sectionLockByType.get(item.artifactType);
-                const isSectionLocked = lock?.locked === true;
+                const hasSectionWarning = lock?.hasPendingPrerequisite === true;
 
                 return (
                   <SidebarNavLink
@@ -517,22 +489,21 @@ function DocumentContainerNav({
                     icon={Icon}
                     nested
                     active={pathActive(pathname, href)}
-                    disabled={isSectionLocked}
                     title={
-                      isSectionLocked && lock?.prerequisiteLabel
-                        ? `Hoàn thành ${lock.prerequisiteLabel} trước`
+                      hasSectionWarning && lock?.prerequisiteLabel
+                        ? `${item.label} — ${lock.prerequisiteLabel} not completed yet`
                         : undefined
                     }
                     onPrefetch={
-                      !isSectionLocked && item.artifactId
+                      item.artifactId
                         ? () => prefetchItem(item.artifactType)
                         : undefined
                     }
                     trailing={
-                      isSectionLocked ? (
-                        <Lock
-                          className="size-3.5 text-muted-foreground/50"
-                          aria-label={`Locked until ${lock?.prerequisiteLabel ?? "previous section"} is accepted`}
+                      hasSectionWarning ? (
+                        <TriangleAlert
+                          className="size-3.5 text-amber-500"
+                          aria-label={`${lock?.prerequisiteLabel ?? "Previous section"} not completed yet`}
                         />
                       ) : accepted ? (
                         <CheckCircle2
