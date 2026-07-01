@@ -6,6 +6,7 @@ import {
   isGithubRefreshRequestUrl,
   refreshGithubTokens,
   persistAccessTokenCookie,
+  clearAuthTokenCookies,
 } from "@/lib/auth/refreshGithubSession";
 import { buildLoginUrl } from "@/lib/auth/session";
 import { formatMessageFromValidationBody } from "@/lib/api/getApiErrorMessage";
@@ -57,7 +58,7 @@ class ApiService {
       const { logout } = await import("@/lib/redux/slices/authSlice");
       store.dispatch(logout());
     } else {
-      deleteCookie("authToken", { path: "/" });
+      clearAuthTokenCookies();
     }
 
     window.dispatchEvent(new Event("logout"));

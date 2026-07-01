@@ -78,7 +78,7 @@ export function DocumentPageHeader({
             )}
             aria-hidden
           >
-            <Icon className="size-[1.125rem]" />
+            <Icon className="size-4.5" />
           </div>
 
           <div className={DOCUMENT_PAGE_CONTENT_RAIL_CLASS}>
