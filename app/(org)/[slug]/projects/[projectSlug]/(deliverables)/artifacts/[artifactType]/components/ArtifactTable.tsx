@@ -27,6 +27,7 @@ import type {
   Artifact,
   ArtifactChangeSource,
   ArtifactCurrentVersionStatus,
+  ArtifactLifecycleState,
   ArtifactPriority,
   ArtifactStatus,
   ArtifactVersionReviewStatus,
@@ -48,6 +49,24 @@ export const STATUS_LABELS: Record<ArtifactStatus, string> = {
   accepted: "Accepted",
   rejected: "Rejected",
   archived: "Archived",
+};
+
+export const LIFECYCLE_CLASS: Record<ArtifactLifecycleState, string> = {
+  missing: "border-border/70 bg-muted text-muted-foreground",
+  blocked: "border-destructive/30 bg-destructive/10 text-destructive",
+  in_progress: "border-sky-400/30 bg-sky-400/10 text-sky-200",
+  current: "border-primary/35 bg-primary/15 text-brand-mint",
+  stale: "border-amber-400/30 bg-amber-400/10 text-amber-200",
+  orphan: "border-fuchsia-400/30 bg-fuchsia-400/10 text-fuchsia-200",
+};
+
+export const LIFECYCLE_LABELS: Record<ArtifactLifecycleState, string> = {
+  missing: "Missing",
+  blocked: "Blocked",
+  in_progress: "In Progress",
+  current: "Current",
+  stale: "Stale",
+  orphan: "Orphan",
 };
 
 export const PRIORITY_LABELS: Record<ArtifactPriority, string> = {
@@ -112,6 +131,25 @@ function formatToken(value: string): string {
 function formatConfidence(value: number): string {
   const percentage = value <= 1 ? value * 100 : value;
   return `${Math.round(Math.max(0, Math.min(percentage, 100)))}%`;
+}
+
+function LifecycleBadge({
+  state,
+  reason,
+}: {
+  state: ArtifactLifecycleState | null;
+  reason?: string | null;
+}) {
+  if (!state) return null;
+  return (
+    <Badge
+      variant="outline"
+      className={cn(LIFECYCLE_CLASS[state])}
+      title={reason ?? undefined}
+    >
+      {LIFECYCLE_LABELS[state]}
+    </Badge>
+  );
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -277,6 +315,10 @@ function ArtifactDetailDialog({
             >
               {STATUS_LABELS[artifact.status]}
             </Badge>
+            <LifecycleBadge
+              state={artifact.lifecycleState}
+              reason={artifact.lifecycleReason}
+            />
             <Badge variant="outline" className="tabular-nums">
               {currentVersion?.versionNumber
                 ? `Version ${currentVersion.versionNumber}`
@@ -342,6 +384,14 @@ function ArtifactDetailDialog({
                         {STATUS_LABELS[artifact.status]}
                       </Badge>
                     </DetailItem>
+                    {artifact.lifecycleState ? (
+                      <DetailItem label="Lifecycle">
+                        <LifecycleBadge
+                          state={artifact.lifecycleState}
+                          reason={artifact.lifecycleReason}
+                        />
+                      </DetailItem>
+                    ) : null}
                     <DetailItem label="Version">
                       <span className="tabular-nums">
                         {currentVersion?.versionNumber
@@ -508,20 +558,23 @@ export function ArtifactTable({ artifacts, typeLabel }: ArtifactTableProps) {
   return (
     <>
       <div className="overflow-hidden rounded-xl border border-border/70 bg-card/35">
-        <Table className="min-w-[640px] table-fixed">
+        <Table className="min-w-[760px] table-fixed">
           <TableCaption className="sr-only">
             {typeLabel} artifacts with their status, current version, and last
             update date. Open an artifact to read its full content.
           </TableCaption>
           <TableHeader className="bg-muted/45">
             <TableRow className="hover:bg-transparent">
-              <TableHead scope="col" className="w-[55%] px-4 text-xs">
+              <TableHead scope="col" className="w-[45%] px-4 text-xs">
                 Artifact
               </TableHead>
-              <TableHead scope="col" className="w-[17%] px-3 text-xs">
+              <TableHead scope="col" className="w-[14%] px-3 text-xs">
                 Status
               </TableHead>
-              <TableHead scope="col" className="w-[13%] px-3 text-xs">
+              <TableHead scope="col" className="w-[16%] px-3 text-xs">
+                Lifecycle
+              </TableHead>
+              <TableHead scope="col" className="w-[10%] px-3 text-xs">
                 Version
               </TableHead>
               <TableHead scope="col" className="w-[15%] px-4 text-xs">
@@ -582,6 +635,13 @@ export function ArtifactTable({ artifacts, typeLabel }: ArtifactTableProps) {
                     >
                       {STATUS_LABELS[artifact.status]}
                     </Badge>
+                  </TableCell>
+
+                  <TableCell className="px-3 py-3.5 whitespace-normal">
+                    <LifecycleBadge
+                      state={artifact.lifecycleState}
+                      reason={artifact.lifecycleReason}
+                    />
                   </TableCell>
 
                   <TableCell className="px-3 py-3.5 whitespace-normal">

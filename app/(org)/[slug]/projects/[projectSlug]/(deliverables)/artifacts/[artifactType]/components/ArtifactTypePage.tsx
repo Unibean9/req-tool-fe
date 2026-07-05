@@ -70,9 +70,14 @@ export function ArtifactTypePage({
   const label = ARTIFACT_TYPE_LABELS[artifactType];
 
   const isInitialLoad = isProjectsPending || (isArtifactsPending && !isFetching);
+  const archivedCount = filtered.filter(
+    (artifact) => artifact.status === "archived"
+  ).length;
   const itemStatus = `${filtered.length} ${
     filtered.length === 1 ? "item" : "items"
-  } in this BRD section`;
+  } in this BRD section${
+    archivedCount > 0 ? `, ${archivedCount} archived` : ""
+  }`;
 
   if (isInitialLoad) {
     return (

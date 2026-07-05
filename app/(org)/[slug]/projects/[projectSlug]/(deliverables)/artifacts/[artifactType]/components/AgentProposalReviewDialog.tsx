@@ -45,7 +45,10 @@ import {
   type AgentToolCallStatus,
 } from "@/hooks/useAgentSession";
 import { MarkdownContent } from "@/components/shared/markdownContent";
-import { getApiErrorMessage } from "@/lib/api/getApiErrorMessage";
+import {
+  getApiErrorMessage,
+  getDependencyConflictArtifactIds,
+} from "@/lib/api/getApiErrorMessage";
 import type { DocumentType } from "@/lib/api/services/fetchDocument";
 import { cn } from "@/lib/utils";
 
@@ -55,6 +58,7 @@ const PRIMARY_CONTENT_KEYS = ["body", "content", "description"] as const;
 const SNAPSHOT_LABELS: Record<string, string> = {
   acceptance_criteria: "Acceptance criteria",
   agent_role: "Agent role",
+  artifact_id: "Artifact ID",
   artifact_type: "Artifact type",
   assumptions: "Assumptions",
   body: "Content",
@@ -68,12 +72,17 @@ const SNAPSHOT_LABELS: Record<string, string> = {
   priority: "Priority",
   problem: "Problem",
   rationale: "Proposal rationale",
+  relation_type: "Relation type",
   scope: "Scope",
+  source_artifact_id: "Source artifact ID",
   step_key: "Workflow step",
+  superseded_by_artifact_id: "Superseded by",
+  target_artifact_id: "Target artifact ID",
   title: "Title",
   workflow_area: "Workflow area",
   synthesis_metadata: "Synthesis metadata",
   synthesis_source: "Synthesis source",
+  created_link_id: "Created link ID",
   contract_version: "Contract version",
   inference_level: "Inference level",
   evidence_refs: "Evidence references",
@@ -82,8 +91,16 @@ const SNAPSHOT_LABELS: Record<string, string> = {
 };
 
 const METADATA_OBJECT_KEYS = new Set(["synthesis_metadata"]);
+const VISIBLE_IDENTIFIER_KEYS = new Set([
+  "artifact_id",
+  "source_artifact_id",
+  "target_artifact_id",
+  "superseded_by_artifact_id",
+  "created_link_id",
+]);
 
 type ReviewMode = "review" | "request-edit";
+type ProposalKind = "artifact" | "link" | "retirement";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
@@ -127,6 +144,7 @@ function formatSnapshotLabel(key: string): string {
 
 function shouldHideSnapshotKey(key: string): boolean {
   const normalized = key.trim().toLowerCase().replace(/-/g, "_");
+  if (VISIBLE_IDENTIFIER_KEYS.has(normalized)) return false;
   return (
     normalized === "id" ||
     normalized === "ids" ||
@@ -136,6 +154,29 @@ function shouldHideSnapshotKey(key: string): boolean {
     normalized === "tool_name" ||
     normalized === "tool_call"
   );
+}
+
+function getProposalKind(toolName: string): ProposalKind {
+  if (toolName.startsWith("create_artifact_link:")) return "link";
+  if (toolName.startsWith("propose_retirement:")) return "retirement";
+  return "artifact";
+}
+
+function getProposalKindLabel(kind: ProposalKind): string {
+  switch (kind) {
+    case "link":
+      return "Artifact link";
+    case "retirement":
+      return "Retirement";
+    case "artifact":
+      return "Artifact";
+  }
+}
+
+function formatRelationLabel(value: string): string {
+  return value
+    .replace(/[_-]+/g, " ")
+    .replace(/\b\w/g, (character) => character.toUpperCase());
 }
 
 function isFlatMetadataObject(value: unknown): boolean {
@@ -213,7 +254,7 @@ function sanitizeSnapshotValue(value: unknown): unknown {
   );
 }
 
-function formatStatus(status: AgentToolCallStatus): {
+function formatStatus(status: AgentToolCallStatus, kind: ProposalKind): {
   label: string;
   variant: "default" | "outline" | "destructive" | "secondary";
 } {
@@ -225,6 +266,12 @@ function formatStatus(status: AgentToolCallStatus): {
     case "rejected":
       return { label: "Rejected", variant: "destructive" };
     case "executed":
+      if (kind === "link") {
+        return { label: "Link created", variant: "secondary" };
+      }
+      if (kind === "retirement") {
+        return { label: "Archived", variant: "secondary" };
+      }
       return { label: "Artifact created", variant: "secondary" };
     case "superseded":
       return { label: "Superseded", variant: "outline" };
@@ -350,6 +397,25 @@ function EvidenceRefList({ refs }: { refs: string[] }) {
         </li>
       ))}
     </ul>
+  );
+}
+
+function DependencyBlockerList({ ids }: { ids: string[] }) {
+  return (
+    <div className="rounded-lg border border-destructive/20 bg-destructive/8 px-3 py-2.5">
+      <p className="text-xs font-medium text-destructive">
+        Downstream blockers
+      </p>
+      <ul className="mt-2 grid gap-1.5">
+        {ids.map((id) => (
+          <li key={id}>
+            <code className="block truncate rounded-md bg-background/65 px-2 py-1 font-mono text-[0.6875rem] text-foreground/85">
+              {id}
+            </code>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
 
@@ -531,13 +597,42 @@ export function AgentProposalReviewDialog({
   const requestEdit = useRequestEditToolCall();
 
   const snapshot = toolCall.inputSnapshot;
+  const proposalKind = getProposalKind(toolCall.toolName);
+  const relationType = snapshotString(snapshot, "relation_type");
+  const sourceArtifactId = snapshotString(snapshot, "source_artifact_id");
+  const targetArtifactId = snapshotString(snapshot, "target_artifact_id");
+  const retirementArtifactId = snapshotString(snapshot, "artifact_id");
   const proposalTitle =
     snapshotString(snapshot, "title") ??
-    `Proposed ${formatSnapshotLabel(
-      snapshotString(snapshot, "artifact_type") ?? itemType
-    )}`;
+    (proposalKind === "link"
+      ? `Proposed ${relationType ? formatRelationLabel(relationType) : "artifact link"}`
+      : proposalKind === "retirement"
+        ? "Proposed artifact retirement"
+        : `Proposed ${formatSnapshotLabel(
+            snapshotString(snapshot, "artifact_type") ?? itemType
+          )}`);
   const artifactLabel =
-    snapshotString(snapshot, "artifact_type") ?? itemType;
+    proposalKind === "artifact"
+      ? snapshotString(snapshot, "artifact_type") ?? itemType
+      : getProposalKindLabel(proposalKind);
+  const proposalDescription =
+    proposalKind === "link"
+      ? "Review the source, target, and relation before creating this artifact link."
+      : proposalKind === "retirement"
+        ? "Review the retirement reason and downstream impact before archiving this artifact."
+        : "Review the complete content and supporting details before making a decision.";
+  const emptyPrimaryDescription =
+    proposalKind === "link"
+      ? "This proposal is defined by the source artifact, target artifact, relation type, and metadata below."
+      : proposalKind === "retirement"
+        ? "This proposal is defined by the artifact, retirement reason, and superseding artifact below."
+        : "No primary content field was provided. All available details are shown below.";
+  const approveLabel =
+    proposalKind === "link"
+      ? "Approve link"
+      : proposalKind === "retirement"
+        ? "Approve archive"
+        : "Approve proposal";
   const primaryContentKey = PRIMARY_CONTENT_KEYS.find(
     (key) => snapshot[key] !== undefined && snapshot[key] !== null
   );
@@ -574,7 +669,7 @@ export function AgentProposalReviewDialog({
       metadataDetailEntries: metadata,
     };
   }, [detailEntries]);
-  const status = formatStatus(toolCall.status);
+  const status = formatStatus(toolCall.status, proposalKind);
   const isResolved = toolCall.status !== "proposed";
   const isBusy =
     approve.isPending || reject.isPending || requestEdit.isPending;
@@ -582,6 +677,7 @@ export function AgentProposalReviewDialog({
     mode === "request-edit"
       ? requestEdit.error
       : approve.error ?? reject.error ?? null;
+  const dependencyBlockers = getDependencyConflictArtifactIds(actionError);
   const editFieldId = `proposal-edit-${toolCall.id}`;
   const editHelpId = `proposal-edit-help-${toolCall.id}`;
   const editErrorId = `proposal-edit-error-${toolCall.id}`;
@@ -673,12 +769,18 @@ export function AgentProposalReviewDialog({
             {proposalTitle}
           </span>
           <span className="text-pretty text-xs leading-relaxed text-muted-foreground">
-            Open the full review to inspect every proposal detail.
+            {proposalDescription}
           </span>
         </span>
 
         <span className="flex w-full items-center justify-between gap-3 text-xs">
-          <span className="text-muted-foreground">Ready for review</span>
+          <span className="text-muted-foreground">
+            {sourceArtifactId && targetArtifactId
+              ? `${sourceArtifactId.slice(0, 8)} -> ${targetArtifactId.slice(0, 8)}`
+              : retirementArtifactId
+                ? retirementArtifactId.slice(0, 8)
+                : "Ready for review"}
+          </span>
           <span className="inline-flex items-center gap-1.5 font-semibold text-primary">
             <Eye aria-hidden />
             View full proposal
@@ -705,8 +807,7 @@ export function AgentProposalReviewDialog({
               {proposalTitle}
             </DialogTitle>
             <DialogDescription className="text-pretty">
-              Review the complete content and supporting details before making
-              a decision.
+              {proposalDescription}
             </DialogDescription>
           </div>
         </DialogHeader>
@@ -730,8 +831,7 @@ export function AgentProposalReviewDialog({
                   Proposal data
                 </div>
                 <p className="text-pretty text-sm leading-6 text-muted-foreground">
-                  No primary content field was provided. All available details
-                  are shown below.
+                  {emptyPrimaryDescription}
                 </p>
               </div>
             )}
@@ -847,16 +947,17 @@ export function AgentProposalReviewDialog({
               </Field>
 
               {actionError ? (
-                <p
-                  id={editErrorId}
-                  className="text-pretty text-sm text-destructive"
-                  role="alert"
-                >
-                  {getApiErrorMessage(
-                    actionError,
-                    "Could not send the revision request"
-                  )}
-                </p>
+                <div id={editErrorId} className="grid gap-2" role="alert">
+                  <p className="text-pretty text-sm text-destructive">
+                    {getApiErrorMessage(
+                      actionError,
+                      "Could not send the revision request"
+                    )}
+                  </p>
+                  {dependencyBlockers.length ? (
+                    <DependencyBlockerList ids={dependencyBlockers} />
+                  ) : null}
+                </div>
               ) : null}
 
               <div className="flex justify-end">
@@ -877,12 +978,17 @@ export function AgentProposalReviewDialog({
           ) : (
             <div className="flex flex-col gap-3">
               {actionError ? (
-                <p className="text-pretty text-sm text-destructive" role="alert">
-                  {getApiErrorMessage(
-                    actionError,
-                    "Could not process the proposal"
-                  )}
-                </p>
+                <div className="grid gap-2" role="alert">
+                  <p className="text-pretty text-sm text-destructive">
+                    {getApiErrorMessage(
+                      actionError,
+                      "Could not process the proposal"
+                    )}
+                  </p>
+                  {dependencyBlockers.length ? (
+                    <DependencyBlockerList ids={dependencyBlockers} />
+                  ) : null}
+                </div>
               ) : null}
 
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -952,7 +1058,7 @@ export function AgentProposalReviewDialog({
                         ) : (
                           <ThumbsUp data-icon="inline-start" />
                         )}
-                        Approve proposal
+                        {approveLabel}
                       </Button>
                     </>
                   ) : null}

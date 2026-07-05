@@ -179,9 +179,15 @@ function DiscordRailItem({
 
 function ProjectWorkspaceMain({
   isMembersView,
+  projectId,
+  orgSlug,
+  projectSlug,
   children,
 }: {
   isMembersView: boolean;
+  projectId: string | null;
+  orgSlug: string;
+  projectSlug: string;
   children: React.ReactNode;
 }) {
   const { mode } = useProjectWorkspaceMode();
@@ -194,7 +200,13 @@ function ProjectWorkspaceMain({
         isMembersView && mode === "deliverables" ? "p-0" : "px-2 py-4 sm:px-3 sm:py-6"
       )}
     >
-      {mode === "artifact-link" && <ArtifactLinkPageContent />}
+      {mode === "artifact-link" && (
+        <ArtifactLinkPageContent
+          projectId={projectId}
+          orgSlug={orgSlug}
+          projectSlug={projectSlug}
+        />
+      )}
       {mode === "deliverables" && children}
     </main>
   );
@@ -401,7 +413,12 @@ export function ProjectWorkspaceLayout({
         projectsLoaded={!isProjectsPending}
       />
 
-      <ProjectWorkspaceMain isMembersView={isMembersView}>
+      <ProjectWorkspaceMain
+        isMembersView={isMembersView}
+        projectId={projectId}
+        orgSlug={orgSlug}
+        projectSlug={projectSlug}
+      >
         {children}
       </ProjectWorkspaceMain>
 
