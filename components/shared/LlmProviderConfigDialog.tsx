@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Eye, EyeOff, Key, Loader2, Trash2, Zap } from "lucide-react";
+import { Eye, EyeOff, Globe2, Key, Loader2, Trash2, Zap } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -29,21 +29,125 @@ import {
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
-const PROVIDERS: { value: LLMProviderType; label: string }[] = [
-  { value: "openai", label: "OpenAI" },
-  { value: "anthropic", label: "Anthropic" },
-  { value: "google", label: "Google" },
-  { value: "bedrock", label: "AWS Bedrock" },
+type ProviderOptionId = LLMProviderType;
+
+type ProviderOption = {
+  value: ProviderOptionId;
+  label: string;
+  helper: string;
+  payloadType: LLMProviderType;
+  apiKeyPlaceholder: string;
+  model: string;
+  strong: string;
+};
+
+const PROVIDERS: ProviderOption[] = [
+  {
+    value: "openai",
+    label: "OpenAI",
+    helper: "Built-in",
+    payloadType: "openai",
+    apiKeyPlaceholder: "Enter OpenAI API key",
+    model: "gpt-4.1-mini",
+    strong: "gpt-4.1",
+  },
+  {
+    value: "anthropic",
+    label: "Anthropic",
+    helper: "Built-in",
+    payloadType: "anthropic",
+    apiKeyPlaceholder: "Enter Anthropic API key",
+    model: "claude-3-5-haiku-latest",
+    strong: "claude-3-5-sonnet-latest",
+  },
+  {
+    value: "google",
+    label: "Google",
+    helper: "Built-in",
+    payloadType: "google",
+    apiKeyPlaceholder: "Enter Google API key",
+    model: "gemini-2.0-flash",
+    strong: "gemini-2.0-pro",
+  },
+  {
+    value: "mistral",
+    label: "Mistral",
+    helper: "Built-in",
+    payloadType: "mistral",
+    apiKeyPlaceholder: "Enter Mistral API key",
+    model: "mistral-small-latest",
+    strong: "mistral-large-latest",
+  },
+  {
+    value: "bedrock",
+    label: "AWS Bedrock",
+    helper: "Built-in",
+    payloadType: "bedrock",
+    apiKeyPlaceholder: "Enter AWS access key ID",
+    model: "anthropic.claude-3-haiku",
+    strong: "anthropic.claude-3-5-sonnet",
+  },
+  {
+    value: "custom",
+    label: "Custom",
+    helper: "Custom URL",
+    payloadType: "custom",
+    apiKeyPlaceholder: "Enter provider API key",
+    model: "provider/model-or-model-id",
+    strong: "optional-strong-model",
+  },
 ];
 
 const HEALTH_CHECK_COOLDOWN_S = 30;
 
-const MODEL_PLACEHOLDER: Record<LLMProviderType, { model: string; strong: string }> = {
-  openai: { model: "gpt-4.1-mini", strong: "gpt-4.1" },
-  anthropic: { model: "claude-3-5-haiku-latest", strong: "claude-3-5-sonnet-latest" },
-  google: { model: "gemini-2.0-flash", strong: "gemini-2.0-pro" },
-  bedrock: { model: "anthropic.claude-3-haiku", strong: "anthropic.claude-3-5-sonnet" },
-};
+function getProviderOption(value: ProviderOptionId): ProviderOption {
+  return PROVIDERS.find((p) => p.value === value) ?? PROVIDERS[0];
+}
+
+function normalizeBaseUrl(value: string): string {
+  return value.trim().replace(/\/+$/, "");
+}
+
+function isPrivateOrLocalHost(hostname: string): boolean {
+  const host = hostname.replace(/^\[|\]$/g, "").toLowerCase();
+  if (host === "localhost" || host.endsWith(".localhost") || host === "::1") return true;
+
+  const ipv4 = host.split(".").map((part) => Number(part));
+  if (ipv4.length !== 4 || ipv4.some((part) => !Number.isInteger(part) || part < 0 || part > 255)) {
+    return host.includes(":") && (host.startsWith("fc") || host.startsWith("fd") || host.startsWith("fe80:"));
+  }
+
+  const [a, b] = ipv4;
+  return (
+    a === 10 ||
+    a === 127 ||
+    (a === 100 && b >= 64 && b <= 127) ||
+    (a === 169 && b === 254) ||
+    (a === 172 && b >= 16 && b <= 31) ||
+    (a === 192 && b === 168)
+  );
+}
+
+function getBaseUrlError(value: string): string | null {
+  const trimmed = value.trim();
+  if (!trimmed) return "Base URL is required.";
+
+  try {
+    const url = new URL(trimmed);
+    if (url.protocol !== "https:") return "Base URL must use HTTPS.";
+    if (url.username || url.password) return "Base URL must not include credentials.";
+    if (url.search || url.hash) return "Base URL must not include query string or fragment.";
+    if (isPrivateOrLocalHost(url.hostname)) return "Base URL cannot point to localhost or a private IP.";
+    return null;
+  } catch {
+    return "Enter a valid HTTPS base URL.";
+  }
+}
+
+function getDisplayProvider(providerType: LLMProviderType): ProviderOption {
+  if (providerType !== "custom") return getProviderOption(providerType);
+  return getProviderOption("custom");
+}
 
 // ─── Sub-components ──────────────────────────────────────────────────────────
 
@@ -151,30 +255,55 @@ function CreateForm({
 }: {
   onSaved?: () => void;
 }) {
-  const [providerType, setProviderType] = useState<LLMProviderType>("openai");
+  const [providerType, setProviderType] = useState<ProviderOptionId>("openai");
+  const [baseUrl, setBaseUrl] = useState("");
+  const [baseUrlTouched, setBaseUrlTouched] = useState(false);
   const [apiKey, setApiKey] = useState("");
   const [secretKey, setSecretKey] = useState("");
   const [region, setRegion] = useState("");
+  const [regionTouched, setRegionTouched] = useState(false);
   const [modelName, setModelName] = useState("");
   const [strongModelName, setStrongModelName] = useState("");
   const [showApiKey, setShowApiKey] = useState(false);
   const [showSecretKey, setShowSecretKey] = useState(false);
 
   const createMutation = useCreateLlmProviderConfig({ onSuccess: () => onSaved?.() });
-  const isBedrock = providerType === "bedrock";
+  const provider = getProviderOption(providerType);
+  const isCustomProvider = provider.payloadType === "custom";
+  const isBedrock = provider.payloadType === "bedrock";
+  const baseUrlError = isCustomProvider ? getBaseUrlError(baseUrl) : null;
+  const showBaseUrlError = Boolean(baseUrlTouched && baseUrlError);
+  const regionError = isBedrock && !region.trim() ? "Region is required." : null;
+  const showRegionError = Boolean(regionTouched && regionError);
   const isSaving = createMutation.isPending;
-  const canSave = apiKey.trim().length > 0 && !isSaving;
-  const ph = MODEL_PLACEHOLDER[providerType];
+  const canSave =
+    apiKey.trim().length > 0 &&
+    !isSaving &&
+    (!isCustomProvider || (modelName.trim().length > 0 && !baseUrlError)) &&
+    (!isBedrock || !regionError);
+
+  function handleProviderChange(nextProviderType: ProviderOptionId) {
+    setProviderType(nextProviderType);
+    setBaseUrl("");
+    setBaseUrlTouched(false);
+    setSecretKey("");
+    setRegion("");
+    setRegionTouched(false);
+  }
 
   function handleSave() {
     if (!canSave) return;
+    const trimmedModelName = modelName.trim();
+    const trimmedStrongModelName = strongModelName.trim();
+
     createMutation.mutate({
-      provider_type: providerType,
+      provider_type: provider.payloadType,
       api_key: apiKey.trim(),
-      model_name: modelName.trim() || undefined,
-      strong_model_name: strongModelName.trim() || undefined,
+      model_name: isCustomProvider ? trimmedModelName : trimmedModelName || undefined,
+      strong_model_name: trimmedStrongModelName || undefined,
+      ...(isCustomProvider ? { base_url: normalizeBaseUrl(baseUrl) } : {}),
       ...(isBedrock
-        ? { secret_key: secretKey.trim() || null, region: region.trim() || null }
+        ? { secret_key: secretKey.trim() || null, region: region.trim() }
         : { secret_key: null, region: null }),
     });
   }
@@ -184,20 +313,23 @@ function CreateForm({
       {/* Provider selector */}
       <div className="grid gap-2">
         <span className="text-sm font-medium text-foreground">Provider</span>
-        <div className="grid grid-cols-4 gap-1.5">
+        <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3">
           {PROVIDERS.map((p) => (
             <button
               key={p.value}
               type="button"
-              onClick={() => setProviderType(p.value)}
+              onClick={() => handleProviderChange(p.value)}
               className={cn(
-                "rounded-lg border px-2 py-2.5 text-center text-sm font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring/45",
+                "flex min-h-14 flex-col items-center justify-center rounded-lg border px-2 py-2 text-center outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring/45",
                 providerType === p.value
                   ? "border-primary/50 bg-primary/8 text-foreground"
                   : "border-border/60 bg-background text-muted-foreground hover:bg-muted/50 hover:text-foreground"
               )}
             >
-              {p.label}
+              <span className="block truncate text-sm font-medium">{p.label}</span>
+              <span className="mt-0.5 block truncate text-[11px] font-medium opacity-70">
+                {p.helper}
+              </span>
             </button>
           ))}
         </div>
@@ -214,17 +346,37 @@ function CreateForm({
           onChange={setApiKey}
           show={showApiKey}
           onToggleShow={() => setShowApiKey((v) => !v)}
-          placeholder={
-            providerType === "openai"
-              ? "sk-..."
-              : providerType === "anthropic"
-                ? "sk-ant-..."
-                : "Your API key"
-          }
+          placeholder={provider.apiKeyPlaceholder}
           onKeyDown={(e) => {
             if (e.key === "Enter" && canSave) handleSave();
           }}
         />
+      </div>
+
+      {/* Custom-compatible: Base URL */}
+      <div
+        className={cn(
+          "grid gap-1.5 overflow-hidden transition-all duration-300 ease-in-out",
+          isCustomProvider ? "max-h-28 opacity-100" : "max-h-0 opacity-0"
+        )}
+      >
+        <label htmlFor="create-base-url" className="text-sm font-medium text-foreground">
+          Base URL <span className="text-destructive">*</span>
+        </label>
+        <Input
+          id="create-base-url"
+          type="url"
+          placeholder="https://custom.example/v1"
+          value={baseUrl}
+          onBlur={() => setBaseUrlTouched(true)}
+          onChange={(e) => {
+            setBaseUrl(e.target.value);
+            setBaseUrlTouched(true);
+          }}
+          aria-invalid={showBaseUrlError}
+          maxLength={512}
+        />
+        {showBaseUrlError && <p className="text-xs text-destructive">{baseUrlError}</p>}
       </div>
 
       {/* Bedrock-specific: Secret Key + Region */}
@@ -249,16 +401,22 @@ function CreateForm({
         </div>
         <div className="grid gap-1.5">
           <label htmlFor="create-region" className="text-sm font-medium text-foreground">
-            Region
+            Region <span className="text-destructive">*</span>
           </label>
           <Input
             id="create-region"
             type="text"
             placeholder="e.g. us-east-1"
             value={region}
-            onChange={(e) => setRegion(e.target.value)}
+            onBlur={() => setRegionTouched(true)}
+            onChange={(e) => {
+              setRegion(e.target.value);
+              setRegionTouched(true);
+            }}
+            aria-invalid={showRegionError}
             maxLength={64}
           />
+          {showRegionError && <p className="text-xs text-destructive">{regionError}</p>}
         </div>
       </div>
 
@@ -266,12 +424,12 @@ function CreateForm({
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="grid gap-1.5">
           <label htmlFor="create-model-name" className="text-sm font-medium text-foreground">
-            Model Name
+            Model Name {isCustomProvider && <span className="text-destructive">*</span>}
           </label>
           <Input
             id="create-model-name"
             type="text"
-            placeholder={ph.model}
+            placeholder={provider.model}
             value={modelName}
             onChange={(e) => setModelName(e.target.value)}
             maxLength={255}
@@ -279,12 +437,12 @@ function CreateForm({
         </div>
         <div className="grid gap-1.5">
           <label htmlFor="create-strong-model-name" className="text-sm font-medium text-foreground">
-          Judge Model Name (Optional)
+            Judge Model Name
           </label>
           <Input
             id="create-strong-model-name"
             type="text"
-            placeholder={ph.strong}
+            placeholder={provider.strong}
             value={strongModelName}
             onChange={(e) => setStrongModelName(e.target.value)}
             maxLength={255}
@@ -294,7 +452,7 @@ function CreateForm({
 
       <Button onClick={handleSave} disabled={!canSave} className="w-full">
         {isSaving && <Loader2 className="size-4 animate-spin" />}
-        {isSaving ? "Saving…" : "Save Key"}
+        {isSaving ? "Saving…" : "Save Provider"}
       </Button>
     </div>
   );
@@ -303,16 +461,26 @@ function CreateForm({
 // ─── Edit form ────────────────────────────────────────────────────────────────
 
 function EditForm({ config }: { config: LLMProviderConfig }) {
+  const [baseUrl, setBaseUrl] = useState(config.baseUrl ?? "");
+  const [baseUrlTouched, setBaseUrlTouched] = useState(false);
   const [region, setRegion] = useState(config.region ?? "");
+  const [regionTouched, setRegionTouched] = useState(false);
   const [modelName, setModelName] = useState(config.modelName ?? "");
   const [strongModelName, setStrongModelName] = useState(config.strongModelName ?? "");
 
+  const initialBaseUrl = config.baseUrl ?? "";
   const initialRegion = config.region ?? "";
   const initialModelName = config.modelName ?? "";
   const initialStrongModelName = config.strongModelName ?? "";
+  const isCustomProvider = config.providerType === "custom";
+  const isBedrock = config.providerType === "bedrock";
+  const baseUrlError = isCustomProvider ? getBaseUrlError(baseUrl) : null;
+  const showBaseUrlError = Boolean(baseUrlTouched && baseUrlError);
+  const regionError = isBedrock && !region.trim() ? "Region is required." : null;
 
   const isDirty =
-    region !== initialRegion ||
+    (isCustomProvider && baseUrl !== initialBaseUrl) ||
+    (isBedrock && region !== initialRegion) ||
     modelName !== initialModelName ||
     strongModelName !== initialStrongModelName;
 
@@ -325,17 +493,23 @@ function EditForm({ config }: { config: LLMProviderConfig }) {
   const isDeleting = deleteMutation.isPending;
   const isTesting = healthCheckMutation.isPending;
   const isWorking = isUpdating || isDeleting;
+  const showRegionError = Boolean(regionTouched && regionError);
+  const canUpdate =
+    isDirty &&
+    !isWorking &&
+    (!isCustomProvider || !baseUrlError) &&
+    (!isBedrock || !regionError);
 
-  const ph = MODEL_PLACEHOLDER[config.providerType];
-  const isBedrock = config.providerType === "bedrock";
-  const providerLabel = PROVIDERS.find((p) => p.value === config.providerType)?.label ?? "";
+  const provider = getDisplayProvider(config.providerType);
+  const providerLabel = provider.label;
 
   function handleUpdate() {
-    if (!isDirty || isWorking) return;
+    if (!canUpdate) return;
     updateMutation.mutate({
       configId: config.id,
       body: {
-        region: region.trim() || null,
+        ...(isCustomProvider ? { base_url: normalizeBaseUrl(baseUrl) } : {}),
+        ...(isBedrock ? { region: region.trim() } : {}),
         model_name: modelName.trim() || null,
         strong_model_name: strongModelName.trim() || null,
       },
@@ -393,6 +567,12 @@ function EditForm({ config }: { config: LLMProviderConfig }) {
               Not verified yet — click &quot;Test Connection&quot; to validate.
             </p>
           )}
+          {config.baseUrl && (
+            <p className="flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground">
+              <Globe2 className="size-3 shrink-0" />
+              <span className="truncate">{config.baseUrl}</span>
+            </p>
+          )}
         </div>
       </div>
 
@@ -422,19 +602,58 @@ function EditForm({ config }: { config: LLMProviderConfig }) {
       <div className="grid gap-4">
         <span className="text-sm font-medium text-foreground">Model Settings</span>
 
-        <div className="grid gap-1.5">
-          <label htmlFor="edit-region" className="text-sm font-medium text-foreground">
-            Region
-          </label>
-          <Input
-            id="edit-region"
-            type="text"
-            placeholder="e.g. us-east-1"
-            value={region}
-            onChange={(e) => setRegion(e.target.value)}
-            maxLength={64}
-          />
-        </div>
+        {isCustomProvider && (
+          <div className="grid gap-1.5">
+            <label htmlFor="edit-base-url" className="text-sm font-medium text-foreground">
+              Base URL <span className="text-destructive">*</span>
+            </label>
+            <Input
+              id="edit-base-url"
+              type="url"
+              placeholder="https://custom.example/v1"
+              value={baseUrl}
+              onBlur={() => setBaseUrlTouched(true)}
+              onChange={(e) => {
+                setBaseUrl(e.target.value);
+                setBaseUrlTouched(true);
+              }}
+              aria-invalid={showBaseUrlError}
+              maxLength={512}
+            />
+            <p
+              className={cn(
+                "text-xs",
+                showBaseUrlError ? "text-destructive" : "text-muted-foreground"
+              )}
+            >
+              {showBaseUrlError
+                ? baseUrlError
+                : "Changing this resets the config to draft until health check passes."}
+            </p>
+          </div>
+        )}
+
+        {isBedrock && (
+          <div className="grid gap-1.5">
+            <label htmlFor="edit-region" className="text-sm font-medium text-foreground">
+              Region <span className="text-destructive">*</span>
+            </label>
+            <Input
+              id="edit-region"
+              type="text"
+              placeholder="e.g. us-east-1"
+              value={region}
+              onBlur={() => setRegionTouched(true)}
+              onChange={(e) => {
+                setRegion(e.target.value);
+                setRegionTouched(true);
+              }}
+              aria-invalid={showRegionError}
+              maxLength={64}
+            />
+            {showRegionError && <p className="text-xs text-destructive">{regionError}</p>}
+          </div>
+        )}
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="grid gap-1.5">
@@ -444,7 +663,7 @@ function EditForm({ config }: { config: LLMProviderConfig }) {
             <Input
               id="edit-model-name"
               type="text"
-              placeholder={ph.model}
+              placeholder={provider.model}
               value={modelName}
               onChange={(e) => setModelName(e.target.value)}
               maxLength={255}
@@ -452,12 +671,12 @@ function EditForm({ config }: { config: LLMProviderConfig }) {
           </div>
           <div className="grid gap-1.5">
             <label htmlFor="edit-strong-model-name" className="text-sm font-medium text-foreground">
-              Judge Model Name (Optional)
+              Judge Model Name
             </label>
             <Input
               id="edit-strong-model-name"
               type="text"
-              placeholder={ph.strong}
+              placeholder={provider.strong}
               value={strongModelName}
               onChange={(e) => setStrongModelName(e.target.value)}
               maxLength={255}
@@ -477,9 +696,9 @@ function EditForm({ config }: { config: LLMProviderConfig }) {
           {isDeleting ? <Loader2 className="size-4 animate-spin" /> : <Trash2 className="size-4" />}
           {isDeleting ? "Removing…" : "Remove"}
         </Button>
-        <Button onClick={handleUpdate} disabled={!isDirty || isWorking}>
+        <Button onClick={handleUpdate} disabled={!canUpdate}>
           {isUpdating && <Loader2 className="size-4 animate-spin" />}
-          {isUpdating ? "Updating…" : "Update Models"}
+          {isUpdating ? "Updating…" : "Update Settings"}
         </Button>
       </div>
     </div>

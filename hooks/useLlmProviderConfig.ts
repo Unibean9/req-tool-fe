@@ -76,7 +76,7 @@ export function useUpsertLlmProviderConfig(
   return useCreateLlmProviderConfig(options);
 }
 
-/** PATCH /api/v1/users/me/llm-provider-configs/{config_id} — model fields only */
+/** PATCH /api/v1/users/me/llm-provider-configs/{config_id}. */
 export function useUpdateLlmProviderConfig(
   options?: Omit<
     UseMutationOptions<
@@ -108,7 +108,7 @@ export function useUpdateLlmProviderConfig(
       void queryClient.invalidateQueries({
         queryKey: queryKeys.llmProviderConfigs.detail(variables.configId),
       });
-      toast.success("Model settings updated — run health check to revalidate");
+      toast.success("Provider settings updated — run health check to revalidate");
       userOnSuccess?.(data, variables, context, meta);
     },
     onError: (error, variables, context, meta) => {
