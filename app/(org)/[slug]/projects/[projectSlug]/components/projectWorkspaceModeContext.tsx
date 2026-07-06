@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useState, type ReactNode } from "react";
 
-export type WorkspaceMode = "deliverables" | "artifact-link";
+export type WorkspaceMode = "deliverables";
 
 type ContextValue = {
   mode: WorkspaceMode;

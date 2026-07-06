@@ -29,7 +29,6 @@ import { DeliverablesSidebarContent } from "../(deliverables)/components/Deliver
 
 const WORKSPACE_MODES: { value: WorkspaceMode; label: string }[] = [
   { value: "deliverables", label: "Deliverables" },
-  { value: "artifact-link", label: "Artifact Link" },
 ];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -103,26 +102,27 @@ export function ProjectWorkspaceNavSidebar({
         aria-label="Project navigation"
       >
         <nav className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto overscroll-contain px-2 py-4 scrollbar-none [&::-webkit-scrollbar]:hidden">
-          {/* Mode switcher — always visible */}
-          <div className="shrink-0">
-            <div className="flex rounded-lg bg-muted/40 p-0.5">
-              {WORKSPACE_MODES.map((m) => (
-                <button
-                  key={m.value}
-                  type="button"
-                  onClick={() => setMode(m.value)}
-                  className={cn(
-                    "flex-1 truncate rounded-md px-1.5 py-1.5 text-xs font-medium transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring/45",
-                    mode === m.value
-                      ? "bg-background text-foreground shadow-sm"
-                      : "text-muted-foreground hover:text-foreground",
-                  )}
-                >
-                  {m.label}
-                </button>
-              ))}
+          {WORKSPACE_MODES.length > 1 ? (
+            <div className="shrink-0">
+              <div className="flex rounded-lg bg-muted/40 p-0.5">
+                {WORKSPACE_MODES.map((m) => (
+                  <button
+                    key={m.value}
+                    type="button"
+                    onClick={() => setMode(m.value)}
+                    className={cn(
+                      "flex-1 truncate rounded-md px-1.5 py-1.5 text-xs font-medium transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring/45",
+                      mode === m.value
+                        ? "bg-background text-foreground shadow-sm"
+                        : "text-muted-foreground hover:text-foreground",
+                    )}
+                  >
+                    {m.label}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
+          ) : null}
 
           {mode === "deliverables" && (
             <DeliverablesSidebarContent

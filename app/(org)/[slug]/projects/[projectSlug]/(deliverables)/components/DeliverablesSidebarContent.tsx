@@ -38,7 +38,11 @@ import type {
 import { cn } from "@/lib/utils";
 
 import { useDocumentContainerLock } from "@/hooks/useDocumentContainerLock";
-import { buildDocumentSectionLockMap, getPriorRegistryContainer, isDocumentSectionAccepted } from "@/lib/document/documentSectionLock";
+import {
+  buildDocumentSectionLockMap,
+  getPriorRegistryContainer,
+  isDocumentSectionAccepted,
+} from "@/lib/document/documentSectionLock";
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
@@ -111,10 +115,9 @@ function useDocumentChildrenRevealMotion({
   documentKnown: boolean;
   documentStarted: boolean;
 }): boolean {
-  const [{ armedScope }, dispatch] = useReducer(
-    documentChildrenRevealReducer,
-    { armedScope: null },
-  );
+  const [{ armedScope }, dispatch] = useReducer(documentChildrenRevealReducer, {
+    armedScope: null,
+  });
 
   const shouldAnimateReveal = documentStarted && armedScope === scopeKey;
 
@@ -562,16 +565,16 @@ export function DeliverablesSidebarContent({
         <SidebarSectionTitle>Overview</SidebarSectionTitle>
         <div className="space-y-1 px-0.5">
           <SidebarNavLink
-            href={nav.dashboard}
-            label="Project overview"
-            icon={LayoutDashboard}
-            active={pathActive(pathname, nav.dashboard)}
-          />
-          <SidebarNavLink
             href={nav.members}
-            label="Members (Organization)"
+            label="Members"
             icon={Users}
             active={pathActive(pathname, nav.members)}
+          />
+          <SidebarNavLink
+            href={nav.dashboard}
+            label="Project Overview"
+            icon={LayoutDashboard}
+            active={pathActive(pathname, nav.dashboard)}
           />
         </div>
       </div>

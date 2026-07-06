@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogDescription,
@@ -749,12 +748,6 @@ export function LlmProviderConfigDialog({ open, onOpenChange }: LlmProviderConfi
           )}
         </div>
 
-        {/* ── Footer (close only) ─────────────────────────────── */}
-        <DialogFooter showCloseButton={false} className="mt-4">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Close
-          </Button>
-        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
