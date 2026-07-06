@@ -10,13 +10,17 @@ import {
 import { toast } from "sonner";
 
 import { useCachedGet } from "@/hooks/useCachedGet";
-import { getApiErrorMessage } from "@/lib/api/getApiErrorMessage";
+import {
+  getApiErrorMessage,
+  getDependencyConflictArtifactIds,
+} from "@/lib/api/getApiErrorMessage";
 import {
   fetchArtifact,
   type Artifact,
   type ArtifactEvidence,
   type ArtifactEvidenceListResponse,
   type ArtifactEvidenceResponse,
+  type ArtifactGraphResponse,
   type ArtifactListResponse,
   type ArtifactResponse,
   type ArtifactVersionReviewResponse,
@@ -27,6 +31,8 @@ import {
   type UpdateArtifactRequest,
 } from "@/lib/api/services/fetchArtifact";
 import {
+  projectArtifactGraphQueryKey,
+  projectArtifactQueryKey,
   projectArtifactEvidenceQueryKey,
   projectArtifactsQueryKey,
   projectArtifactsQueryRoot,
@@ -40,6 +46,22 @@ function invalidateArtifacts(queryClient: QueryClient, projectId: string) {
   void queryClient.invalidateQueries({
     queryKey: projectArtifactsQueryRoot(projectId),
     exact: false,
+  });
+}
+
+function invalidateArtifactDetail(
+  queryClient: QueryClient,
+  projectId: string,
+  artifactId: string
+) {
+  void queryClient.invalidateQueries({
+    queryKey: projectArtifactQueryKey(projectId, artifactId),
+  });
+}
+
+function invalidateArtifactGraph(queryClient: QueryClient, projectId: string) {
+  void queryClient.invalidateQueries({
+    queryKey: projectArtifactGraphQueryKey(projectId),
   });
 }
 
@@ -89,6 +111,42 @@ export function useProjectArtifacts(
   });
 }
 
+/** GET /api/v1/projects/{project_id}/artifacts/{artifact_id} */
+export function useProjectArtifact(
+  projectId: string | null | undefined,
+  artifactId: string | null | undefined,
+  options?: { enabled?: boolean }
+) {
+  const pid = projectId?.trim() ?? "";
+  const aid = artifactId?.trim() ?? "";
+  const enabled = Boolean(pid) && Boolean(aid) && (options?.enabled ?? true);
+
+  return useCachedGet<ArtifactResponse, Error, Artifact>({
+    queryKey: projectArtifactQueryKey(pid, aid),
+    queryFn: () => fetchArtifact.getById(pid, aid),
+    select: (res) => res.data,
+    enabled,
+    staleTime: 0,
+  });
+}
+
+/** GET /api/v1/projects/{project_id}/artifact-graph */
+export function useProjectArtifactGraph(
+  projectId: string | null | undefined,
+  options?: { enabled?: boolean }
+) {
+  const pid = projectId?.trim() ?? "";
+  const enabled = Boolean(pid) && (options?.enabled ?? true);
+
+  return useCachedGet<ArtifactGraphResponse, Error, ArtifactGraphResponse["data"]>({
+    queryKey: projectArtifactGraphQueryKey(pid),
+    queryFn: () => fetchArtifact.getGraph(pid),
+    select: (res) => res.data,
+    enabled,
+    staleTime: 0,
+  });
+}
+
 /** GET /api/v1/projects/{project_id}/artifacts/{artifact_id}/evidence */
 export function useProjectArtifactEvidence(
   projectId: string | null | undefined,
@@ -131,6 +189,8 @@ export function useCreateArtifact(
       fetchArtifact.create(projectId, req),
     onSuccess: (data, variables, onMutateResult, context) => {
       invalidateArtifacts(queryClient, variables.projectId);
+      invalidateArtifactDetail(queryClient, variables.projectId, data.data.id);
+      invalidateArtifactGraph(queryClient, variables.projectId);
       invalidateBrdExport(queryClient, variables.projectId);
       invalidatePrdExport(queryClient, variables.projectId);
       toast.success("Artifact đã được tạo");
@@ -166,6 +226,12 @@ export function useUpdateArtifact(
       fetchArtifact.update(projectId, artifactId, req),
     onSuccess: (data, variables, onMutateResult, context) => {
       invalidateArtifacts(queryClient, variables.projectId);
+      invalidateArtifactDetail(
+        queryClient,
+        variables.projectId,
+        variables.artifactId
+      );
+      invalidateArtifactGraph(queryClient, variables.projectId);
       toast.success("Artifact đã được cập nhật");
       userOnSuccess?.(data, variables, onMutateResult, context);
     },
@@ -198,11 +264,22 @@ export function useDeleteArtifact(
       fetchArtifact.delete(projectId, artifactId),
     onSuccess: (data, variables, onMutateResult, context) => {
       invalidateArtifacts(queryClient, variables.projectId);
-      toast.success("Artifact đã được xóa");
+      invalidateArtifactDetail(
+        queryClient,
+        variables.projectId,
+        variables.artifactId
+      );
+      invalidateArtifactGraph(queryClient, variables.projectId);
+      toast.success("Artifact đã được archive");
       userOnSuccess?.(data, variables, onMutateResult, context);
     },
     onError: (error, variables, onMutateResult, context) => {
-      toast.error(getApiErrorMessage(error, "Xóa artifact thất bại"));
+      const blockers = getDependencyConflictArtifactIds(error);
+      toast.error(
+        blockers.length
+          ? `Không thể archive artifact vì còn ${blockers.length} downstream blocker`
+          : getApiErrorMessage(error, "Archive artifact thất bại")
+      );
       userOnError?.(error, variables, onMutateResult, context);
     },
   });
@@ -241,6 +318,12 @@ export function useReviewArtifactVersion(
       fetchArtifact.reviewVersion(projectId, artifactId, versionId, req),
     onSuccess: (data, variables, onMutateResult, context) => {
       invalidateArtifacts(queryClient, variables.projectId);
+      invalidateArtifactDetail(
+        queryClient,
+        variables.projectId,
+        variables.artifactId
+      );
+      invalidateArtifactGraph(queryClient, variables.projectId);
       toast.success("Review artifact đã được ghi nhận");
       userOnSuccess?.(data, variables, onMutateResult, context);
     },
@@ -282,6 +365,12 @@ export function useRestoreArtifactVersion(
       fetchArtifact.restoreVersion(projectId, artifactId, versionId),
     onSuccess: (data, variables, onMutateResult, context) => {
       invalidateArtifacts(queryClient, variables.projectId);
+      invalidateArtifactDetail(
+        queryClient,
+        variables.projectId,
+        variables.artifactId
+      );
+      invalidateArtifactGraph(queryClient, variables.projectId);
       toast.success("Artifact đã được khôi phục về version cũ");
       userOnSuccess?.(data, variables, onMutateResult, context);
     },
@@ -345,6 +434,10 @@ export type {
   ArtifactEvidence,
   ArtifactEvidenceListResponse,
   ArtifactEvidenceResponse,
+  ArtifactGraphEdge,
+  ArtifactGraphNode,
+  ArtifactGraphResponse,
+  ArtifactLifecycleState,
   ArtifactListResponse,
   ArtifactPhase,
   ArtifactPriority,
@@ -367,6 +460,7 @@ export type {
 export {
   ARTIFACT_CHANGE_SOURCES,
   ARTIFACT_CURRENT_VERSION_STATUSES,
+  ARTIFACT_LIFECYCLE_STATES,
   ARTIFACT_PHASES,
   ARTIFACT_PRIORITIES,
   ARTIFACT_STATUSES,

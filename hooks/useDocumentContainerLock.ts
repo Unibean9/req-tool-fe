@@ -49,6 +49,7 @@ export function useDocumentContainerLock(
     if (!documentType || !priorContainer || !priorDocumentType) {
       return {
         locked: false,
+        hasPendingPrerequisite: false,
         prerequisiteDocumentType: null,
         prerequisiteLabel: null,
       };

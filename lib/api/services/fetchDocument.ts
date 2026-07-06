@@ -10,7 +10,7 @@ import {
 
 // ─── Document enums ───────────────────────────────────────────────────────────
 
-export const DOCUMENT_TYPES = ["brd", "prd", "sad"] as const;
+export const DOCUMENT_TYPES = ["brd", "prd", "event_storming", "add"] as const;
 export type DocumentType = (typeof DOCUMENT_TYPES)[number];
 
 export const DOCUMENT_CHANGE_SOURCES = [
@@ -238,9 +238,10 @@ function documentItemPath(
 
 function parseDocumentType(value: string): DocumentType {
   const normalized = value.trim().toLowerCase();
-  return (DOCUMENT_TYPES as readonly string[]).includes(normalized)
-    ? (normalized as DocumentType)
-    : "brd";
+  if (!(DOCUMENT_TYPES as readonly string[]).includes(normalized)) {
+    throw new Error(`Unsupported document_type: ${value}`);
+  }
+  return normalized as DocumentType;
 }
 
 function parseArtifactStatus(value: string | null | undefined): ArtifactStatus | null {

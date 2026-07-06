@@ -35,6 +35,9 @@ import {
   projectAgentSessionMessagesQueryKey,
   projectAgentSessionQueryKey,
   projectAgentSessionToolCallsQueryKey,
+  projectArtifactGraphQueryKey,
+  projectArtifactQueryKey,
+  projectArtifactsQueryRoot,
   projectBrdExportQueryRoot,
   projectPrdExportQueryRoot,
 } from "@/lib/query/query-keys";
@@ -104,6 +107,30 @@ function invalidatePrdExport(queryClient: QueryClient, projectId: string) {
     queryKey: projectPrdExportQueryRoot(projectId),
     exact: false,
     refetchType: "active",
+  });
+}
+
+function invalidateProjectArtifacts(queryClient: QueryClient, projectId: string) {
+  void queryClient.invalidateQueries({
+    queryKey: projectArtifactsQueryRoot(projectId),
+    exact: false,
+  });
+}
+
+function invalidateArtifactGraph(queryClient: QueryClient, projectId: string) {
+  void queryClient.invalidateQueries({
+    queryKey: projectArtifactGraphQueryKey(projectId),
+  });
+}
+
+function invalidateArtifactDetail(
+  queryClient: QueryClient,
+  projectId: string,
+  artifactId: string | null
+) {
+  if (!artifactId) return;
+  void queryClient.invalidateQueries({
+    queryKey: projectArtifactQueryKey(projectId, artifactId),
   });
 }
 
@@ -251,6 +278,13 @@ function syncCacheAfterToolCallAction(
     variables.documentType,
     variables.itemType
   );
+  invalidateProjectArtifacts(queryClient, variables.projectId);
+  invalidateArtifactGraph(queryClient, variables.projectId);
+  invalidateArtifactDetail(
+    queryClient,
+    variables.projectId,
+    toolCall.createdArtifactId
+  );
   invalidateBrdExport(queryClient, variables.projectId);
   invalidatePrdExport(queryClient, variables.projectId);
 }
@@ -313,6 +347,20 @@ function applyStreamEvent(
       data: event.toolCalls,
     }
   );
+
+  if (
+    event.toolCalls.some(
+      (toolCall) =>
+        Boolean(toolCall.createdArtifactId) ||
+        Boolean(toolCall.createdVersionId)
+    )
+  ) {
+    invalidateProjectArtifacts(queryClient, projectId);
+    invalidateArtifactGraph(queryClient, projectId);
+    for (const toolCall of event.toolCalls) {
+      invalidateArtifactDetail(queryClient, projectId, toolCall.createdArtifactId);
+    }
+  }
 
   if (
     event.toolCalls.some(

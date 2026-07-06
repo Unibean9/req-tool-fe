@@ -1,39 +1,61 @@
 import type { LucideIcon } from "lucide-react";
 import {
-  AlertTriangle,
+  Blocks,
+  BookOpenCheck,
+  BookOpenText,
   Boxes,
-  CheckSquare,
+  Cable,
+  CircleDot,
   CircleHelp,
+  ClipboardCheck,
+  ClipboardList,
+  Command,
+  Database,
+  FileStack,
   FileText,
-  GitBranch,
-  Layers,
+  Gauge,
+  Goal,
+  Landmark,
   Lightbulb,
-  Network,
+  MapPinned,
+  Milestone,
+  Route,
   Scale,
-  Shield,
-  Target,
+  ScrollText,
+  ServerCog,
+  ShieldAlert,
+  SquareStack,
   UsersRound,
-  Zap,
+  Waypoints,
+  Workflow,
 } from "lucide-react";
 
 import type { DocumentType } from "@/lib/api/services/fetchDocument";
 
 const ITEM_ICONS: Record<string, LucideIcon> = {
-  vision_objectives: Target,
+  executive_summary: BookOpenText,
+  vision_objectives: Goal,
   problem_statement: CircleHelp,
   stakeholder_register: UsersRound,
-  scope_capabilities: Zap,
+  scope_capabilities: MapPinned,
   business_rules: Scale,
-  constraints_assumptions: Shield,
-  risks_issues: AlertTriangle,
-  functional_requirement: Layers,
-  use_case: GitBranch,
-  non_functional_requirement: Shield,
-  acceptance_criteria: CheckSquare,
-  domain_entity: Boxes,
-  component: Network,
-  interface: Network,
+  constraints_assumptions: Route,
+  risks_issues: ShieldAlert,
+  functional_requirement: ClipboardList,
+  use_case: Workflow,
+  non_functional_requirement: Gauge,
+  acceptance_criteria: ClipboardCheck,
+  domain_entity: Database,
+  component: Blocks,
+  interface: Cable,
   tech_decision: Lightbulb,
+  tech_stack: SquareStack,
+  domain_event: CircleDot,
+  actor_command: Command,
+  policy: Landmark,
+  aggregate: Boxes,
+  epic: Milestone,
+  story: BookOpenCheck,
 };
 
 export function getDocumentItemIcon(itemType: string): LucideIcon {
@@ -41,9 +63,10 @@ export function getDocumentItemIcon(itemType: string): LucideIcon {
 }
 
 const CONTAINER_ICONS: Record<DocumentType, LucideIcon> = {
-  brd: FileText,
-  prd: Layers,
-  sad: Network,
+  brd: ScrollText,
+  prd: FileStack,
+  event_storming: Waypoints,
+  add: ServerCog,
 };
 
 export function getDocumentContainerIcon(documentType: DocumentType): LucideIcon {
@@ -53,11 +76,13 @@ export function getDocumentContainerIcon(documentType: DocumentType): LucideIcon
 export const DOCUMENT_TYPE_LABELS: Record<DocumentType, string> = {
   brd: "Business Requirements Document",
   prd: "Product Requirements Document",
-  sad: "Solution Architecture Document",
+  event_storming: "Event Storming",
+  add: "Architecture Design Document",
 };
 
 export const DOCUMENT_TYPE_SHORT: Record<DocumentType, string> = {
   brd: "BRD",
   prd: "PRD",
-  sad: "SAD",
+  event_storming: "Event Storming",
+  add: "ADD",
 };

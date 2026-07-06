@@ -40,6 +40,7 @@ interface OrgProjectApiRow {
   name: string;
   slug: string;
   description: string | null;
+  executive_summary?: string | null;
   created_at: string;
 }
 
@@ -69,6 +70,7 @@ export interface OrgProject {
   name: string;
   slug: string;
   description: string | null;
+  executiveSummary: string | null;
   createdAt: string;
 }
 
@@ -125,6 +127,7 @@ function mapOrgProjectRow(row: OrgProjectApiRow): OrgProject {
     name: row.name,
     slug: row.slug,
     description: row.description ?? null,
+    executiveSummary: row.executive_summary ?? null,
     createdAt: row.created_at,
   };
 }

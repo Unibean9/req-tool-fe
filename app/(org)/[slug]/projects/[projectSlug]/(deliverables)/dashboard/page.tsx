@@ -74,6 +74,8 @@ export default function ProjectDashboardPage() {
   });
 
   const project = detailProject ?? listProject;
+  const description = project?.description?.trim() ?? "";
+  const executiveSummary = project?.executiveSummary?.trim() ?? "";
 
   if (isPending || (listProject && isDetailPending && !detailProject)) {
     return <DashboardSkeleton />;
@@ -117,10 +119,18 @@ export default function ProjectDashboardPage() {
       <ProjectDashboardHeader project={project} orgId={orgId} />
 
       <ProjectDashboardSection title="Description" accent="violet">
-        {project.description?.trim() ? (
-          <ProjectDashboardProse>{project.description}</ProjectDashboardProse>
+        {description ? (
+          <ProjectDashboardProse>{description}</ProjectDashboardProse>
         ) : (
           <EmptyHint>No description provided.</EmptyHint>
+        )}
+      </ProjectDashboardSection>
+
+      <ProjectDashboardSection title="Executive Summary" accent="emerald">
+        {executiveSummary ? (
+          <ProjectDashboardProse>{executiveSummary}</ProjectDashboardProse>
+        ) : (
+          <EmptyHint>No executive summary provided.</EmptyHint>
         )}
       </ProjectDashboardSection>
     </div>

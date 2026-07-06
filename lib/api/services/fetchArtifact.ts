@@ -3,21 +3,29 @@ import apiService from "../core";
 // ─── Artifact type enum ───────────────────────────────────────────────────────
 
 export const ARTIFACT_TYPES = [
-  "research_output",
-  "intent",
-  "problem",
-  "goal",
-  "stakeholder",
-  "capability",
+  "brd",
+  "prd",
+  "add",
+  "executive_summary",
+  "problem_statement",
+  "vision_objectives",
+  "stakeholder_register",
+  "scope_capabilities",
+  "business_rules",
+  "constraints_assumptions",
   "domain_entity",
-  "business_rule",
-  "constraint",
-  "assumption",
-  "risk",
-  "open_question",
   "functional_requirement",
   "non_functional_requirement",
   "use_case",
+  "component",
+  "interface",
+  "tech_decision",
+  "tech_stack",
+  "event_storming",
+  "domain_event",
+  "actor_command",
+  "policy",
+  "aggregate",
   "epic",
   "story",
   "acceptance_criteria",
@@ -74,7 +82,7 @@ export const EVIDENCE_SOURCE_TYPES = [
 ] as const;
 export type EvidenceSourceType = (typeof EVIDENCE_SOURCE_TYPES)[number];
 
-export const ARTIFACT_PHASES = ["brd", "srs", "delivery"] as const;
+export const ARTIFACT_PHASES = ["brd", "prd", "delivery"] as const;
 export type ArtifactPhase = (typeof ARTIFACT_PHASES)[number];
 
 export const WORKFLOW_STEP_KEYS = [
@@ -85,6 +93,17 @@ export const WORKFLOW_STEP_KEYS = [
   "realization_backlog",
 ] as const;
 export type WorkflowStepKey = (typeof WORKFLOW_STEP_KEYS)[number];
+
+export const ARTIFACT_LIFECYCLE_STATES = [
+  "missing",
+  "blocked",
+  "in_progress",
+  "current",
+  "stale",
+  "orphan",
+] as const;
+export type ArtifactLifecycleState =
+  (typeof ARTIFACT_LIFECYCLE_STATES)[number];
 
 // ─── Wire types (snake_case) ──────────────────────────────────────────────────
 
@@ -121,6 +140,8 @@ interface ArtifactApiRow {
   created_at: string;
   metadata: Record<string, unknown>;
   current_version: ArtifactVersionApiRow | null;
+  lifecycle_state?: string | null;
+  lifecycle_reason?: string | null;
 }
 
 interface ArtifactVersionReviewApiRow {
@@ -144,6 +165,31 @@ interface ArtifactEvidenceApiRow {
   confidence: number | null;
   metadata: Record<string, unknown>;
   created_at: string;
+}
+
+interface ArtifactGraphNodeApiRow {
+  id: string;
+  artifact_id?: string | null;
+  type?: string | null;
+  artifact_type?: string | null;
+  status?: string | null;
+  title?: string | null;
+  label?: string | null;
+  code?: string | null;
+  lifecycle_state?: string | null;
+  lifecycle_reason?: string | null;
+  [key: string]: unknown;
+}
+
+interface ArtifactGraphEdgeApiRow {
+  id?: string | null;
+  source?: string | null;
+  target?: string | null;
+  source_artifact_id?: string | null;
+  target_artifact_id?: string | null;
+  relation_type?: string | null;
+  type?: string | null;
+  [key: string]: unknown;
 }
 
 // ─── API response wrappers ────────────────────────────────────────────────────
@@ -175,6 +221,18 @@ interface ArtifactEvidenceListApiResponse {
 interface ArtifactEvidenceApiResponse {
   success: boolean;
   data: ArtifactEvidenceApiRow;
+  message: string | null;
+}
+
+interface ArtifactGraphApiResponse {
+  success: boolean;
+  data: {
+    nodes?: ArtifactGraphNodeApiRow[];
+    edges?: ArtifactGraphEdgeApiRow[];
+    links?: ArtifactGraphEdgeApiRow[];
+    warnings?: unknown[];
+    [key: string]: unknown;
+  };
   message: string | null;
 }
 
@@ -213,6 +271,8 @@ export interface Artifact {
   createdAt: string;
   metadata: Record<string, unknown>;
   currentVersion: ArtifactVersion | null;
+  lifecycleState: ArtifactLifecycleState | null;
+  lifecycleReason: string | null;
 }
 
 export interface ArtifactVersionReview {
@@ -236,6 +296,27 @@ export interface ArtifactEvidence {
   confidence: number | null;
   metadata: Record<string, unknown>;
   createdAt: string;
+}
+
+export interface ArtifactGraphNode {
+  id: string;
+  artifactId: string;
+  type: ArtifactType | null;
+  status: ArtifactStatus | null;
+  title: string;
+  label: string | null;
+  code: string | null;
+  lifecycleState: ArtifactLifecycleState | null;
+  lifecycleReason: string | null;
+  raw: Record<string, unknown>;
+}
+
+export interface ArtifactGraphEdge {
+  id: string;
+  source: string;
+  target: string;
+  relationType: string | null;
+  raw: Record<string, unknown>;
 }
 
 // ─── Request types ────────────────────────────────────────────────────────────
@@ -327,6 +408,16 @@ export interface ArtifactEvidenceResponse {
   message: string | null;
 }
 
+export interface ArtifactGraphResponse {
+  success: boolean;
+  data: {
+    nodes: ArtifactGraphNode[];
+    edges: ArtifactGraphEdge[];
+    warnings: unknown[];
+  };
+  message: string | null;
+}
+
 // ─── Path helpers ─────────────────────────────────────────────────────────────
 
 function artifactsBasePath(projectId: string) {
@@ -347,6 +438,10 @@ function artifactVersionPath(
 
 function artifactEvidenceBasePath(projectId: string, artifactId: string) {
   return `${artifactPath(projectId, artifactId)}/evidence`;
+}
+
+function artifactGraphPath(projectId: string) {
+  return `/api/v1/projects/${encodeURIComponent(projectId)}/artifact-graph`;
 }
 
 // ─── Resolver helpers ─────────────────────────────────────────────────────────
@@ -372,9 +467,10 @@ function resolveVersionId(versionId: string): string {
 // ─── Mapping helpers ──────────────────────────────────────────────────────────
 
 function parseArtifactType(value: string): ArtifactType {
-  return (ARTIFACT_TYPES as readonly string[]).includes(value)
-    ? (value as ArtifactType)
-    : "functional_requirement";
+  if (!(ARTIFACT_TYPES as readonly string[]).includes(value)) {
+    throw new Error(`Unsupported artifact type: ${value}`);
+  }
+  return value as ArtifactType;
 }
 
 function parseArtifactStatus(value: string): ArtifactStatus {
@@ -407,6 +503,15 @@ function parseArtifactCurrentVersionStatus(
   if (!value) return null;
   return (ARTIFACT_CURRENT_VERSION_STATUSES as readonly string[]).includes(value)
     ? (value as ArtifactCurrentVersionStatus)
+    : null;
+}
+
+function parseArtifactLifecycleState(
+  value: string | null | undefined
+): ArtifactLifecycleState | null {
+  if (!value) return null;
+  return (ARTIFACT_LIFECYCLE_STATES as readonly string[]).includes(value)
+    ? (value as ArtifactLifecycleState)
     : null;
 }
 
@@ -476,6 +581,8 @@ function mapArtifactRow(row: ArtifactApiRow): Artifact {
     createdAt: row.created_at,
     metadata: row.metadata ?? {},
     currentVersion: mapArtifactVersionRow(row.current_version),
+    lifecycleState: parseArtifactLifecycleState(row.lifecycle_state),
+    lifecycleReason: row.lifecycle_reason ?? null,
   };
 }
 
@@ -507,6 +614,73 @@ function mapArtifactEvidenceRow(
     confidence: row.confidence ?? null,
     metadata: row.metadata ?? {},
     createdAt: row.created_at,
+  };
+}
+
+function mapArtifactGraphNodeRow(
+  row: ArtifactGraphNodeApiRow
+): ArtifactGraphNode {
+  const rawArtifactId =
+    typeof row.artifact_id === "string" && row.artifact_id.trim()
+      ? row.artifact_id.trim()
+      : row.id;
+  const rawType =
+    typeof row.artifact_type === "string"
+      ? row.artifact_type
+      : typeof row.type === "string"
+        ? row.type
+        : null;
+  const rawStatus =
+    typeof row.status === "string" ? row.status : null;
+  const title =
+    (typeof row.title === "string" && row.title.trim()) ||
+    (typeof row.label === "string" && row.label.trim()) ||
+    rawArtifactId;
+
+  return {
+    id: row.id,
+    artifactId: rawArtifactId,
+    type: rawType ? parseArtifactType(rawType) : null,
+    status: rawStatus ? parseArtifactStatus(rawStatus) : null,
+    title,
+    label:
+      typeof row.label === "string" && row.label.trim()
+        ? row.label.trim()
+        : null,
+    code: row.code ?? null,
+    lifecycleState: parseArtifactLifecycleState(row.lifecycle_state),
+    lifecycleReason: row.lifecycle_reason ?? null,
+    raw: row,
+  };
+}
+
+function mapArtifactGraphEdgeRow(
+  row: ArtifactGraphEdgeApiRow,
+  index: number
+): ArtifactGraphEdge | null {
+  const source =
+    (typeof row.source_artifact_id === "string" &&
+      row.source_artifact_id.trim()) ||
+    (typeof row.source === "string" && row.source.trim()) ||
+    "";
+  const target =
+    (typeof row.target_artifact_id === "string" &&
+      row.target_artifact_id.trim()) ||
+    (typeof row.target === "string" && row.target.trim()) ||
+    "";
+  if (!source || !target) return null;
+
+  const relationType =
+    (typeof row.relation_type === "string" && row.relation_type.trim()) ||
+    (typeof row.type === "string" && row.type.trim()) ||
+    null;
+
+  return {
+    id: row.id ?? `${source}:${target}:${relationType ?? "related"}:${index}`,
+    source,
+    target,
+    relationType,
+    raw: row,
   };
 }
 
@@ -549,6 +723,14 @@ function assertArtifactEvidenceSuccess(
 ): ArtifactEvidenceApiResponse {
   if (!body.success)
     throw new Error(body.message ?? "Thao tác evidence thất bại");
+  return body;
+}
+
+function assertArtifactGraphSuccess(
+  body: ArtifactGraphApiResponse
+): ArtifactGraphApiResponse {
+  if (!body.success)
+    throw new Error(body.message ?? "Không tải được artifact graph");
   return body;
 }
 
@@ -646,6 +828,24 @@ export const fetchArtifact = {
     };
   },
 
+  /** GET /api/v1/projects/{project_id}/artifacts/{artifact_id} */
+  getById: async (
+    projectId: string,
+    artifactId: string
+  ): Promise<ArtifactResponse> => {
+    const pid = resolveProjectId(projectId);
+    const aid = resolveArtifactId(artifactId);
+    const response = await apiService.get<ArtifactApiResponse>(
+      artifactPath(pid, aid)
+    );
+    const body = assertArtifactSuccess(response.data);
+    return {
+      success: body.success,
+      message: body.message ?? null,
+      data: mapArtifactRow(body.data),
+    };
+  },
+
   /** POST /api/v1/projects/{project_id}/artifacts */
   create: async (
     projectId: string,
@@ -689,6 +889,29 @@ export const fetchArtifact = {
     const pid = resolveProjectId(projectId);
     const aid = resolveArtifactId(artifactId);
     await apiService.delete<unknown>(artifactPath(pid, aid));
+  },
+
+  /** GET /api/v1/projects/{project_id}/artifact-graph */
+  getGraph: async (projectId: string): Promise<ArtifactGraphResponse> => {
+    const pid = resolveProjectId(projectId);
+    const response = await apiService.get<ArtifactGraphApiResponse>(
+      artifactGraphPath(pid)
+    );
+    const body = assertArtifactGraphSuccess(response.data);
+    const rawEdges = body.data.edges ?? body.data.links ?? [];
+    return {
+      success: body.success,
+      message: body.message ?? null,
+      data: {
+        nodes: (body.data.nodes ?? []).map(mapArtifactGraphNodeRow),
+        edges: rawEdges
+          .map(mapArtifactGraphEdgeRow)
+          .filter((edge): edge is ArtifactGraphEdge => edge !== null),
+        warnings: Array.isArray(body.data.warnings)
+          ? body.data.warnings
+          : [],
+      },
+    };
   },
 
   /** POST /api/v1/projects/{project_id}/artifacts/{artifact_id}/versions/{version_id}/review */

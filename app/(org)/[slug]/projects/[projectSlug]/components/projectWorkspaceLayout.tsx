@@ -34,7 +34,6 @@ import {
   ProjectWorkspaceModeProvider,
   useProjectWorkspaceMode,
 } from "./projectWorkspaceModeContext";
-import { ArtifactLinkPageContent } from "../artifact-link/ArtifactLinkPageContent";
 import { AgentSessionSidebar } from "../(deliverables)/artifacts/[artifactType]/components/AgentSessionSidebar";
 
 const PROJECT_RAIL_GRADIENTS = [
@@ -194,7 +193,6 @@ function ProjectWorkspaceMain({
         isMembersView && mode === "deliverables" ? "p-0" : "px-2 py-4 sm:px-3 sm:py-6"
       )}
     >
-      {mode === "artifact-link" && <ArtifactLinkPageContent />}
       {mode === "deliverables" && children}
     </main>
   );
@@ -401,7 +399,9 @@ export function ProjectWorkspaceLayout({
         projectsLoaded={!isProjectsPending}
       />
 
-      <ProjectWorkspaceMain isMembersView={isMembersView}>
+      <ProjectWorkspaceMain
+        isMembersView={isMembersView}
+      >
         {children}
       </ProjectWorkspaceMain>
 

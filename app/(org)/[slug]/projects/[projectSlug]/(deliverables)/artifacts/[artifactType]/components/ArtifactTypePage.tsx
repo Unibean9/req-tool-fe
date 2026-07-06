@@ -4,32 +4,20 @@ import { useMemo } from "react";
 
 import { Button } from "@/components/ui/button";
 import { useProjectArtifacts } from "@/hooks/useArtifact";
+import { useDocumentTypes } from "@/hooks/useDocument";
 import { type ArtifactType } from "@/lib/api/services/fetchArtifact";
 
 import { ArtifactEmptyState, ArtifactTable } from "./ArtifactTable";
 import { ArtifactPageHeader } from "./ArtifactPageHeader";
 import { ArtifactTableSkeleton } from "./ArtifactTableSkeleton";
 
-export const ARTIFACT_TYPE_LABELS: Record<ArtifactType, string> = {
-  research_output: "Research Output",
-  intent: "Intent",
-  problem: "Problem",
-  goal: "Goal",
-  stakeholder: "Stakeholder",
-  capability: "Capability",
-  domain_entity: "Domain Entity",
-  business_rule: "Business Rule",
-  constraint: "Constraint",
-  assumption: "Assumption",
-  risk: "Risk",
-  open_question: "Open Question",
-  functional_requirement: "Functional Requirement",
-  non_functional_requirement: "Non-Functional Requirement",
-  use_case: "Use Case",
-  epic: "Epic",
-  story: "Story",
-  acceptance_criteria: "Acceptance Criteria",
-};
+function formatArtifactTypeLabel(value: string): string {
+  return value
+    .split("_")
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
 
 type ArtifactTypePageProps = {
   artifactType: ArtifactType;
@@ -62,22 +50,43 @@ export function ArtifactTypePage({
     enabled: Boolean(projectId),
     keepPreviousData: true,
   });
+  const { data: documentTypes } = useDocumentTypes();
 
   const filtered = useMemo(() => {
     return artifacts;
   }, [artifacts]);
 
-  const label = ARTIFACT_TYPE_LABELS[artifactType];
+  const artifactMetadata = useMemo(() => {
+    if (!documentTypes) return null;
+
+    return (
+      [...documentTypes.containers, ...documentTypes.items].find(
+        (entry) => entry.artifactType === artifactType
+      ) ?? null
+    );
+  }, [artifactType, documentTypes]);
+
+  const label = artifactMetadata?.label ?? formatArtifactTypeLabel(artifactType);
+  const description = artifactMetadata?.description ?? null;
 
   const isInitialLoad = isProjectsPending || (isArtifactsPending && !isFetching);
+  const archivedCount = filtered.filter(
+    (artifact) => artifact.status === "archived"
+  ).length;
   const itemStatus = `${filtered.length} ${
     filtered.length === 1 ? "item" : "items"
-  } in this BRD section`;
+  } for ${label}${
+    archivedCount > 0 ? `, ${archivedCount} archived` : ""
+  }`;
 
   if (isInitialLoad) {
     return (
       <div className="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto">
-        <ArtifactPageHeader title={label} status="Loading artifacts…" />
+        <ArtifactPageHeader
+          title={label}
+          description={description}
+          status="Loading artifacts…"
+        />
         <ArtifactTableSkeleton />
       </div>
     );
@@ -88,7 +97,8 @@ export function ArtifactTypePage({
       <div className="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto">
         <ArtifactPageHeader
           title={label}
-          status="This BRD section could not be loaded"
+          description={description}
+          status="This artifact type could not be loaded"
         />
         <div className="rounded-xl border border-border/70 bg-card/50 px-5 py-8 text-center">
           <p className="text-sm text-destructive">
@@ -110,7 +120,11 @@ export function ArtifactTypePage({
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto">
-      <ArtifactPageHeader title={label} status={itemStatus} />
+      <ArtifactPageHeader
+        title={label}
+        description={description}
+        status={itemStatus}
+      />
 
       {/* <ArtifactToolbar
         filters={filters}

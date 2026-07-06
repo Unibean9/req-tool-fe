@@ -12,10 +12,13 @@ Mọi response (trừ export) đều có dạng `{ success: boolean, data: T, me
 
 ```
 ArtifactType:
-  research_output | intent | problem | goal | stakeholder | capability
-  domain_entity | business_rule | constraint | assumption | risk
-  open_question | functional_requirement | non_functional_requirement
-  use_case | epic | story | acceptance_criteria
+  brd | prd | add | executive_summary | problem_statement
+  vision_objectives | stakeholder_register | scope_capabilities
+  business_rules | constraints_assumptions | domain_entity
+  functional_requirement | non_functional_requirement | use_case
+  component | interface | tech_decision | tech_stack
+  event_storming | domain_event | actor_command | policy
+  aggregate | epic | story | acceptance_criteria
 
 ArtifactStatus:
   draft | needs_clarification | accepted | rejected | archived
@@ -36,7 +39,7 @@ EvidenceSourceType:
   chat | repo_file | document | url | user_input | ai_output
 
 ArtifactPhase:
-  brd | srs | delivery
+  brd | prd | delivery
 
 WorkflowStepKey:
   intent_vision | capability_map | domain_model | requirements_spec | realization_backlog
@@ -893,18 +896,18 @@ Kiểm tra kết nối provider.
 ## Project Export
 
 ### GET `/api/v1/projects/{project_id}/exports/brd.md`
-Xuất BRD dưới dạng Markdown.
+Export the BRD as Markdown.
 
 **Path params:** `project_id`
 
 **Query params:**
-| Param | Type | Mô tả |
+| Param | Type | Description |
 |-------|------|-------|
-| `include_wont` | boolean | Bao gồm requirements có priority `wont` |
+| `include_wont` | boolean | Include requirements with priority `wont` |
 
 **Headers:** `Accept: text/markdown, text/plain;q=0.9, */*;q=0.8`
 
-**Response:** Raw markdown string (không phải JSON)
+**Response:** Raw markdown string (not JSON)
 
 ---
 

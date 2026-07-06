@@ -8,13 +8,14 @@ import {
   Circle,
   Clock3,
   Loader2,
-  Lock,
+  TriangleAlert,
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useDocument, useDocumentTypes, useEnsureDocument } from "@/hooks/useDocument";
+import { useDocumentContainerLock } from "@/hooks/useDocumentContainerLock";
 import {
   DOCUMENT_TYPE_SHORT,
   getDocumentItemIcon,
@@ -28,7 +29,9 @@ import {
   buildDocumentSectionLockMap,
   getDocumentSectionState,
   getDocumentSectionStatusLabel,
+  getPriorRegistryContainer,
   isDocumentSectionAccepted,
+  type DocumentContainerLockInfo,
   type DocumentSectionLockInfo,
   type DocumentSectionState,
 } from "@/lib/document/documentSectionLock";
@@ -120,8 +123,8 @@ function DocumentCommandCenter({
               Document command center
             </p>
             <p className="mt-1 max-w-2xl text-pretty text-xs leading-5 text-muted-foreground">
-              Track acceptance, spot the next section to move, and keep the BRD
-              package from feeling like seven identical cards.
+              Track acceptance, spot the next section to move, and keep the
+              document from feeling like identical cards.
             </p>
           </div>
 
@@ -229,7 +232,7 @@ function DocumentCommandCenter({
             </h2>
             <p className="mt-1 text-pretty text-xs leading-5 text-muted-foreground">
               {isComplete
-                ? "The BRD package is in a stable state for review or export."
+                ? "This document is in a stable state for review or export."
                 : "When a draft or backlog item appears, it will be promoted here."}
             </p>
           </div>
@@ -252,15 +255,15 @@ function DocumentSectionCard({
   const state = getDocumentSectionState(item);
   const status = getDocumentSectionStatusLabel(item);
   const isAccepted = state === "accepted";
-  const isLocked = lock?.locked === true;
+  const hasWarning = lock?.hasPendingPrerequisite === true;
 
   const cardClassName = cn(
     "group flex flex-col justify-between rounded-lg border transition-[border-color,background-color,transform] duration-200 ease-out",
     "outline-none focus-visible:ring-2 focus-visible:ring-ring/45",
-    !isLocked && "hover:-translate-y-0.5 hover:bg-card/65 motion-reduce:transform-none",
+    "hover:-translate-y-0.5 hover:bg-card/65 motion-reduce:transform-none",
     isAccepted ? "min-h-24 p-3" : "min-h-32 p-4",
-    isLocked
-      ? "cursor-not-allowed border-border/40 bg-muted/15 opacity-60"
+    hasWarning
+      ? "border-amber-500/30 bg-amber-500/5 hover:border-amber-500/45"
       : state === "accepted"
         ? "border-primary/18 bg-background/25 hover:border-primary/30"
         : state === "inProgress"
@@ -268,13 +271,13 @@ function DocumentSectionCard({
           : "border-border/50 bg-background/20 hover:border-border/80",
   );
 
-  const inner = (
-    <>
+  return (
+    <Link href={href} className={cardClassName}>
       <div className="flex items-start gap-3">
         <div
           className={cn(
             "flex size-8 shrink-0 items-center justify-center rounded-lg",
-            isLocked ? "bg-muted/40 text-muted-foreground" : sectionIconTone(state),
+            hasWarning ? "bg-amber-500/10 text-amber-600" : sectionIconTone(state),
           )}
           aria-hidden
         >
@@ -285,13 +288,13 @@ function DocumentSectionCard({
             {item.label}
           </h3>
           <p className="mt-1 line-clamp-2 text-pretty text-xs leading-5 text-muted-foreground">
-            {isLocked && lock?.prerequisiteLabel
-              ? `Hoàn thành ${lock.prerequisiteLabel} trước`
+            {hasWarning && lock?.prerequisiteLabel
+              ? `${lock.prerequisiteLabel} not completed yet`
               : item.description}
           </p>
         </div>
-        {isLocked ? (
-          <Lock className="size-4 shrink-0 text-muted-foreground/60" aria-hidden />
+        {hasWarning ? (
+          <TriangleAlert className="size-4 shrink-0 text-amber-500" aria-hidden />
         ) : state === "accepted" ? (
           <CheckCircle2 className="size-4 shrink-0 text-primary" aria-hidden />
         ) : state === "inProgress" ? (
@@ -309,37 +312,21 @@ function DocumentSectionCard({
           variant="outline"
           className={cn(
             "text-[0.6875rem]",
-            isLocked
-              ? "border-border/60 bg-muted/25 text-muted-foreground"
+            hasWarning
+              ? "border-amber-500/40 bg-amber-500/10 text-amber-700"
               : statusBadgeClass(item),
           )}
         >
-          {isLocked ? "Locked" : status}
+          {hasWarning ? "Needs prerequisite" : status}
         </Badge>
-        {!isLocked ? (
-          <span className="inline-flex items-center gap-1 text-xs text-muted-foreground transition-colors duration-200 group-hover:text-foreground/80">
-            Open
-            <ArrowRight
-              className="size-3 transition-transform duration-200 group-hover:translate-x-0.5 motion-reduce:transform-none"
-              aria-hidden
-            />
-          </span>
-        ) : null}
+        <span className="inline-flex items-center gap-1 text-xs text-muted-foreground transition-colors duration-200 group-hover:text-foreground/80">
+          Open
+          <ArrowRight
+            className="size-3 transition-transform duration-200 group-hover:translate-x-0.5 motion-reduce:transform-none"
+            aria-hidden
+          />
+        </span>
       </div>
-    </>
-  );
-
-  if (isLocked) {
-    return (
-      <div className={cardClassName} aria-disabled="true">
-        {inner}
-      </div>
-    );
-  }
-
-  return (
-    <Link href={href} className={cardClassName}>
-      {inner}
     </Link>
   );
 }
@@ -349,15 +336,18 @@ function DocumentSectionMatrix({
   base,
   sectionOrder,
   documentType,
+  containerLock,
 }: {
   items: DocumentItemSlot[];
   base: string;
   sectionOrder: readonly string[];
   documentType: DocumentType;
+  containerLock: DocumentContainerLockInfo;
 }) {
   const lockByType = useMemo(
-    () => buildDocumentSectionLockMap(sectionOrder, items, documentType),
-    [documentType, items, sectionOrder],
+    () =>
+      buildDocumentSectionLockMap(sectionOrder, items, documentType, containerLock),
+    [containerLock, documentType, items, sectionOrder],
   );
 
   const orderedItems = useMemo(() => {
@@ -432,12 +422,17 @@ export function DocumentOverviewPage({
     return document?.items.map((item) => item.artifactType) ?? [];
   }, [document?.items, documentType, registry?.containers]);
 
-  const sectionLockByType = useMemo(
+  const priorContainer = useMemo(
     () =>
-      document
-        ? buildDocumentSectionLockMap(sectionOrder, document.items, documentType)
-        : new Map(),
-    [document, documentType, sectionOrder],
+      registry?.containers.length
+        ? getPriorRegistryContainer(registry.containers, documentType)
+        : null,
+    [documentType, registry],
+  );
+  const containerLock = useDocumentContainerLock(
+    projectId,
+    documentType,
+    priorContainer,
   );
 
   const inProgressItems = useMemo(
@@ -471,13 +466,10 @@ export function DocumentOverviewPage({
             null,
         )
         .find(
-          (item) =>
-            item &&
-            !sectionLockByType.get(item.artifactType)?.locked &&
-            getDocumentSectionState(item) !== "accepted",
+          (item) => item && getDocumentSectionState(item) !== "accepted",
         ) ?? null
     );
-  }, [document, sectionLockByType, sectionOrder]);
+  }, [document, sectionOrder]);
 
   const isInitialLoad =
     isProjectsPending || !projectId || (isPending && !document);
@@ -612,6 +604,7 @@ export function DocumentOverviewPage({
           base={base}
           sectionOrder={sectionOrder}
           documentType={documentType}
+          containerLock={containerLock}
         />
       </div>
     </div>

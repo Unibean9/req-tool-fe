@@ -1,6 +1,12 @@
 import apiService from "../core";
 
-export type LLMProviderType = "openai" | "anthropic" | "google" | "bedrock";
+export type LLMProviderType =
+  | "bedrock"
+  | "openai"
+  | "google"
+  | "anthropic"
+  | "mistral"
+  | "custom";
 export type LLMProviderConfigStatus = "draft" | "active" | "error" | "disabled";
 
 // ─── API types (snake_case from backend) ────────────────────────────────────
@@ -95,6 +101,7 @@ export interface HealthCheckResponse {
 
 export interface CreateLLMProviderConfigBody {
   provider_type?: LLMProviderType;
+  base_url?: string | null;
   api_key: string;
   secret_key?: string | null;
   region?: string | null;
@@ -106,6 +113,7 @@ export interface CreateLLMProviderConfigBody {
 export type UpsertLLMProviderConfigBody = CreateLLMProviderConfigBody;
 
 export interface UpdateLLMProviderConfigBody {
+  base_url?: string | null;
   region?: string | null;
   model_name?: string | null;
   strong_model_name?: string | null;
@@ -187,7 +195,7 @@ export const fetchLlmProviderConfig = {
     };
   },
 
-  /** PATCH /api/v1/users/me/llm-provider-configs/{config_id} — model fields only */
+  /** PATCH /api/v1/users/me/llm-provider-configs/{config_id} */
   update: async (
     configId: string,
     body: UpdateLLMProviderConfigBody

@@ -65,8 +65,8 @@ const STEP_KEY_LABELS: Record<WorkflowStepKey, string> = {
 };
 
 const PHASE_LABELS: Record<ArtifactPhase, string> = {
-  brd: "BRD",
-  srs: "SRS",
+  brd: "Business Requirements",
+  prd: "Product Requirements",
   delivery: "Delivery",
 };
 

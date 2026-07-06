@@ -15,10 +15,24 @@ interface ApiProblemValidationItem {
   message?: string;
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
+
 function formatValidationDetail(detail: unknown): string | null {
   if (typeof detail === "string") {
     const t = detail.trim();
     return t || null;
+  }
+  if (isRecord(detail)) {
+    const message = detail.message;
+    if (typeof message === "string" && message.trim()) {
+      return message.trim();
+    }
+    const nestedDetail = detail.detail;
+    if (typeof nestedDetail === "string" && nestedDetail.trim()) {
+      return nestedDetail.trim();
+    }
   }
   if (!Array.isArray(detail)) return null;
   const messages: string[] = [];
@@ -59,6 +73,25 @@ export function formatMessageFromValidationBody(body: unknown): string | null {
   return (
     formatProblemErrors(value.errors) ??
     formatValidationDetail(value.detail)
+  );
+}
+
+export function getProblemDetailObject(
+  errorOrBody: unknown
+): Record<string, unknown> | null {
+  const body =
+    isRecord(errorOrBody) && "data" in errorOrBody
+      ? (errorOrBody as { data?: unknown }).data
+      : errorOrBody;
+  if (!isRecord(body)) return null;
+  return isRecord(body.detail) ? body.detail : null;
+}
+
+export function getDependencyConflictArtifactIds(error: unknown): string[] {
+  const detail = getProblemDetailObject(error);
+  if (!detail || !Array.isArray(detail.artifact_ids)) return [];
+  return detail.artifact_ids.filter(
+    (item): item is string => typeof item === "string" && item.trim().length > 0
   );
 }
 
