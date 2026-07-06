@@ -6,7 +6,7 @@ product
 
 ## Users
 
-Requirements | Bean9 serves business analysts, product owners, project managers, developers, and student software teams working inside shared project workspaces. They use it while turning research and stakeholder input into structured BRD, SRS, backlog, and delivery artifacts that the whole team can trace and review.
+Requirements | Bean9 serves business analysts, product owners, project managers, developers, and student software teams working inside shared project workspaces. They use it while turning research and stakeholder input into structured BRD, PRD, backlog, and delivery artifacts that the whole team can trace and review.
 
 ## Product Purpose
 

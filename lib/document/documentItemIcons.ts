@@ -4,6 +4,7 @@ import {
   Boxes,
   CheckSquare,
   CircleHelp,
+  Cpu,
   FileText,
   GitBranch,
   Layers,
@@ -34,6 +35,7 @@ const ITEM_ICONS: Record<string, LucideIcon> = {
   component: Network,
   interface: Network,
   tech_decision: Lightbulb,
+  tech_stack: Cpu,
 };
 
 export function getDocumentItemIcon(itemType: string): LucideIcon {
@@ -43,7 +45,8 @@ export function getDocumentItemIcon(itemType: string): LucideIcon {
 const CONTAINER_ICONS: Record<DocumentType, LucideIcon> = {
   brd: FileText,
   prd: Layers,
-  sad: Network,
+  event_storming: GitBranch,
+  add: Network,
 };
 
 export function getDocumentContainerIcon(documentType: DocumentType): LucideIcon {
@@ -53,11 +56,13 @@ export function getDocumentContainerIcon(documentType: DocumentType): LucideIcon
 export const DOCUMENT_TYPE_LABELS: Record<DocumentType, string> = {
   brd: "Business Requirements Document",
   prd: "Product Requirements Document",
-  sad: "Solution Architecture Document",
+  event_storming: "Event Storming",
+  add: "Architecture Design Document",
 };
 
 export const DOCUMENT_TYPE_SHORT: Record<DocumentType, string> = {
   brd: "BRD",
   prd: "PRD",
-  sad: "SAD",
+  event_storming: "Event Storming",
+  add: "ADD",
 };

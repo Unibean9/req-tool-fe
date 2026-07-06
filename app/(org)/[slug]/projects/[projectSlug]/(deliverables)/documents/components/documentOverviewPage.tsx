@@ -123,8 +123,8 @@ function DocumentCommandCenter({
               Document command center
             </p>
             <p className="mt-1 max-w-2xl text-pretty text-xs leading-5 text-muted-foreground">
-              Track acceptance, spot the next section to move, and keep the BRD
-              package from feeling like seven identical cards.
+              Track acceptance, spot the next section to move, and keep the
+              document from feeling like identical cards.
             </p>
           </div>
 
@@ -232,7 +232,7 @@ function DocumentCommandCenter({
             </h2>
             <p className="mt-1 text-pretty text-xs leading-5 text-muted-foreground">
               {isComplete
-                ? "The BRD package is in a stable state for review or export."
+                ? "This document is in a stable state for review or export."
                 : "When a draft or backlog item appears, it will be promoted here."}
             </p>
           </div>
@@ -427,7 +427,7 @@ export function DocumentOverviewPage({
       registry?.containers.length
         ? getPriorRegistryContainer(registry.containers, documentType)
         : null,
-    [documentType, registry?.containers],
+    [documentType, registry],
   );
   const containerLock = useDocumentContainerLock(
     projectId,

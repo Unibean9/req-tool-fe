@@ -3,21 +3,29 @@ import apiService from "../core";
 // ─── Artifact type enum ───────────────────────────────────────────────────────
 
 export const ARTIFACT_TYPES = [
-  "research_output",
-  "intent",
-  "problem",
-  "goal",
-  "stakeholder",
-  "capability",
+  "brd",
+  "prd",
+  "add",
+  "executive_summary",
+  "problem_statement",
+  "vision_objectives",
+  "stakeholder_register",
+  "scope_capabilities",
+  "business_rules",
+  "constraints_assumptions",
   "domain_entity",
-  "business_rule",
-  "constraint",
-  "assumption",
-  "risk",
-  "open_question",
   "functional_requirement",
   "non_functional_requirement",
   "use_case",
+  "component",
+  "interface",
+  "tech_decision",
+  "tech_stack",
+  "event_storming",
+  "domain_event",
+  "actor_command",
+  "policy",
+  "aggregate",
   "epic",
   "story",
   "acceptance_criteria",
@@ -74,7 +82,7 @@ export const EVIDENCE_SOURCE_TYPES = [
 ] as const;
 export type EvidenceSourceType = (typeof EVIDENCE_SOURCE_TYPES)[number];
 
-export const ARTIFACT_PHASES = ["brd", "srs", "delivery"] as const;
+export const ARTIFACT_PHASES = ["brd", "prd", "delivery"] as const;
 export type ArtifactPhase = (typeof ARTIFACT_PHASES)[number];
 
 export const WORKFLOW_STEP_KEYS = [
@@ -459,9 +467,10 @@ function resolveVersionId(versionId: string): string {
 // ─── Mapping helpers ──────────────────────────────────────────────────────────
 
 function parseArtifactType(value: string): ArtifactType {
-  return (ARTIFACT_TYPES as readonly string[]).includes(value)
-    ? (value as ArtifactType)
-    : "functional_requirement";
+  if (!(ARTIFACT_TYPES as readonly string[]).includes(value)) {
+    throw new Error(`Unsupported artifact type: ${value}`);
+  }
+  return value as ArtifactType;
 }
 
 function parseArtifactStatus(value: string): ArtifactStatus {

@@ -2,11 +2,13 @@ import { FileText } from "lucide-react";
 
 type ArtifactPageHeaderProps = {
   title: string;
+  description?: string | null;
   status: string;
 };
 
 export function ArtifactPageHeader({
   title,
+  description,
   status,
 }: ArtifactPageHeaderProps) {
   return (
@@ -21,11 +23,16 @@ export function ArtifactPageHeader({
 
         <div className="min-w-0">
           <p className="text-xs font-medium text-primary">
-            Business requirements
+            Artifact type
           </p>
           <h1 className="mt-0.5 text-balance font-heading text-2xl font-bold tracking-tight text-foreground">
             {title}
           </h1>
+          {description ? (
+            <p className="mt-1 max-w-3xl text-sm leading-relaxed text-muted-foreground">
+              {description}
+            </p>
+          ) : null}
           <p className="mt-1 text-sm text-muted-foreground" aria-live="polite">
             {status}
           </p>
