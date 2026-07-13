@@ -12,6 +12,8 @@ export const AGENT_SESSION_STATUSES = [
   "waiting_for_human",
   "completed",
   "failed",
+  "turn_failed",
+  "expired",
 ] as const;
 export type AgentSessionStatus = (typeof AGENT_SESSION_STATUSES)[number];
 
@@ -159,7 +161,10 @@ interface AgentSessionSnapshotApi {
 
 interface AgentSessionStreamClosedApi {
   type: "stream_closed";
-  status: Extract<AgentSessionStatus, "completed" | "failed">;
+  status: Extract<
+    AgentSessionStatus,
+    "completed" | "failed" | "turn_failed" | "expired"
+  >;
 }
 
 // ─── Client types (camelCase) ─────────────────────────────────────────────────
@@ -259,7 +264,10 @@ export interface AgentSessionSnapshotEvent {
 
 export interface AgentSessionStreamClosedEvent {
   type: "stream_closed";
-  status: Extract<AgentSessionStatus, "completed" | "failed">;
+  status: Extract<
+    AgentSessionStatus,
+    "completed" | "failed" | "turn_failed" | "expired"
+  >;
 }
 
 export type AgentSessionStreamEvent =
@@ -302,9 +310,9 @@ function mapSession(s: AgentSessionApi): AgentSession {
       ? s.interrupt_type === "stream_response"
         ? "waiting_input"
         : "processing"
-      : s.status === "failed"
+      : s.status === "failed" || s.status === "turn_failed"
         ? "error"
-        : s.status === "completed"
+        : s.status === "completed" || s.status === "expired"
           ? "idle"
           : s.interrupt_type === "propose_artifacts"
             ? "waiting_approval"

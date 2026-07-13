@@ -39,7 +39,7 @@ export function useInfinityScroll<TItem, TFilters extends RequestParams = Reques
   staleTime = DEFAULT_QUERY_STALE_MS,
   gcTime = DEFAULT_QUERY_GC_MS,
   refetchOnWindowFocus = false,
-  errorMessage = "Không thể tải dữ liệu",
+  errorMessage = "Unable to load data",
   mapItems,
 }: UseInfinityScrollOptions<TItem, TFilters>) {
   const infiniteQuery = useInfiniteQuery({

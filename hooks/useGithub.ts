@@ -171,7 +171,7 @@ export function useGithubOAuthPopupResult(redirectTo?: string) {
         toast.error(
           typeof typed.message === "string" && typed.message
             ? typed.message
-            : "Đăng nhập GitHub thất bại"
+            : "GitHub login failed"
         );
         return;
       }

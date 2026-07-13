@@ -187,11 +187,11 @@ export function useCreateOrgProject(
         return { ...old, data: [...old.data, created] };
       });
       void queryClient.invalidateQueries({ queryKey: key });
-      toast.success("Dự án đã được tạo");
+      toast.success("Project created");
       userOnSuccess?.(data, variables, onMutateResult, context);
     },
     onError: (error, variables, onMutateResult, context) => {
-      toast.error(getApiErrorMessage(error, "Tạo dự án thất bại"));
+      toast.error(getApiErrorMessage(error, "Failed to create project"));
       userOnError?.(error, variables, onMutateResult, context);
     },
   });
@@ -247,11 +247,11 @@ export function useUpdateOrgProject(
       void queryClient.invalidateQueries({
         queryKey: orgProjectQueryKey(variables.orgId, variables.projectId),
       });
-      toast.success("Dự án đã được cập nhật");
+      toast.success("Project updated");
       userOnSuccess?.(data, variables, onMutateResult, context);
     },
     onError: (error, variables, onMutateResult, context) => {
-      toast.error(getApiErrorMessage(error, "Cập nhật dự án thất bại"));
+      toast.error(getApiErrorMessage(error, "Failed to update project"));
       userOnError?.(error, variables, onMutateResult, context);
     },
   });
@@ -312,7 +312,7 @@ export function useDeleteOrgProject(
       void queryClient.invalidateQueries({
         queryKey: orgProjectsQueryKey(variables.orgId),
       });
-      toast.success("Dự án đã được xóa");
+      toast.success("Project deleted");
     },
     onError: (error, variables, mutateContext, mutationContext) => {
       if (mutateContext?.previousList) {
@@ -321,7 +321,7 @@ export function useDeleteOrgProject(
           mutateContext.previousList
         );
       }
-      toast.error(getApiErrorMessage(error, "Xóa dự án thất bại"));
+      toast.error(getApiErrorMessage(error, "Failed to delete project"));
       userOnError?.(error, variables, mutateContext, mutationContext);
     },
   });

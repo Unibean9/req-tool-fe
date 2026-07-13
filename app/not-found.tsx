@@ -2,9 +2,9 @@ import { NotFoundView } from "@/components/not-found-view";
 import { buildPageMetadata } from "@/lib/seo/metadata";
 
 export const metadata = buildPageMetadata({
-  title: "Không tìm thấy trang",
+  title: "Page not found",
   description:
-    "Trang bạn truy cập không tồn tại hoặc đã được chuyển đi. Quay về Requirements | Bean9 để tiếp tục.",
+    "The page you're looking for doesn't exist or has been moved. Return to Requirements | Bean9 to continue.",
   path: "/404",
   noindex: true,
 });

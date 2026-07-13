@@ -195,7 +195,7 @@ export function ProjectWorkspaceOrgRailSwitcher() {
             />
             <TooltipContent side="right" sideOffset={10} align="center">
               <span className="block text-[10px] font-semibold tracking-wide text-background/70 uppercase">
-                Tổ chức
+                Organization
               </span>
               {orgFromList.name}
             </TooltipContent>
@@ -279,7 +279,7 @@ export function ProjectWorkspaceOrgRailSwitcher() {
                 onClick={() => setCreateOrgOpen(true)}
               >
                 <Plus className="size-4 text-muted-foreground" aria-hidden />
-                Tạo tổ chức
+                Create organization
               </DropdownMenuItem>
             </div>
           </DropdownMenuContent>

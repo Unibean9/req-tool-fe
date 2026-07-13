@@ -98,7 +98,7 @@ function resolveOrgId(orgIdOrParams: string | ListOrgProjectsParams): string {
   const id =
     typeof orgIdOrParams === "string" ? orgIdOrParams : orgIdOrParams.orgId;
   const trimmed = id.trim();
-  if (!trimmed) throw new Error("org_id là bắt buộc");
+  if (!trimmed) throw new Error("org_id is required");
   return trimmed;
 }
 
@@ -109,14 +109,14 @@ function resolveGetOrgProjectParams(
   if (typeof orgIdOrParams === "object") {
     const orgId = orgIdOrParams.orgId.trim();
     const projectId = orgIdOrParams.projectId.trim();
-    if (!orgId) throw new Error("org_id là bắt buộc");
-    if (!projectId) throw new Error("project_id là bắt buộc");
+    if (!orgId) throw new Error("org_id is required");
+    if (!projectId) throw new Error("project_id is required");
     return { orgId, projectId };
   }
   const orgId = orgIdOrParams.trim();
   const projectId = (projectIdArg ?? "").trim();
-  if (!orgId) throw new Error("org_id là bắt buộc");
-  if (!projectId) throw new Error("project_id là bắt buộc");
+  if (!orgId) throw new Error("org_id is required");
+  if (!projectId) throw new Error("project_id is required");
   return { orgId, projectId };
 }
 
@@ -136,7 +136,7 @@ function assertOrgProjectSuccess(
   body: OrgProjectApiResponse
 ): OrgProjectApiResponse {
   if (!body.success) {
-    throw new Error(body.message ?? "Thao tác dự án thất bại");
+    throw new Error(body.message ?? "Project operation failed");
   }
   return body;
 }
@@ -145,14 +145,14 @@ function assertOrgProjectListSuccess(
   body: OrgProjectListApiResponse
 ): OrgProjectListApiResponse {
   if (!body.success) {
-    throw new Error(body.message ?? "Không tải được danh sách dự án");
+    throw new Error(body.message ?? "Failed to load project list");
   }
   return body;
 }
 
 function assertDeleteOrgProjectSuccess(body: DeleteOrgProjectApiResponse): void {
   if (body && typeof body === "object" && "success" in body && !body.success) {
-    throw new Error(body.message ?? "Xóa dự án thất bại");
+    throw new Error(body.message ?? "Failed to delete project");
   }
 }
 
@@ -203,7 +203,7 @@ export const fetchProject = {
     req: CreateProjectRequest
   ): Promise<CreateOrgProjectResponse> => {
     const orgId = req.orgId.trim();
-    if (!orgId) throw new Error("org_id là bắt buộc");
+    if (!orgId) throw new Error("org_id is required");
     const response = await apiService.post<OrgProjectApiResponse>(
       `/api/v1/projects`,
       {

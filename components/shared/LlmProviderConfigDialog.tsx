@@ -249,11 +249,7 @@ function PasswordInput({
 
 // ─── Create form ─────────────────────────────────────────────────────────────
 
-function CreateForm({
-  onSaved,
-}: {
-  onSaved?: () => void;
-}) {
+function CreateForm() {
   const [providerType, setProviderType] = useState<ProviderOptionId>("openai");
   const [baseUrl, setBaseUrl] = useState("");
   const [baseUrlTouched, setBaseUrlTouched] = useState(false);
@@ -266,7 +262,7 @@ function CreateForm({
   const [showApiKey, setShowApiKey] = useState(false);
   const [showSecretKey, setShowSecretKey] = useState(false);
 
-  const createMutation = useCreateLlmProviderConfig({ onSuccess: () => onSaved?.() });
+  const createMutation = useCreateLlmProviderConfig();
   const provider = getProviderOption(providerType);
   const isCustomProvider = provider.payloadType === "custom";
   const isBedrock = provider.payloadType === "bedrock";
@@ -744,7 +740,7 @@ export function LlmProviderConfigDialog({ open, onOpenChange }: LlmProviderConfi
           ) : activeConfig ? (
             <EditForm config={activeConfig} />
           ) : (
-            <CreateForm onSaved={() => onOpenChange(false)} />
+            <CreateForm />
           )}
         </div>
 

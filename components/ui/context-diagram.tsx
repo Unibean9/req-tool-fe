@@ -962,8 +962,8 @@ function ContextDiagramCanvas({
             onKeyDown={(e) => { if (e.key === "Enter") handleCreateFlow(); }}
           />
           <DialogFooter>
-            <Button variant="outline" onClick={() => setPendingConn(null)}>Hủy</Button>
-            <Button onClick={handleCreateFlow} disabled={!pendingLabel.trim()}>Tạo dây</Button>
+            <Button variant="outline" onClick={() => setPendingConn(null)}>Cancel</Button>
+            <Button onClick={handleCreateFlow} disabled={!pendingLabel.trim()}>Create flow</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

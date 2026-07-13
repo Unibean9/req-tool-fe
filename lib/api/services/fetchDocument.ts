@@ -206,14 +206,14 @@ export interface UpsertDocumentItemRequest {
 
 function resolveProjectId(projectId: string): string {
   const id = projectId.trim();
-  if (!id) throw new Error("project_id là bắt buộc");
+  if (!id) throw new Error("project_id is required");
   return id;
 }
 
 function resolveDocumentType(documentType: string): DocumentType {
   const value = documentType.trim().toLowerCase();
   if (!(DOCUMENT_TYPES as readonly string[]).includes(value)) {
-    throw new Error("document_type không hợp lệ");
+    throw new Error("document_type is invalid");
   }
   return value as DocumentType;
 }

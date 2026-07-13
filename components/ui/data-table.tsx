@@ -35,7 +35,7 @@ export function DataTable<TData, TValue>({
   columns,
   data,
   searchColumn,
-  searchPlaceholder = "Tìm kiếm…",
+  searchPlaceholder = "Search…",
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
@@ -94,7 +94,7 @@ export function DataTable<TData, TValue>({
             ) : (
               <TableRow>
                 <TableCell colSpan={columns.length} className="h-24 text-center text-muted-foreground">
-                  Không có dữ liệu.
+                  No data.
                 </TableCell>
               </TableRow>
             )}
@@ -108,7 +108,7 @@ export function DataTable<TData, TValue>({
           onClick={() => table.previousPage()}
           disabled={!table.getCanPreviousPage()}
         >
-          Trước
+          Previous
         </Button>
         <Button
           variant="outline"
@@ -116,7 +116,7 @@ export function DataTable<TData, TValue>({
           onClick={() => table.nextPage()}
           disabled={!table.getCanNextPage()}
         >
-          Sau
+          Next
         </Button>
       </div>
     </div>

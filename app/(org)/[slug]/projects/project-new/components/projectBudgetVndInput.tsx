@@ -130,7 +130,7 @@ export function ProjectBudgetVndInput({
           className="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-sm font-medium text-muted-foreground"
           aria-hidden
         >
-          VNĐ
+          VND
         </span>
       </div>
       <ProjectNewFieldError message={showError ? error : undefined} />

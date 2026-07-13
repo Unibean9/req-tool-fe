@@ -27,7 +27,7 @@ export function NotFoundView({ className }: { className?: string }) {
       <div className="relative z-10 flex w-full max-w-4xl flex-col items-center gap-10 sm:gap-12">
         <NotFound404Text
           size="lg"
-          subtitle="Không thể tìm thấy trang"
+          subtitle="This page could not be found"
           className="w-full"
         />
 
@@ -40,7 +40,7 @@ export function NotFoundView({ className }: { className?: string }) {
             )}
           >
             <Home className="size-4" aria-hidden />
-            Về trang chủ
+            Back to home
           </Link>
           <Button
             type="button"
@@ -53,7 +53,7 @@ export function NotFoundView({ className }: { className?: string }) {
             onClick={() => router.back()}
           >
             <ArrowLeft className="size-4" aria-hidden />
-            Quay lại
+            Go back
           </Button>
         </div>
       </div>

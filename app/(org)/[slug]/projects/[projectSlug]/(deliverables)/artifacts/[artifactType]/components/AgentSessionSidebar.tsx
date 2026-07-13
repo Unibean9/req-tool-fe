@@ -481,6 +481,7 @@ function ChatView({
   realtimeSnapshotCount,
   modeHint,
   onModeHintChange,
+  resumedFromFailure = false,
 }: {
   projectId: string;
   sessionId: string;
@@ -494,6 +495,7 @@ function ChatView({
   realtimeSnapshotCount: number;
   modeHint: AgentMessageModeHint | null;
   onModeHintChange: (value: AgentMessageModeHint | null) => void;
+  resumedFromFailure?: boolean;
 }) {
   const {
     data: messages = [],
@@ -516,6 +518,18 @@ function ChatView({
 
   return (
     <div className="flex flex-1 flex-col gap-0 overflow-hidden">
+      {resumedFromFailure && (
+        <div className="mx-4 mt-3 flex items-start gap-2 rounded-lg border border-amber-500/25 bg-amber-500/8 p-3">
+          <AlertTriangle
+            className="mt-0.5 size-4 shrink-0 text-amber-600"
+            aria-hidden
+          />
+          <p className="text-pretty text-xs leading-5 text-muted-foreground">
+            The last turn couldn&apos;t finish. Send a message to try again —
+            your draft so far is kept.
+          </p>
+        </div>
+      )}
       {isPending ? (
         <div className="flex-1 overflow-y-auto px-4 py-4">
           <div
@@ -952,7 +966,12 @@ type AgentSessionView =
   | { kind: "error"; isRetrying: boolean; message: string }
   | { kind: "connecting"; isDeleting: boolean }
   | { kind: "active"; agentRole: string | null }
-  | { kind: "chat"; agentRole: string | null; isInitialTurn: boolean }
+  | {
+      kind: "chat";
+      agentRole: string | null;
+      isInitialTurn: boolean;
+      resumedFromFailure?: boolean;
+    }
   | { kind: "proposals" }
   | { kind: "completed" }
   | { kind: "failed" };
@@ -1031,9 +1050,18 @@ function resolveAgentSessionView({
     return { kind: "proposals" };
   }
 
+  if (session.status === "turn_failed") {
+    return {
+      kind: "chat",
+      agentRole: session.agentRole,
+      isInitialTurn: false,
+      resumedFromFailure: true,
+    };
+  }
   if (session.uiStatus === "error") return { kind: "failed" };
   if (session.status === "completed") return { kind: "completed" };
-  if (session.status === "failed") return { kind: "failed" };
+  if (session.status === "failed" || session.status === "expired")
+    return { kind: "failed" };
   return { kind: "connecting", isDeleting };
 }
 
@@ -1134,6 +1162,7 @@ function AgentSessionBody({
             realtimeSnapshotCount={realtimeSnapshotCount}
             modeHint={modeHint}
             onModeHintChange={onModeHintChange}
+            resumedFromFailure={view.resumedFromFailure}
           />
         );
         break;
@@ -1416,7 +1445,8 @@ export function AgentSessionSidebar({
         !sessionId ||
         !session ||
         session.status === "completed" ||
-        session.status === "failed"
+        session.status === "failed" ||
+        session.status === "expired"
       ) {
         void refetchSession();
         return;

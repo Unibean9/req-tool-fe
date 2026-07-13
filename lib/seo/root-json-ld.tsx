@@ -22,18 +22,6 @@ export async function RootJsonLd() {
       name: SITE.name,
       publisher: { "@id": `${origin}/#organization` },
     },
-    {
-      "@type": "ItemList",
-      "@id": `${origin}/#itemlist-luyen-de`,
-      name: "Luyện đề",
-      itemListElement: [
-        {
-          "@type": "ListItem",
-          position: 1,
-          item: { "@type": "Thing", name: "Danh mục luyện đề", url: `${origin}/luyen-de` },
-        },
-      ],
-    },
   ];
 
   return (

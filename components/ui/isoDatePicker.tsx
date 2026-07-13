@@ -41,7 +41,7 @@ export function IsoDatePicker({
   onChange,
   minDate,
   disabled,
-  placeholder = "Chọn ngày",
+  placeholder = "Select date",
   "aria-invalid": ariaInvalid,
   className,
 }: IsoDatePickerProps) {
