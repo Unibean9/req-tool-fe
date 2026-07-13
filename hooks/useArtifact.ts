@@ -193,11 +193,11 @@ export function useCreateArtifact(
       invalidateArtifactGraph(queryClient, variables.projectId);
       invalidateBrdExport(queryClient, variables.projectId);
       invalidatePrdExport(queryClient, variables.projectId);
-      toast.success("Artifact đã được tạo");
+      toast.success("Artifact created");
       userOnSuccess?.(data, variables, onMutateResult, context);
     },
     onError: (error, variables, onMutateResult, context) => {
-      toast.error(getApiErrorMessage(error, "Tạo artifact thất bại"));
+      toast.error(getApiErrorMessage(error, "Failed to create artifact"));
       userOnError?.(error, variables, onMutateResult, context);
     },
   });
@@ -232,11 +232,11 @@ export function useUpdateArtifact(
         variables.artifactId
       );
       invalidateArtifactGraph(queryClient, variables.projectId);
-      toast.success("Artifact đã được cập nhật");
+      toast.success("Artifact updated");
       userOnSuccess?.(data, variables, onMutateResult, context);
     },
     onError: (error, variables, onMutateResult, context) => {
-      toast.error(getApiErrorMessage(error, "Cập nhật artifact thất bại"));
+      toast.error(getApiErrorMessage(error, "Failed to update artifact"));
       userOnError?.(error, variables, onMutateResult, context);
     },
   });
@@ -270,15 +270,15 @@ export function useDeleteArtifact(
         variables.artifactId
       );
       invalidateArtifactGraph(queryClient, variables.projectId);
-      toast.success("Artifact đã được archive");
+      toast.success("Artifact archived");
       userOnSuccess?.(data, variables, onMutateResult, context);
     },
     onError: (error, variables, onMutateResult, context) => {
       const blockers = getDependencyConflictArtifactIds(error);
       toast.error(
         blockers.length
-          ? `Không thể archive artifact vì còn ${blockers.length} downstream blocker`
-          : getApiErrorMessage(error, "Archive artifact thất bại")
+          ? `Cannot archive artifact — it still has ${blockers.length} downstream blocker(s)`
+          : getApiErrorMessage(error, "Failed to archive artifact")
       );
       userOnError?.(error, variables, onMutateResult, context);
     },
@@ -324,11 +324,11 @@ export function useReviewArtifactVersion(
         variables.artifactId
       );
       invalidateArtifactGraph(queryClient, variables.projectId);
-      toast.success("Review artifact đã được ghi nhận");
+      toast.success("Artifact review recorded");
       userOnSuccess?.(data, variables, onMutateResult, context);
     },
     onError: (error, variables, onMutateResult, context) => {
-      toast.error(getApiErrorMessage(error, "Review artifact thất bại"));
+      toast.error(getApiErrorMessage(error, "Failed to review artifact"));
       userOnError?.(error, variables, onMutateResult, context);
     },
   });
@@ -371,11 +371,11 @@ export function useRestoreArtifactVersion(
         variables.artifactId
       );
       invalidateArtifactGraph(queryClient, variables.projectId);
-      toast.success("Artifact đã được khôi phục về version cũ");
+      toast.success("Artifact restored to a previous version");
       userOnSuccess?.(data, variables, onMutateResult, context);
     },
     onError: (error, variables, onMutateResult, context) => {
-      toast.error(getApiErrorMessage(error, "Khôi phục artifact thất bại"));
+      toast.error(getApiErrorMessage(error, "Failed to restore artifact"));
       userOnError?.(error, variables, onMutateResult, context);
     },
   });
@@ -416,11 +416,11 @@ export function useCreateArtifactEvidence(
         variables.projectId,
         variables.artifactId
       );
-      toast.success("Evidence đã được gắn vào artifact");
+      toast.success("Evidence attached to artifact");
       userOnSuccess?.(data, variables, onMutateResult, context);
     },
     onError: (error, variables, onMutateResult, context) => {
-      toast.error(getApiErrorMessage(error, "Gắn evidence thất bại"));
+      toast.error(getApiErrorMessage(error, "Failed to attach evidence"));
       userOnError?.(error, variables, onMutateResult, context);
     },
   });

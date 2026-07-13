@@ -75,6 +75,6 @@ export function rootMetadata(): Metadata {
     ...base,
     metadataBase: new URL(getSiteUrl()),
     title: { default: SITE.name, template: `%s | ${BRAND}` },
-    keywords: ["Requirements | Bean9", "làm việc", "dự án", "tổ chức", "project", "workspace"],
+    keywords: ["Requirements | Bean9", "work", "project", "organization", "workspace"],
   };
 }

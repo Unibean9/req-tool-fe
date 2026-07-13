@@ -29,7 +29,7 @@ function getAccessToken(): string | null {
 }
 
 export function getHubConnection(): HubConnection {
-  if (typeof window === "undefined") throw new Error("SignalR chỉ chạy trên browser");
+  if (typeof window === "undefined") throw new Error("SignalR only runs in the browser");
   if (connection) return connection;
 
   connection = new HubConnectionBuilder()

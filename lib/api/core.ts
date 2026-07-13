@@ -98,7 +98,7 @@ class ApiService {
             void this.endSessionAndRedirectToLogin();
             return Promise.reject({
               code: 401,
-              message: "Đăng nhập hết hạn. Vui lòng đăng nhập lại.",
+              message: "Your session has expired. Please log in again.",
               status: false,
             } as ApiError);
           }
@@ -143,7 +143,7 @@ class ApiService {
 
             return Promise.reject({
               code: 401,
-              message: "Đăng nhập hết hạn. Vui lòng đăng nhập lại.",
+              message: "Your session has expired. Please log in again.",
               status: false,
             } as ApiError);
           }
@@ -165,7 +165,7 @@ class ApiService {
             validationMsg ||
             dataMessage ||
             error.message ||
-            "Đã xảy ra lỗi",
+            "An error occurred",
           status: false,
           data: rawData,
         };
@@ -225,6 +225,6 @@ class ApiService {
   }
 }
 
-const apiService = new ApiService(process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/");
+const apiService = new ApiService(process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/");
 
 export default apiService;

@@ -314,7 +314,10 @@ function applyStreamEvent(
               data: {
                 ...current.data,
                 status: event.status,
-                uiStatus: event.status === "failed" ? "error" : "idle",
+                uiStatus:
+                  event.status === "failed" || event.status === "turn_failed"
+                    ? "error"
+                    : "idle",
               },
             }
           : current

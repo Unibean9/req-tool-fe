@@ -52,14 +52,14 @@ export function CreateOrgDialog({ open, onOpenChange }: CreateOrgDialogProps) {
     <Dialog open={open} onOpenChange={handleDialogOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Tạo tổ chức</DialogTitle>
+          <DialogTitle>Create organization</DialogTitle>
           <DialogDescription>
-            Nhập tên hiển thị. Bạn có thể đổi sau trong cài đặt tổ chức (khi có).
+            Enter a display name. You can change it later in organization settings (once available).
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-2">
           <div className="flex items-baseline justify-between gap-2">
-            <Label htmlFor="create-org-name">Tên tổ chức</Label>
+            <Label htmlFor="create-org-name">Organization name</Label>
             <span className="text-[11px] tabular-nums text-muted-foreground">
               {name.length} / {ORG_NAME_MAX_CHARS}
             </span>
@@ -67,7 +67,7 @@ export function CreateOrgDialog({ open, onOpenChange }: CreateOrgDialogProps) {
           <Input
             id="create-org-name"
             autoComplete="organization"
-            placeholder="Ví dụ: Nhóm sản phẩm A"
+            placeholder="e.g. Product Team A"
             value={name}
             maxLength={ORG_NAME_MAX_CHARS}
             disabled={createOrg.isPending}
@@ -87,14 +87,14 @@ export function CreateOrgDialog({ open, onOpenChange }: CreateOrgDialogProps) {
             disabled={createOrg.isPending}
             onClick={() => onOpenChange(false)}
           >
-            Hủy
+            Cancel
           </Button>
           <Button
             type="button"
             disabled={!canSubmit}
             onClick={() => createOrg.mutate({ name: trimmed })}
           >
-            {createOrg.isPending ? "Đang tạo…" : "Tạo tổ chức"}
+            {createOrg.isPending ? "Creating…" : "Create organization"}
           </Button>
         </DialogFooter>
       </DialogContent>

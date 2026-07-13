@@ -37,7 +37,7 @@ function OnboardingTopProgress({
       aria-valuenow={activeIndex + 1}
       aria-valuemin={1}
       aria-valuemax={total}
-      aria-label={`Bước ${activeIndex + 1} trên ${total}`}
+      aria-label={`Step ${activeIndex + 1} of ${total}`}
     >
       {Array.from({ length: total }, (_, i) => (
         <span
@@ -116,7 +116,7 @@ export function OrgOnboardingIntro({ onSkip, onComplete }: OrgOnboardingIntroPro
           className="h-9 px-3 text-muted-foreground hover:bg-white/5 hover:text-foreground"
           onClick={() => onSkipRef.current()}
         >
-          Bỏ qua
+          Skip
         </Button>
       </div>
 
@@ -186,7 +186,7 @@ export function OrgOnboardingIntro({ onSkip, onComplete }: OrgOnboardingIntroPro
           className="h-12 min-w-44 gap-2 rounded-xl px-8 text-base font-semibold shadow-none"
           onClick={advanceManually}
         >
-          {lineIndex < total - 1 ? "Tiếp tục" : "Bắt đầu"}
+          {lineIndex < total - 1 ? "Continue" : "Get started"}
           <ArrowRight className="size-4" aria-hidden />
         </Button>
       </footer>

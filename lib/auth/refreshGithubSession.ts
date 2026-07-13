@@ -26,7 +26,7 @@ interface GithubRefreshApiResponse {
 }
 
 function getApiBaseUrl(): string {
-  const raw = process.env.NEXT_PUBLIC_API_URL?.trim() || "http://localhost:8080/";
+  const raw = process.env.NEXT_PUBLIC_API_URL?.trim() || "http://localhost:8000/";
   return raw.replace(/\/+$/, "");
 }
 
@@ -53,7 +53,7 @@ export async function refreshGithubTokens(
     throw new Error(
       typeof body?.message === "string" && body.message.trim()
         ? body.message.trim()
-        : "Không làm mới được phiên đăng nhập."
+        : "Could not refresh the login session."
     );
   }
 

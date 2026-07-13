@@ -5,7 +5,7 @@ export type PublicSubjectSeo = {
 };
 
 function subjectsEndpoint(): string {
-  const base = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080/").replace(/\/?$/, "/");
+  const base = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/").replace(/\/?$/, "/");
   const path =
     process.env.NEXT_PUBLIC_SEO_SUBJECTS_PATH?.replace(/^\//, "") ?? "api/v1/public/subjects";
   return new URL(path, base).toString();

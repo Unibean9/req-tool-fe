@@ -214,7 +214,7 @@ function OrgAccountDropdownMenu({
         <DropdownMenuGroup className="p-3 pb-2">
           <DropdownMenuLabel className="p-0 font-normal">
             <span className="block truncate text-sm font-semibold text-foreground">
-              {displayName || email || "Tài khoản"}
+              {displayName || email || "Account"}
             </span>
             {currentOrg ? (
               <span className="mt-0.5 block truncate text-xs text-muted-foreground">
@@ -440,7 +440,7 @@ function OrgWorkspaceMobileBottomNav({
             priority
           />
         </span>
-        <span className="text-[9px] font-medium text-muted-foreground">Trang chủ</span>
+        <span className="text-[9px] font-medium text-muted-foreground">Home</span>
       </Link>
       {showOrgTabs && orgSlug ? (
         <div className="flex min-w-0 flex-1 items-stretch justify-around gap-0.5 overflow-x-auto overscroll-x-contain [-ms-overflow-style:none] scrollbar-none [&::-webkit-scrollbar]:hidden">

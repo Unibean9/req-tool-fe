@@ -7,32 +7,32 @@ export type OrgOnboardingSlide = {
 export const ORG_ONBOARDING_SLIDES: readonly OrgOnboardingSlide[] = [
   {
     kicker: "Workspace",
-    headline: "Chào mừng đến ReqFlow",
+    headline: "Welcome to ReqFlow",
     detail:
-      "Nơi requirements được tổ chức đúng cách ngay từ ngày đầu — không còn nằm rải rác trong sheet và chat.",
+      "Where requirements get organized the right way from day one — no more scattered sheets and chats.",
   },
   {
-    kicker: "Cấu trúc",
-    headline: "Backlog thành hệ thống",
+    kicker: "Structure",
+    headline: "A backlog that's a system",
     detail:
-      "Agile và GitHub-first workflow: mọi mục đều có chỗ, có owner và có trace tới code.",
+      "Agile and GitHub-first workflow: every item has a place, an owner, and a trace to code.",
   },
   {
-    kicker: "Khởi động",
-    headline: "Project sẵn sàng làm việc",
+    kicker: "Kickoff",
+    headline: "A project ready to work",
     detail:
-      "Hierarchy rõ ràng, conventions nhất quán và đồng bộ GitHub tự động khi team bắt đầu sprint.",
+      "Clear hierarchy, consistent conventions, and automatic GitHub sync as the team starts sprinting.",
   },
   {
-    kicker: "Phối hợp",
-    headline: "Requirements có lộ trình",
+    kicker: "Coordination",
+    headline: "Requirements with a roadmap",
     detail:
-      "Phân tích, tổ chức và triển khai cùng một nguồn sự thật — team bám scope và tiến độ chặt hơn.",
+      "Analyze, organize, and deliver from a single source of truth — teams stay closer to scope and progress.",
   },
   {
-    kicker: "Kết nối",
-    headline: "Một flow thống nhất",
+    kicker: "Connection",
+    headline: "One unified flow",
     detail:
-      "Từ Business Capability đến Technical Task — không còn khoảng trống giữa nghiệp vụ và kỹ thuật.",
+      "From Business Capability to Technical Task — no more gap between business and engineering.",
   },
 ] as const;

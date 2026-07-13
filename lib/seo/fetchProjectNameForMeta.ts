@@ -2,7 +2,7 @@ import { cookies } from "next/headers";
 
 import { AUTH_COOKIE } from "@/lib/auth/session";
 
-const API_BASE = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080").replace(/\/?$/, "");
+const API_BASE = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000").replace(/\/?$/, "");
 
 async function serverFetch<T>(path: string, token: string): Promise<T | null> {
   try {
@@ -53,30 +53,4 @@ export async function fetchProjectNameForMeta(
   const token = cookieStore.get(AUTH_COOKIE)?.value;
   if (!token) return null;
   return (await resolveProjectMeta(orgSlug, projectSlug, token))?.name ?? null;
-}
-
-/**
- * Resolves both project name and actor name for actor detail metadata.
- * Makes three sequential API calls: orgs/me → org projects → project actors.
- * Returns null fields silently on any failure.
- */
-export async function fetchActorTitleForMeta(
-  orgSlug: string,
-  projectSlug: string,
-  actorId: string
-): Promise<{ projectName: string | null; actorName: string | null }> {
-  const cookieStore = await cookies();
-  const token = cookieStore.get(AUTH_COOKIE)?.value;
-  if (!token) return { projectName: null, actorName: null };
-
-  const project = await resolveProjectMeta(orgSlug, projectSlug, token);
-  if (!project) return { projectName: null, actorName: null };
-
-  const actorsRes = await serverFetch<{
-    status: boolean;
-    data: { id: string; name: string }[];
-  }>(`/api/v1/projects/${encodeURIComponent(project.id)}/actors`, token);
-
-  const actor = actorsRes?.data?.find((a) => a.id === actorId);
-  return { projectName: project.name, actorName: actor?.name ?? null };
 }

@@ -7,8 +7,8 @@ export const SITE = {
   name: "Requirements | Bean9",
   shortName: "Requirements | Bean9",
   defaultDescription:
-    "Requirements | Bean9 — công cụ quản lý yêu cầu, actor, epic, feature và NFR cho dự án phần mềm.",
-  locale: "vi_VN" as const,
+    "Requirements | Bean9 — the requirements management tool for actors, epics, features, and NFRs on software projects.",
+  locale: "en_US" as const,
 };
 
 /** Production: set NEXT_PUBLIC_APP_URL without trailing slash (e.g. https://example.com). */

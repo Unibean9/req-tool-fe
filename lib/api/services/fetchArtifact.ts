@@ -448,19 +448,19 @@ function artifactGraphPath(projectId: string) {
 
 function resolveProjectId(projectId: string): string {
   const id = projectId.trim();
-  if (!id) throw new Error("project_id là bắt buộc");
+  if (!id) throw new Error("project_id is required");
   return id;
 }
 
 function resolveArtifactId(artifactId: string): string {
   const id = artifactId.trim();
-  if (!id) throw new Error("artifact_id là bắt buộc");
+  if (!id) throw new Error("artifact_id is required");
   return id;
 }
 
 function resolveVersionId(versionId: string): string {
   const id = versionId.trim();
-  if (!id) throw new Error("version_id là bắt buộc");
+  if (!id) throw new Error("version_id is required");
   return id;
 }
 
@@ -690,7 +690,7 @@ function assertArtifactSuccess(
   body: ArtifactApiResponse
 ): ArtifactApiResponse {
   if (!body.success)
-    throw new Error(body.message ?? "Thao tác artifact thất bại");
+    throw new Error(body.message ?? "Artifact operation failed");
   return body;
 }
 
@@ -698,7 +698,7 @@ function assertArtifactListSuccess(
   body: ArtifactListApiResponse
 ): ArtifactListApiResponse {
   if (!body.success)
-    throw new Error(body.message ?? "Không tải được danh sách artifact");
+    throw new Error(body.message ?? "Failed to load artifact list");
   return body;
 }
 
@@ -706,7 +706,7 @@ function assertArtifactVersionReviewSuccess(
   body: ArtifactVersionReviewApiResponse
 ): ArtifactVersionReviewApiResponse {
   if (!body.success)
-    throw new Error(body.message ?? "Review artifact thất bại");
+    throw new Error(body.message ?? "Failed to review artifact");
   return body;
 }
 
@@ -714,7 +714,7 @@ function assertArtifactEvidenceListSuccess(
   body: ArtifactEvidenceListApiResponse
 ): ArtifactEvidenceListApiResponse {
   if (!body.success)
-    throw new Error(body.message ?? "Không tải được evidence");
+    throw new Error(body.message ?? "Failed to load evidence");
   return body;
 }
 
@@ -722,7 +722,7 @@ function assertArtifactEvidenceSuccess(
   body: ArtifactEvidenceApiResponse
 ): ArtifactEvidenceApiResponse {
   if (!body.success)
-    throw new Error(body.message ?? "Thao tác evidence thất bại");
+    throw new Error(body.message ?? "Evidence operation failed");
   return body;
 }
 
@@ -730,7 +730,7 @@ function assertArtifactGraphSuccess(
   body: ArtifactGraphApiResponse
 ): ArtifactGraphApiResponse {
   if (!body.success)
-    throw new Error(body.message ?? "Không tải được artifact graph");
+    throw new Error(body.message ?? "Failed to load artifact graph");
   return body;
 }
 

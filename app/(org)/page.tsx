@@ -33,10 +33,10 @@ export default function Home() {
       <div className={shell}>
         <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-4 p-6">
           <p className="text-destructive text-sm">
-            {error instanceof Error ? error.message : "Không tải được danh sách tổ chức."}
+            {error instanceof Error ? error.message : "Failed to load the organization list."}
           </p>
           <Button type="button" variant="outline" size="sm" onClick={() => void refetch()}>
-            Thử lại
+            Retry
           </Button>
         </div>
       </div>

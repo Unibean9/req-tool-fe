@@ -16,7 +16,7 @@ export function useSignalRNotifications() {
     const connection = getHubConnection();
 
     const handleNotification = (message: string, title?: string) => {
-      toast(title || "Thông báo", { description: message });
+      toast(title || "Notification", { description: message });
     };
 
     connection.on("ReceiveNotification", handleNotification);
