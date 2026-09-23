@@ -44,6 +44,7 @@ export type UseCaseDiagramPlan = {
   diagramId: string;
   level: UseCaseLevel;
   systemBoundary: string;
+  subsystem: string | null;
   nodes: UseCaseDiagramNode[];
   edges: UseCaseDiagramEdge[];
 };

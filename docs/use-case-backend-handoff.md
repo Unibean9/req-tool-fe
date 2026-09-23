@@ -172,6 +172,7 @@ export interface DiagramPlan {
   diagramId: string;
   level: UseCaseLevel;
   systemBoundary: string;
+  subsystem: string | null;
   nodes: DiagramNode[];
   edges: DiagramEdge[];
 }
@@ -239,7 +240,7 @@ Các node là semantic node từ BE. FE chịu trách nhiệm layout và positio
 
 `part-of` chỉ dùng cho hierarchy/table, **không vẽ thành UML edge**.
 
-Khi `diagramPlans` rỗng do validation error, hiển thị trạng thái diagram chưa đủ điều kiện và dùng `validation.issues` để giải thích. Không tự đổi `include` thành `extend`, không đổi hướng source/target và không dùng mũi tên kín thay cho marker BE trả về.
+BE có thể trả `diagramPlans` dạng draft khi model còn validation error để người dùng review trên React Flow. FE phải gắn nhãn draft và vẫn dùng `eligibleDiagramIds`/`eligibleForSrs` để quyết định điều kiện SRS. Nếu `diagramPlans` vẫn rỗng, hiển thị trạng thái chưa render được và dùng `validation.issues` để giải thích. Không tự đổi `include` thành `extend`, không đổi hướng source/target và không dùng mũi tên kín thay cho marker BE trả về.
 
 ## 7. API chỉnh sửa thủ công
 
