@@ -369,6 +369,14 @@ function AgentDecisionFooter({
   );
 }
 
+function AgentAwaitingReplyRow() {
+  return (
+    <div className="flex min-w-0 flex-col py-1">
+      <AgentThinkingIndicator />
+    </div>
+  );
+}
+
 export function AgentAssistantThread({
   messages,
   onSend,
@@ -490,6 +498,8 @@ export function AgentAssistantThread({
             <ThreadPrimitive.Messages
               components={{ Message: AgentThreadMessage }}
             />
+
+            {isAwaitingAgentReply ? <AgentAwaitingReplyRow /> : null}
 
             <ThreadPrimitive.ScrollToBottom
               behavior="smooth"
