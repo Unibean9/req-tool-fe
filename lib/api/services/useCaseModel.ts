@@ -115,6 +115,20 @@ export async function generateUseCaseRelations(projectId: string, body: Generate
   return unwrap(response.data);
 }
 
+// Split-generation flow: build the L0/L1 group skeleton deterministically (no LLM call, so it
+// cannot time out), then fill in L2 detail one small group at a time via generateGroupUseCases.
+// This replaces one giant generateUseCaseModel() call -- the thing that used to time out on a
+// larger project -- with several small calls.
+export async function generateUseCaseGroups(projectId: string, body: GenerateUseCaseModelRequest = {}): Promise<UseCaseModelResponse> {
+  const response = await apiService.post<ApiEnvelope<UseCaseModelResponse>, GenerateUseCaseModelRequest>(`${projectPath(projectId)}/use-case-model/groups/generate`, { maxLevel: body.maxLevel ?? "L2", ...(body.providerConfigId ? { providerConfigId: body.providerConfigId } : {}) });
+  return unwrap(response.data);
+}
+
+export async function generateGroupUseCases(projectId: string, groupId: string, body: GenerateUseCaseModelRequest = {}): Promise<UseCaseModelResponse> {
+  const response = await apiService.post<ApiEnvelope<UseCaseModelResponse>, GenerateUseCaseModelRequest>(`${projectPath(projectId)}/use-case-model/groups/${encodeURIComponent(groupId)}/use-cases/generate`, { maxLevel: body.maxLevel ?? "L2", ...(body.providerConfigId ? { providerConfigId: body.providerConfigId } : {}) });
+  return unwrap(response.data);
+}
+
 export async function updateUseCasePlantUml(projectId: string, body: UpdateUseCasePlantUmlRequest): Promise<UseCasePlantUml> {
   const response = await apiService.patch<ApiEnvelope<UseCasePlantUml>, UpdateUseCasePlantUmlRequest>(`${projectPath(projectId)}/use-case-model/uml`, body);
   return unwrap(response.data);

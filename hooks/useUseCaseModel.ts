@@ -1,19 +1,23 @@
 "use client";
 
-import { useCallback, useRef } from "react";
+import { useCallback, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { getApiErrorMessage } from "@/lib/api/getApiErrorMessage";
 import {
   fetchUseCaseModel,
-  generateUseCaseModel,
+  generateGroupUseCases,
+  generateUseCaseGroups,
   generateUseCaseRelations,
   updateUseCasePlantUml,
 } from "@/lib/api/services/useCaseModel";
 
+export type UseCaseGroupProgress = { current: number; total: number; groupName: string };
+
 export function useUseCaseModel(projectId: string | undefined) {
   const client = useQueryClient();
   const locked = useRef(false);
+  const [groupProgress, setGroupProgress] = useState<UseCaseGroupProgress | null>(null);
   const queryKey = ["use-case-model", projectId] as const;
   const query = useQuery({
     queryKey,
@@ -63,9 +67,26 @@ export function useUseCaseModel(projectId: string | undefined) {
       locked.current = false;
     }
   }, [mutateRelationsAsync, projectId]);
+  // Split-generation flow: a fast deterministic groups pass, then one small LLM call per group
+  // for L2 detail -- replaces the old single call that generated the whole project's use cases
+  // at once (the thing that used to time out on a larger project). The model updates in the
+  // query cache after every group, and groupProgress drives a "Generating group X/N…" indicator
+  // instead of one long, silent wait.
   const generate = () => save(async () => {
-    const model = await generateUseCaseModel(projectId!, { maxLevel: "L2" });
-    client.setQueryData(queryKey, model);
+    setGroupProgress(null);
+    const groupsModel = await generateUseCaseGroups(projectId!, { maxLevel: "L2" });
+    client.setQueryData(queryKey, groupsModel);
+    const groups = groupsModel.useCases.filter((item) => item.level === "L0");
+    try {
+      for (let index = 0; index < groups.length; index += 1) {
+        const group = groups[index];
+        setGroupProgress({ current: index + 1, total: groups.length, groupName: group.title });
+        const model = await generateGroupUseCases(projectId!, group.id, { maxLevel: "L2" });
+        client.setQueryData(queryKey, model);
+      }
+    } finally {
+      setGroupProgress(null);
+    }
   });
   const generateRelations = () => saveRelations(async () => {
     const model = await generateUseCaseRelations(projectId!, { maxLevel: "L2" });
@@ -83,5 +104,6 @@ export function useUseCaseModel(projectId: string | undefined) {
     savePlantUml,
     saving: mutation.isPending,
     generatingRelations: relationsMutation.isPending,
+    groupProgress,
   };
 }
