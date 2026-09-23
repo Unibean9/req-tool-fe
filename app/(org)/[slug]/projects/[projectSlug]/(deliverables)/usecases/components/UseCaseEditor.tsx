@@ -6,11 +6,10 @@ import type { UseCaseCreateRequest, UseCaseItemResponse, UseCaseModelResponse } 
 
 const fieldClass = "mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-sm";
 
-export function UseCaseEditor({ model, item, busy, error, onClose, onSave }: {
+export function UseCaseEditor({ model, item, busy, onClose, onSave }: {
   model: UseCaseModelResponse;
   item?: UseCaseItemResponse;
   busy: boolean;
-  error: string | null;
   onClose: () => void;
   onSave: (body: UseCaseCreateRequest) => Promise<boolean>;
 }) {
@@ -38,7 +37,6 @@ export function UseCaseEditor({ model, item, busy, error, onClose, onSave }: {
         <label className="block text-xs">Precondition<textarea required maxLength={400} value={draft.precondition} onChange={(e) => update("precondition", e.target.value)} className={fieldClass} /></label>
         <label className="block text-xs">Source trace (one reference per line)<textarea required value={draft.sourceTrace.join("\n")} onChange={(e) => update("sourceTrace", e.target.value.split("\n"))} className={fieldClass} /></label>
       </fieldset>
-      {error ? <p role="alert" className="whitespace-pre-line text-sm text-destructive">{error}</p> : null}
       <div className="flex justify-end gap-2"><button type="button" disabled={busy} onClick={onClose} className="rounded-md border px-4 py-2 text-sm">Cancel</button><button disabled={busy || !model.actors.length} className="rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground disabled:opacity-50">{busy ? "Saving…" : "Save use case"}</button></div>
     </form>
   </DialogContent></Dialog>;

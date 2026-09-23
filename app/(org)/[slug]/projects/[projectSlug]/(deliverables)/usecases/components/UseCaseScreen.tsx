@@ -9,8 +9,9 @@ import {
 } from "@xyflow/react";
 import {
   CheckCircle2, CircleDot, Download, GitBranch, Layers3, Maximize2, Minimize2,
-  Network, Plus, Search, Sparkles, Table2, Trash2, Users,
+  Network, Plus, Sparkles, Table2, Trash2, Users,
 } from "lucide-react";
+import { toast } from "sonner";
 import "@xyflow/react/dist/style.css";
 import {
   createUseCaseActor, updateUseCaseActor, deleteUseCaseActor,
@@ -26,33 +27,17 @@ import { getApiErrorMessage } from "@/lib/api/getApiErrorMessage";
 import { useOrgWorkspace } from "../../../../../orgWorkspaceContext";
 import { UseCaseEditor } from "./UseCaseEditor";
 import { UseCaseActorsDialog } from "./UseCaseActorsDialog";
+import { PlantUmlPreview } from "./PlantUmlPreview";
+import { UseCaseTable } from "./UseCaseTable";
+import { UseCaseDetails } from "./UseCaseDetails";
+import { MOCK_TABLE_MODEL } from "@/lib/usecases/mockTable";
 
 const EMPTY_USE_CASES: UseCaseItemResponse[] = [];
 const EMPTY_ACTORS: UseCaseActorResponse[] = [];
 
-function hierarchyRows(items: UseCaseItemResponse[]) {
-  const byId = new Map(items.map((item) => [item.id, item]));
-  const children = new Map<string, UseCaseItemResponse[]>();
-  for (const item of items) {
-    const parentId = item.parentUseCaseId && byId.has(item.parentUseCaseId) ? item.parentUseCaseId : "";
-    children.set(parentId, [...(children.get(parentId) ?? []), item]);
-  }
-  const visited = new Set<string>();
-  const rows: { item: UseCaseItemResponse; depth: number }[] = [];
-  const visit = (item: UseCaseItemResponse, depth: number) => {
-    if (visited.has(item.id)) return;
-    visited.add(item.id);
-    rows.push({ item, depth });
-    for (const child of children.get(item.id) ?? []) visit(child, depth + 1);
-  };
-  for (const root of children.get("") ?? []) visit(root, 0);
-  for (const item of items) visit(item, 0);
-  return rows;
-}
-
 type ActorNodeData = { actorId: string; name: string; side: "left" | "right"; onRename?: (name: string) => void };
 type CaseNodeData = { useCaseId: string; title: string; editTitle?: string; level: UseCaseLevel; onRename?: (name: string) => void };
-type Tab = "table" | "diagram";
+type Tab = "table" | "diagram" | "plantuml";
 
 function EditableLabel({ value, editValue = value, onRename, className }: { value: string; editValue?: string; onRename?: (name: string) => void; className: string }) {
   const [editing, setEditing] = useState(false);
@@ -245,29 +230,35 @@ function StatusBadge({ status }: { status: UseCaseStatus }) {
   return <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-medium ${style}`}><CheckCircle2 className="size-3" />{status}</span>;
 }
 
-function DetailField({ label, value }: { label: string; value: string }) {
-  return <div><p className="text-[10px] font-medium text-muted-foreground">{label}</p><p className="mt-1 leading-relaxed text-foreground/85">{value}</p></div>;
-}
-
 export default function UseCaseScreen() {
   const params = useParams<{ projectSlug: string }>();
   const { orgId } = useOrgWorkspace();
   const projects = useOrgProjects(orgId);
   const projectId = projects.data?.find((project) => project.slug === params.projectSlug)?.id;
-  const { data: response, error: loadError, isLoading, refetch, save, generate, saving, saveError } = useUseCaseModel(projectId);
-  const [uiError, setUiError] = useState<string | null>(null);
+  const { data: apiResponse, error: loadError, isLoading, refetch, save, generate, saving } = useUseCaseModel(projectId);
+  const isMock = !apiResponse?.useCases.length && !isLoading && !projects.isLoading;
+  const response = useMemo(() => apiResponse ?? (isMock ? {
+    ...MOCK_TABLE_MODEL,
+    projectName: projects.data?.find((project) => project.id === projectId)?.name ?? MOCK_TABLE_MODEL.projectName,
+  } : undefined), [apiResponse, isMock, projectId, projects.data]);
   const [selectedPlanId, setSelectedPlanId] = useState("");
   const [actorsOpen, setActorsOpen] = useState(false);
   const [editor, setEditor] = useState<UseCaseItemResponse | "new" | null>(null);
   const [tab, setTab] = useState<Tab>("table");
   const [level, setLevel] = useState<"all" | UseCaseLevel>("all");
-  const [query, setQuery] = useState("");
   const [selectedId, setSelectedId] = useState("");
   const [lineType, setLineType] = useState<"straight" | "step" | "smoothstep" | "default">("straight");
   const [relationship, setRelationship] = useState<Exclude<UseCaseRelationshipType, "part-of">>("association");
   const [isDiagramFullscreen, setIsDiagramFullscreen] = useState(false);
   const diagramSectionRef = useRef<HTMLElement>(null);
   const nodeTypes = useMemo(() => ({ system: SystemNode, actor: ActorNode, usecase: UseCaseNode }), []);
+  const loadProblem = loadError ?? projects.error;
+  useEffect(() => {
+    if (!loadProblem) return;
+    toast.error(getApiErrorMessage(loadProblem, projectId ? "Could not load use case model." : "Project could not be found."), {
+      id: `use-case-load-${projectId ?? "project"}`,
+    });
+  }, [loadProblem, projectId]);
   const renameActor = useCallback((id: string, name: string) => { void save(() => updateUseCaseActor(projectId!, id, { name })); }, [projectId, save]);
   const renameUseCase = useCallback((id: string, title: string) => { void save(() => updateUseCase(projectId!, id, { title })); }, [projectId, save]);
   const plan = response?.diagramPlans.find((item) => item.diagramId === selectedPlanId) ?? response?.diagramPlans[0];
@@ -345,12 +336,11 @@ export default function UseCaseScreen() {
     }
   }, [edges, nodes, response?.projectName, plan?.level, plan?.subsystem, plan?.systemBoundary, lineType]);
 
-  const useCases = response?.useCases ?? EMPTY_USE_CASES;
-  const actors = response?.actors ?? EMPTY_ACTORS;
+  const useCases = isMock ? MOCK_TABLE_MODEL.useCases : response?.useCases ?? EMPTY_USE_CASES;
+  const actors = isMock ? MOCK_TABLE_MODEL.actors : response?.actors ?? EMPTY_ACTORS;
   const actorById = useMemo(() => new Map(actors.map((actor) => [actor.id, actor])), [actors]);
-  const visibleUseCases = useMemo(() => hierarchyRows(useCases).filter(({ item }) => (level === "all" || item.level === level) && `${item.id} ${item.title} ${item.subsystem} ${item.status}`.toLowerCase().includes(query.toLowerCase())), [level, query, useCases]);
   const selected = useCases.find((item) => item.id === selectedId) ?? useCases[0] ?? null;
-  const selectedRelationships = selected ? (response?.relationships ?? []).filter((item) => item.sourceId === selected.id || item.targetId === selected.id) : [];
+  const selectedRelationships = selected ? (isMock ? MOCK_TABLE_MODEL.relationships : response?.relationships ?? []).filter((item) => item.sourceId === selected.id || item.targetId === selected.id) : [];
   const count = (wanted: "all" | UseCaseLevel) => wanted === "all" ? useCases.length : useCases.filter((item) => item.level === wanted).length;
   const addActor = () => setActorsOpen(true);
   const addUseCase = () => setEditor("new");
@@ -371,41 +361,46 @@ export default function UseCaseScreen() {
   };
 
   if (!response) return <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-3 p-6 text-sm text-muted-foreground">
-    {projects.isLoading || isLoading ? "Loading use case model…" : <><p role="alert">{getApiErrorMessage(loadError ?? projects.error, projectId ? "Could not load use case model." : "Project could not be found.")}</p><button type="button" onClick={() => { void projects.refetch(); if (projectId) void refetch(); }} className="rounded-md border px-3 py-2">Retry</button></>}
+    {projects.isLoading || isLoading ? "Loading use case model…" : <><p className="text-center text-muted-foreground">Unable to load the use case model.</p><button type="button" onClick={() => { void projects.refetch(); if (projectId) void refetch(); }} className="rounded-md border px-3 py-2">Retry</button></>}
   </div>;
 
-  return <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto pb-4">
+  return <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto pb-4 [&>header]:shrink-0 [&>details]:shrink-0 [&>p]:shrink-0">
     <header className="rounded-xl border border-border/70 bg-card/35 p-4">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="min-w-0">
           <div className="mb-2 text-[10px] font-semibold tracking-[0.16em] text-primary">{response.projectName.toUpperCase()} <span className="text-muted-foreground">/ MODELING</span></div>
-          <div className="flex items-center gap-3"><h1 className="text-3xl font-semibold tracking-tight">Use Case</h1><span className="inline-flex items-center gap-1 rounded-full border border-amber-500/40 bg-amber-500/10 px-2.5 py-1 text-[10px] font-medium text-amber-200"><Sparkles className="size-3" />{saving ? "Saving…" : "Project model"}</span></div>
+          <div className="flex items-center gap-3"><h1 className="text-3xl font-semibold tracking-tight">Use Case</h1><span className="inline-flex items-center gap-1 rounded-full border border-amber-500/40 bg-amber-500/10 px-2.5 py-1 text-[10px] font-medium text-amber-200"><Sparkles className="size-3" />{isMock ? "Mock data" : saving ? "Saving…" : "Project model"}</span></div>
           <p className="mt-2 max-w-3xl text-sm text-muted-foreground">Explore a multi-level use case model informed by the project’s BRD and PRD. The table is the source model; the diagram is a React Flow preview.</p>
         </div>
-        <div className="flex flex-wrap items-center gap-3"><button type="button" disabled={saving} onClick={addActor} className="text-xs text-primary">Actors · {actors.length}</button><button type="button" disabled={saving} onClick={addUseCase} className="text-xs text-primary">Add use case</button><button type="button" disabled={saving} onClick={() => void generate()} className="rounded-md bg-primary px-3 py-2 text-xs font-medium text-primary-foreground disabled:opacity-50">{saving ? "Processing…" : "Generate Use Case"}</button><div className="inline-flex items-center gap-2 text-xs text-muted-foreground"><Layers3 className="size-4 text-primary" />{useCases.length} use cases across 3 levels</div></div>
+        <div className="flex flex-wrap items-center gap-3"><button type="button" disabled={saving || isMock} onClick={addActor} className="text-xs text-primary">Actors · {actors.length}</button><button type="button" disabled={saving} onClick={addUseCase} className="text-xs text-primary">Add use case</button><button type="button" disabled={saving} onClick={() => void generate()} className="rounded-md bg-primary px-3 py-2 text-xs font-medium text-primary-foreground disabled:opacity-50">{saving ? "Processing…" : "Generate Use Case"}</button><div className="inline-flex items-center gap-2 text-xs text-muted-foreground"><Layers3 className="size-4 text-primary" />{useCases.length} use cases across 3 levels</div></div>
       </div>
       <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-border/60 pt-3">
-        <div className="flex items-center gap-1 rounded-lg bg-muted/40 p-1"><button type="button" onClick={() => setTab("table")} className={`inline-flex h-8 items-center gap-2 rounded-md px-3 text-xs font-medium ${tab === "table" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}><Table2 className="size-4" />Use Case Table</button><button type="button" onClick={() => setTab("diagram")} className={`inline-flex h-8 items-center gap-2 rounded-md px-3 text-xs font-medium ${tab === "diagram" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}><Network className="size-4" />Diagram</button></div>
-        {tab === "table" ? <div className="flex items-center gap-1 overflow-x-auto">{(["all", "L0", "L1", "L2"] as const).map((item) => <button key={item} type="button" onClick={() => setLevel(item)} className={`shrink-0 rounded-md px-2.5 py-2 text-[11px] ${level === item ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"}`}>{item === "all" ? "All levels" : item} · {count(item)}</button>)}</div> : <div className="flex items-center gap-2"><button type="button" disabled={saving} onClick={addActor} className="inline-flex h-8 items-center gap-1 rounded-md border border-border/70 px-2.5 text-[11px] hover:bg-muted/50"><Plus className="size-3.5" />Actor</button><button type="button" disabled={saving} onClick={addUseCase} className="inline-flex h-8 items-center gap-1 rounded-md border border-border/70 px-2.5 text-[11px] hover:bg-muted/50"><Plus className="size-3.5" />UC oval</button></div>}
+        <div className="flex items-center gap-1 rounded-lg bg-muted/40 p-1"><button type="button" onClick={() => setTab("table")} className={`inline-flex h-8 items-center gap-2 rounded-md px-3 text-xs font-medium ${tab === "table" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}><Table2 className="size-4" />Use Case Table</button><button type="button" onClick={() => setTab("diagram")} className={`inline-flex h-8 items-center gap-2 rounded-md px-3 text-xs font-medium ${tab === "diagram" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}><Network className="size-4" />Diagram</button><button type="button" onClick={() => setTab("plantuml")} className={`inline-flex h-8 items-center gap-2 rounded-md px-3 text-xs font-medium ${tab === "plantuml" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}><Network className="size-4" />PlantUML</button></div>
+        {tab === "table" ? <div className="flex items-center gap-1 overflow-x-auto">{(["all", "L0", "L1", "L2"] as const).map((item) => <button key={item} type="button" onClick={() => setLevel(item)} className={`shrink-0 rounded-md px-2.5 py-2 text-[11px] ${level === item ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"}`}>{item === "all" ? "All levels" : item} · {count(item)}</button>)}</div> : tab === "diagram" ? <div className="flex items-center gap-2"><button type="button" disabled={saving} onClick={addActor} className="inline-flex h-8 items-center gap-1 rounded-md border border-border/70 px-2.5 text-[11px] hover:bg-muted/50"><Plus className="size-3.5" />Actor</button><button type="button" disabled={saving} onClick={addUseCase} className="inline-flex h-8 items-center gap-1 rounded-md border border-border/70 px-2.5 text-[11px] hover:bg-muted/50"><Plus className="size-3.5" />UC oval</button></div> : <span className="text-xs text-muted-foreground">PlantUML · mock preview</span>}
       </div>
     </header>
-    {saveError || uiError ? <p role="alert" className="rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm whitespace-pre-line text-destructive">{saveError ?? uiError}</p> : null}
+    {isMock ? <p role="status" className="rounded-lg border border-amber-500/30 bg-amber-500/5 px-3 py-2 text-xs text-amber-300">Mock data · 21 sample use cases for table preview. Live data will replace these rows when available.<button type="button" disabled={!projectId || isLoading} onClick={() => void refetch()} className="ml-3 underline">Reload data</button></p> : null}
     {response.generation?.source === "manual" ? <p role="status" className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 text-xs text-amber-300">Changes are saved. The diagram may show an earlier version because diagram updates are not yet available after manual edits.</p> : null}
     {response.validation ? <details className="rounded-lg border border-border/60 px-3 py-2 text-xs text-muted-foreground"><summary className="cursor-pointer">{response.validation.eligibleForSrs ? "Eligible for SRS" : "Review required for SRS"} · {response.validation.issues.length} issues · {response.validation.eligibleDiagramIds.length} eligible diagrams</summary><div className="mt-3 space-y-2"><p>Eligible diagrams: {response.validation.eligibleDiagramIds.join(", ") || "None"}</p>{response.validation.issues.map((issue, index) => <p key={`${issue.code}-${index}`} className={issue.severity === "error" ? "text-destructive" : "text-amber-400"}>{issue.severity}: {issue.message}{issue.path ? ` (${issue.path})` : ""}</p>)}</div></details> : <p className="text-xs text-muted-foreground">Model has not been validated. Generate to review diagram eligibility.</p>}
-    {actorsOpen ? <UseCaseActorsDialog actors={actors} busy={saving} error={saveError} onClose={() => setActorsOpen(false)} onCreate={(name, kind) => save(() => createUseCaseActor(projectId!, { name, kind }))} onRename={(id, name) => save(() => updateUseCaseActor(projectId!, id, { name }))} onDelete={(id) => save(() => deleteUseCaseActor(projectId!, id))} /> : null}
-    {editor ? <UseCaseEditor key={typeof editor === "string" ? editor : editor.id} model={response} item={editor === "new" ? undefined : editor} busy={saving} error={saveError} onClose={() => setEditor(null)} onSave={(body) => save(() => editor === "new" ? createUseCase(projectId!, body) : updateUseCase(projectId!, editor.id, body))} /> : null}
+    {actorsOpen ? <UseCaseActorsDialog actors={actors} busy={saving} onClose={() => setActorsOpen(false)} onCreate={(name, kind) => save(() => createUseCaseActor(projectId!, { name, kind }))} onRename={(id, name) => save(() => updateUseCaseActor(projectId!, id, { name }))} onDelete={(id) => save(() => deleteUseCaseActor(projectId!, id))} /> : null}
+    {editor ? <UseCaseEditor key={typeof editor === "string" ? editor : editor.id} model={response} item={editor === "new" ? undefined : editor} busy={saving} onClose={() => setEditor(null)} onSave={(body) => save(() => editor === "new" ? createUseCase(projectId!, body) : updateUseCase(projectId!, editor.id, body))} /> : null}
 
-    {tab === "table" ? <div className="grid min-h-[560px] min-w-0 flex-1 grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_340px]">
-      <section className="min-w-0 overflow-hidden rounded-xl border border-border/70 bg-card/25"><div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/70 px-4 py-4"><div><h2 className="text-sm font-semibold">Use Case Table</h2><p className="mt-1 text-xs text-muted-foreground">Hierarchy, actor mapping, evidence, and relationship hints.</p></div><label className="flex h-8 items-center gap-2 rounded-md border border-border/70 bg-background/45 px-2.5 text-muted-foreground"><Search className="size-3.5" /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search use cases" className="w-36 bg-transparent text-[11px] text-foreground outline-none placeholder:text-muted-foreground" /></label></div>
-        <div className="overflow-auto"><table className="w-full min-w-[820px] border-collapse text-left"><thead className="sticky top-0 z-10 bg-muted/80"><tr className="border-b border-border/60 text-[11px] text-muted-foreground"><th className="px-4 py-3 font-medium">Level</th><th className="px-4 py-3 font-medium">Use case</th><th className="px-4 py-3 font-medium">Primary actor</th><th className="px-4 py-3 font-medium">Subsystem</th><th className="px-4 py-3 font-medium">Status</th><th className="px-4 py-3 font-medium">Priority</th></tr></thead><tbody>{visibleUseCases.map(({ item, depth }) => <tr key={item.id} onClick={() => setSelectedId(item.id)} className={`cursor-pointer border-b border-border/50 transition-colors ${selected?.id === item.id ? "bg-primary/8" : "hover:bg-muted/25"}`}><td className="px-4 py-3"><span className="rounded-lg border border-primary/25 bg-primary/10 px-2 py-1 font-mono text-[10px] font-semibold text-primary">{item.level}</span></td><td className="max-w-[300px] px-4 py-3"><div className="flex items-center gap-2" style={{ paddingLeft: depth * 16 }}><span className="size-1.5 shrink-0 rounded-full bg-primary" /><span className="min-w-0"><span className="block truncate text-xs font-medium">{item.title}</span><span className="mt-0.5 block font-mono text-[9px] text-muted-foreground">{item.id}</span></span></div></td><td className="px-4 py-3 text-xs text-muted-foreground">{actorById.get(item.primaryActorId)?.name ?? "—"}</td><td className="max-w-[210px] truncate px-4 py-3 text-xs text-muted-foreground">{item.subsystem}</td><td className="px-4 py-3"><StatusBadge status={item.status} /></td><td className="px-4 py-3 text-xs text-muted-foreground">{item.priority}</td></tr>)}</tbody></table>{visibleUseCases.length === 0 ? <p className="px-4 py-8 text-center text-xs text-muted-foreground">{useCases.length ? "No matching use cases." : "No use case model yet. Generate from the project BRD and PRD to get started."}</p> : null}</div>
-      </section>
-      <aside className="overflow-hidden rounded-xl border border-border/70 bg-card/40">{selected ? <>
-        <div className="border-b border-border/60 p-4"><div className="flex items-start justify-between gap-3"><div><p className="text-[10px] font-semibold tracking-[0.15em] text-muted-foreground">SELECTED USE CASE</p><h2 className="mt-2 text-base font-semibold leading-snug">{selected.title}</h2><button type="button" disabled={saving} onClick={() => setEditor(selected)} className="mt-2 text-xs text-primary">Edit use case</button><button type="button" disabled={saving} onClick={() => void save(() => deleteUseCase(projectId!, selected.id))} className="ml-3 text-xs text-destructive">Delete</button></div><span className="rounded-lg border border-primary/30 bg-primary/10 px-2 py-1 font-mono text-[10px] text-primary">{selected.level}</span></div><div className="mt-3 flex flex-wrap items-center gap-2"><StatusBadge status={selected.status} /><span className="text-[10px] text-muted-foreground">{selected.priority} priority</span></div></div>
-        <div className="space-y-4 p-4 text-xs"><div><p className="font-mono text-[10px] text-muted-foreground">{selected.id} · {selected.subsystem.toUpperCase()}</p><p className="mt-2 leading-relaxed text-foreground/85">{selected.description}</p></div><DetailField label="Primary actor" value={actorById.get(selected.primaryActorId)?.name ?? "—"} /><DetailField label="Supporting actors" value={selected.supportingActorIds.map((id) => actorById.get(id)?.name).filter(Boolean).join(", ") || "None"} /><DetailField label="Precondition" value={selected.precondition} />
-          <div><p className="mb-2 text-[10px] font-medium text-muted-foreground">Relationships</p>{selectedRelationships.length ? <ul className="space-y-2">{selectedRelationships.map((relation) => { const otherId = relation.sourceId === selected.id ? relation.targetId : relation.sourceId; const other = useCases.find((item) => item.id === otherId); return <li key={relation.id} className="flex items-center gap-2 text-[11px] text-foreground/80"><GitBranch className="size-3 text-primary" /><span className="text-muted-foreground">{relation.type}</span><span className="truncate">{other?.id ?? otherId}</span>{relation.condition ? <span className="text-muted-foreground">{relation.condition}</span> : null}<button type="button" disabled={saving} aria-label={`Delete relationship ${relation.id}`} onClick={() => void save(() => deleteUseCaseRelationship(projectId!, relation.id))} className="ml-auto text-destructive"><Trash2 className="size-3" /></button></li>; })}</ul> : <span className="text-muted-foreground">No linked use cases</span>}</div>
-          <div><p className="mb-2 text-[10px] font-medium text-muted-foreground">Source trace</p><div className="flex flex-wrap gap-1.5">{selected.sourceTrace.map((source) => <span key={source} className="rounded-md border border-border/70 bg-muted/35 px-2 py-1 font-mono text-[9px]">{source}</span>)}</div></div>
-        </div></> : <p className="p-5 text-sm text-muted-foreground">Select a use case to inspect details.</p>}</aside>
-    </div> : <section ref={diagramSectionRef} className={`flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-border/70 bg-card/25 ${isDiagramFullscreen ? "h-screen w-screen rounded-none bg-background p-2" : ""}`}><div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/70 px-4 py-3"><div><h2 className="text-sm font-semibold">{plan?.subsystem ?? plan?.systemBoundary ?? response.projectName}</h2><p className="mt-1 text-xs text-muted-foreground">{plan?.subsystem ? `System boundary · ${plan.systemBoundary} · ` : ""}React Flow preview · {edges.length} relationships{plan && !planIsEligible ? " · Draft preview" : ""}</p></div><div className="flex flex-wrap items-center gap-2"><select aria-label="Diagram" value={plan?.diagramId ?? ""} onChange={(e) => setSelectedPlanId(e.target.value)} className="h-8 max-w-60 rounded-md border border-border/70 bg-background px-2 text-xs">{response.diagramPlans.map((item) => <option key={item.diagramId} value={item.diagramId}>{item.level} · {item.subsystem ?? item.systemBoundary}{response.validation && !response.validation.eligibleDiagramIds.includes(item.diagramId) ? " · Draft" : ""}</option>)}</select><select aria-label="Connector line style" className="h-8 rounded-md border border-border/70 bg-background px-2 text-[10px]" onChange={(event) => setLineType(event.target.value as typeof lineType)}><option value="straight">Straight line</option><option value="step">Right angle</option><option value="smoothstep">Rounded elbow</option><option value="default">Bezier curve</option></select><select aria-label="Relationship type" className="h-8 rounded-md border border-border/70 bg-background px-2 text-[10px]" onChange={(event) => setRelationship(event.target.value as typeof relationship)}><option value="association">Association</option><option value="include">«include»</option><option value="extend">«extend»</option><option value="generalization">Generalization</option></select>{selectedCount > 0 ? <button type="button" disabled={saving} onClick={deleteSelected} className="inline-flex h-8 items-center gap-1 rounded-md border border-destructive/40 px-2.5 text-[10px] text-destructive hover:bg-destructive/10"><Trash2 className="size-3.5" />Delete selected · {selectedCount}</button> : null}<button type="button" disabled={!plan} onClick={() => void exportDiagram().catch((error) => setUiError(getApiErrorMessage(error, "Could not export diagram.")))} className="inline-flex h-8 items-center gap-1 rounded-md border border-border/70 px-2.5 text-[10px] hover:bg-muted/50"><Download className="size-3.5" />Export PNG</button><button type="button" onClick={() => void toggleDiagramFullscreen().catch((error) => setUiError(getApiErrorMessage(error, "Full screen is unavailable.")))} className="inline-flex h-8 items-center gap-1 rounded-md border border-border/70 px-2.5 text-[10px] hover:bg-muted/50">{isDiagramFullscreen ? <Minimize2 className="size-3.5" /> : <Maximize2 className="size-3.5" />}{isDiagramFullscreen ? "Exit full screen" : "Full screen"}</button></div></div>{plan && !planIsEligible ? <p role="status" className="border-b border-amber-500/30 bg-amber-500/5 px-4 py-2.5 text-xs text-amber-300">Draft preview only. Resolve the validation issues above before using this diagram as an SRS diagram.</p> : null}
+    {tab === "table" ? <div className="grid min-h-[360px] min-w-0 flex-1 grid-cols-1 grid-rows-[minmax(360px,1fr)_auto] gap-4 xl:grid-rows-[minmax(0,1fr)] xl:grid-cols-[minmax(0,1fr)_340px]">
+      <UseCaseTable items={useCases} actors={actorById} level={level} selectedId={selected?.id} onSelect={setSelectedId} renderStatus={(status) => <StatusBadge status={status} />} />
+      <UseCaseDetails
+        selected={selected}
+        items={useCases}
+        actors={actorById}
+        relationships={selectedRelationships}
+        isMock={isMock}
+        busy={saving}
+        onSelect={setSelectedId}
+        onEdit={setEditor}
+        onDelete={(id) => { void save(() => deleteUseCase(projectId!, id)); }}
+        onDeleteRelationship={(id) => { void save(() => deleteUseCaseRelationship(projectId!, id)); }}
+        renderStatus={(status) => <StatusBadge status={status} />}
+      />
+    </div> : tab === "plantuml" ? <PlantUmlPreview /> : <section ref={diagramSectionRef} className={`flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-border/70 bg-card/25 ${isDiagramFullscreen ? "h-screen w-screen rounded-none bg-background p-2" : ""}`}><div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/70 px-4 py-3"><div><h2 className="text-sm font-semibold">{plan?.subsystem ?? plan?.systemBoundary ?? response.projectName}</h2><p className="mt-1 text-xs text-muted-foreground">{plan?.subsystem ? `System boundary · ${plan.systemBoundary} · ` : ""}React Flow preview · {edges.length} relationships{plan && !planIsEligible ? " · Draft preview" : ""}</p></div><div className="flex flex-wrap items-center gap-2"><select aria-label="Diagram" value={plan?.diagramId ?? ""} onChange={(e) => setSelectedPlanId(e.target.value)} className="h-8 max-w-60 rounded-md border border-border/70 bg-background px-2 text-xs">{response.diagramPlans.map((item) => <option key={item.diagramId} value={item.diagramId}>{item.level} · {item.subsystem ?? item.systemBoundary}{response.validation && !response.validation.eligibleDiagramIds.includes(item.diagramId) ? " · Draft" : ""}</option>)}</select><select aria-label="Connector line style" className="h-8 rounded-md border border-border/70 bg-background px-2 text-[10px]" onChange={(event) => setLineType(event.target.value as typeof lineType)}><option value="straight">Straight line</option><option value="step">Right angle</option><option value="smoothstep">Rounded elbow</option><option value="default">Bezier curve</option></select><select aria-label="Relationship type" className="h-8 rounded-md border border-border/70 bg-background px-2 text-[10px]" onChange={(event) => setRelationship(event.target.value as typeof relationship)}><option value="association">Association</option><option value="include">«include»</option><option value="extend">«extend»</option><option value="generalization">Generalization</option></select>{selectedCount > 0 ? <button type="button" disabled={saving} onClick={deleteSelected} className="inline-flex h-8 items-center gap-1 rounded-md border border-destructive/40 px-2.5 text-[10px] text-destructive hover:bg-destructive/10"><Trash2 className="size-3.5" />Delete selected · {selectedCount}</button> : null}<button type="button" disabled={!plan} onClick={() => void exportDiagram().catch((error) => toast.error(getApiErrorMessage(error, "Could not export diagram.")))} className="inline-flex h-8 items-center gap-1 rounded-md border border-border/70 px-2.5 text-[10px] hover:bg-muted/50"><Download className="size-3.5" />Export PNG</button><button type="button" onClick={() => void toggleDiagramFullscreen().catch((error) => toast.error(getApiErrorMessage(error, "Full screen is unavailable.")))} className="inline-flex h-8 items-center gap-1 rounded-md border border-border/70 px-2.5 text-[10px] hover:bg-muted/50">{isDiagramFullscreen ? <Minimize2 className="size-3.5" /> : <Maximize2 className="size-3.5" />}{isDiagramFullscreen ? "Exit full screen" : "Full screen"}</button></div></div>{plan && !planIsEligible ? <p role="status" className="border-b border-amber-500/30 bg-amber-500/5 px-4 py-2.5 text-xs text-amber-300">Draft preview only. Resolve the validation issues above before using this diagram as an SRS diagram.</p> : null}
       <div className="relative min-h-[420px] w-full flex-1 bg-white">{!plan ? <div className="flex h-full min-h-[420px] items-center justify-center p-8 text-center text-sm text-gray-600">No diagram is available. Review validation issues or generate a use case model.</div> : <ReactFlow key={plan?.diagramId} deleteKeyCode={null} nodesConnectable={!saving} nodes={nodes} edges={edges.map((edge) => edge.type === "generalization" ? edge : { ...edge, type: lineType })} nodeTypes={nodeTypes} edgeTypes={edgeTypes} onNodesChange={onNodesChange} onEdgesChange={onEdgesChange} onConnect={onConnect} fitView fitViewOptions={{ padding: 0.025 }} minZoom={0.15} maxZoom={1.3} proOptions={{ hideAttribution: true }}><Background color="#e7e7e7" gap={24} size={1} /><Controls className="!overflow-hidden !rounded-lg !border !border-[#ccc] !bg-white !shadow-md [&>button]:!border-[#ddd] [&>button]:!bg-white [&>button]:!fill-[#333]" /></ReactFlow>}</div>
       <div className="flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-border/60 px-4 py-2.5 text-[10px] text-muted-foreground"><span className="inline-flex items-center gap-1.5"><Users className="size-3" />Actor</span><span className="inline-flex items-center gap-1.5"><CircleDot className="size-3" />Use case oval</span><span className="inline-flex items-center gap-1.5"><GitBranch className="size-3" />Association · include · extend</span><span className="ml-auto">Double-click label to edit · select node or edge and delete</span></div>
     </section>}

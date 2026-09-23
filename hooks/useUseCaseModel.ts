@@ -19,6 +19,9 @@ export function useUseCaseModel(projectId: string | undefined) {
   const mutation = useMutation({
     mutationFn: async (operation: () => Promise<unknown>) => operation(),
     onSuccess: () => { toast.success("Use case model saved."); },
+    onError: (error) => {
+      toast.error(getApiErrorMessage(error, "Could not save use case changes."));
+    },
     onSettled: () => client.invalidateQueries({ queryKey }),
   });
   const { mutateAsync } = mutation;
@@ -38,8 +41,5 @@ export function useUseCaseModel(projectId: string | undefined) {
     const model = await generateUseCaseModel(projectId!, { maxLevel: "L2" });
     client.setQueryData(queryKey, model);
   });
-  return {
-    ...query, save, generate, saving: mutation.isPending,
-    saveError: mutation.error ? getApiErrorMessage(mutation.error, "Could not save use case changes.") : null,
-  };
+  return { ...query, save, generate, saving: mutation.isPending };
 }
