@@ -97,11 +97,15 @@ function AgentThinkingIndicator() {
   );
 }
 
-function AgentMessageText({ text, status }: TextMessagePartProps) {
+function AgentMessageText({ text }: TextMessagePartProps) {
   const role = useAuiState((state) => state.message.role);
 
-  if (!text && status.type === "running") {
-    return <AgentThinkingIndicator />;
+  // The standalone AgentAwaitingReplyRow (driven by isAwaitingAgentReply, i.e. real session
+  // status) already covers the "agent is thinking" indicator end-to-end. This per-message
+  // `status.type === "running"` signal fires independently of that — attaching a second dots
+  // indicator here doubled up the UI, so text rendering stays unconditional.
+  if (!text) {
+    return null;
   }
 
   if (role === "user") {
@@ -112,12 +116,7 @@ function AgentMessageText({ text, status }: TextMessagePartProps) {
     );
   }
 
-  return (
-    <>
-      <MarkdownContent content={text} className="min-w-0" />
-      {status.type === "running" ? <AgentThinkingIndicator /> : null}
-    </>
-  );
+  return <MarkdownContent content={text} className="min-w-0" />;
 }
 
 function AgentPayloadBlocks({ payload }: { payload: AgentMessagePayload }) {
@@ -165,6 +164,21 @@ function AgentThreadMessage() {
   const { onSend } = useAgentThreadContext();
   const role = useAuiState((state) => state.message.role);
   const custom = useAuiState((state) => state.message.metadata.custom);
+
+  // The thinking placeholder has no real text part to carry the indicator, and must not be
+  // routed through the payload/options rendering below — render it and stop right here so it
+  // sits in the actual message flow (respecting turnAnchor="top" reserve) instead of being a
+  // viewport-level sibling that the anchor reserve pushes to the bottom of the panel.
+  if (custom.thinking === true) {
+    return (
+      <MessagePrimitive.Root className="min-w-0 pt-3 first:pt-0">
+        <article className="flex min-w-0 flex-col w-full py-1">
+          <AgentThinkingIndicator />
+        </article>
+      </MessagePrimitive.Root>
+    );
+  }
+
   const payload = getAgentPayload(custom.agentPayload);
   const animate = custom.animate === true;
   const hideOptions = custom.hideOptions === true;
@@ -369,12 +383,22 @@ function AgentDecisionFooter({
   );
 }
 
-function AgentAwaitingReplyRow() {
-  return (
-    <div className="flex min-w-0 flex-col py-1">
-      <AgentThinkingIndicator />
-    </div>
-  );
+// Synthetic trailing message (never sent to the backend) that carries the "agent is thinking"
+// indicator. Rendered as a real list item — not a viewport-level sibling — so it sits inside
+// ThreadPrimitive.Viewport's turnAnchor="top" reserve like any other message, instead of being
+// pushed below that reserved space to the bottom of the panel.
+const THINKING_MESSAGE_ID = "__agent_thinking__";
+
+function buildThinkingMessage(sessionId: string): AgentMessage {
+  return {
+    id: THINKING_MESSAGE_ID,
+    sessionId,
+    role: "agent",
+    content: "",
+    payload: null,
+    createdAt: null,
+    updatedAt: null,
+  };
 }
 
 export function AgentAssistantThread({
@@ -404,6 +428,11 @@ export function AgentAssistantThread({
 }) {
   const latestMessageId = messages.at(-1)?.id ?? null;
   const isDecisionMode = decisionOptions.length > 0;
+  const displayMessages = useMemo(() => {
+    if (!isAwaitingAgentReply) return messages;
+    const sessionId = messages.at(-1)?.sessionId ?? "";
+    return [...messages, buildThinkingMessage(sessionId)];
+  }, [messages, isAwaitingAgentReply]);
 
   const sendAppendMessage = useCallback(
     (message: AppendMessage) => {
@@ -444,6 +473,7 @@ export function AgentAssistantThread({
             message.id === latestMessageId,
           hideOptions:
             isDecisionMode && message.id === latestMessageId,
+          thinking: message.id === THINKING_MESSAGE_ID,
         },
       },
     }),
@@ -455,7 +485,7 @@ export function AgentAssistantThread({
   );
 
   const runtime = useExternalStoreRuntime({
-    messages,
+    messages: displayMessages,
     convertMessage,
     isRunning: isAwaitingAgentReply,
     isSendDisabled: isSending || isAwaitingAgentReply,
@@ -498,8 +528,6 @@ export function AgentAssistantThread({
             <ThreadPrimitive.Messages
               components={{ Message: AgentThreadMessage }}
             />
-
-            {isAwaitingAgentReply ? <AgentAwaitingReplyRow /> : null}
 
             <ThreadPrimitive.ScrollToBottom
               behavior="smooth"
