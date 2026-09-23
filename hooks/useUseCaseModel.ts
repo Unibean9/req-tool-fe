@@ -4,7 +4,12 @@ import { useCallback, useRef } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { getApiErrorMessage } from "@/lib/api/getApiErrorMessage";
-import { fetchUseCaseModel, generateUseCaseModel } from "@/lib/api/services/useCaseModel";
+import {
+  fetchUseCaseModel,
+  generateUseCaseModel,
+  generateUseCaseRelations,
+  updateUseCasePlantUml,
+} from "@/lib/api/services/useCaseModel";
 
 export function useUseCaseModel(projectId: string | undefined) {
   const client = useQueryClient();
@@ -24,7 +29,16 @@ export function useUseCaseModel(projectId: string | undefined) {
     },
     onSettled: () => client.invalidateQueries({ queryKey }),
   });
+  const relationsMutation = useMutation({
+    mutationFn: async (operation: () => Promise<unknown>) => operation(),
+    onSuccess: () => { toast.success("Use case relationships generated."); },
+    onError: (error) => {
+      toast.error(getApiErrorMessage(error, "Could not generate use case relationships."));
+    },
+    onSettled: () => client.invalidateQueries({ queryKey }),
+  });
   const { mutateAsync } = mutation;
+  const { mutateAsync: mutateRelationsAsync } = relationsMutation;
   const save = useCallback(async (operation: () => Promise<unknown>) => {
     if (!projectId || locked.current) return false;
     locked.current = true;
@@ -37,9 +51,37 @@ export function useUseCaseModel(projectId: string | undefined) {
       locked.current = false;
     }
   }, [mutateAsync, projectId]);
+  const saveRelations = useCallback(async (operation: () => Promise<unknown>) => {
+    if (!projectId || locked.current) return false;
+    locked.current = true;
+    try {
+      await mutateRelationsAsync(operation);
+      return true;
+    } catch {
+      return false;
+    } finally {
+      locked.current = false;
+    }
+  }, [mutateRelationsAsync, projectId]);
   const generate = () => save(async () => {
     const model = await generateUseCaseModel(projectId!, { maxLevel: "L2" });
     client.setQueryData(queryKey, model);
   });
-  return { ...query, save, generate, saving: mutation.isPending };
+  const generateRelations = () => saveRelations(async () => {
+    const model = await generateUseCaseRelations(projectId!, { maxLevel: "L2" });
+    client.setQueryData(queryKey, model);
+  });
+  const savePlantUml = (source: string) => save(async () => {
+    const plantUml = await updateUseCasePlantUml(projectId!, { source });
+    client.setQueryData(queryKey, (current: Awaited<ReturnType<typeof fetchUseCaseModel>> | undefined) => current ? { ...current, plantUml } : current);
+  });
+  return {
+    ...query,
+    save,
+    generate,
+    generateRelations,
+    savePlantUml,
+    saving: mutation.isPending,
+    generatingRelations: relationsMutation.isPending,
+  };
 }

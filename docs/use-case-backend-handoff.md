@@ -1,13 +1,13 @@
 # Use Case — BE handoff cho FE
 
-> Handoff cho màn hình **Use Case** gồm Table nhiều level và Diagram bằng React Flow.
+> Handoff cho màn hình **Use Case** gồm Table nhiều level và mã PlantUML có thể chỉnh sửa/preview.
 > Contract gốc ở [`req-tool-be/docs/rule-diagram-usecase/use-case-model-api.md`](../../req-tool-be/docs/rule-diagram-usecase/use-case-model-api.md).
 
 ## 1. Trạng thái backend
 
 - Backend đã có API đọc model, generate từ BRD/PRD đang lưu trong **document registry**, và chỉnh sửa thủ công actor/use case/relationship.
 - Runtime **không đọc hai file Markdown mẫu trong repository**. Nguồn generate là các component/version BRD và PRD hiện tại của project.
-- Full test BE hiện tại: `1107 passed, 2 skipped, 17 deselected`.
+- Full test BE đã được chạy trong checkout hiện tại; xem output CI để lấy số lượng test theo revision.
 - `projectId` trên các path bên dưới là **UUID của project**, không phải project slug.
 - Không gửi API key từ FE. Backend dùng LLM provider config active của user; có thể chọn config bằng `providerConfigId`.
 
@@ -40,7 +40,7 @@ Base URL local mặc định của FE là `http://localhost:8000/` qua `NEXT_PUB
 
 ## 3. API chính cho tab Use Case
 
-### 3.1. Đọc model dùng chung cho Table và Diagram
+### 3.1. Đọc model dùng chung cho Table và PlantUML
 
 ```http
 GET /api/v1/projects/{projectId}/use-case-model
@@ -54,9 +54,9 @@ Query params:
 | `includeActors` | `true \| false` | `true` | Có trả `actors` không |
 | `includeRelationships` | `true \| false` | `true` | Có trả quan hệ và edge không |
 
-Nên dùng cả ba giá trị mặc định khi mở tab. Table và Diagram phải dùng cùng một `model` để không lệch dữ liệu.
+Nên dùng cả ba giá trị mặc định khi mở tab. Table và PlantUML source phải dùng cùng một `model` để không lệch dữ liệu. Response mới có `plantUml: { language, source, editable, stale, generatedFrom }`; `diagrams` và `diagramPlans` là legacy, không render.
 
-### 3.2. Generate Use Case Table + Diagram
+### 3.2. Generate Use Case Table + PlantUML
 
 ```http
 POST /api/v1/projects/{projectId}/use-case-model/generate
@@ -75,15 +75,29 @@ Body có thể là `{}`:
 - `providerConfigId` là optional. Không truyền thì BE chọn provider active mặc định của user.
 - Không truyền API key/model key trong body.
 - Sau khi thành công, response `data` có cùng schema với API GET.
-- Response có thêm `generation`, `validation`, `sourceHash`, `diagrams`, `diagramPlans`.
-- Nếu model có lỗi luật, API vẫn có thể trả model để người dùng review; đọc `validation` trước khi cho trạng thái “đủ điều kiện SRS”.
+- Response có thêm `generation`, `validation`, `sourceHash`, và `plantUml`.
+- `plantUml.source` được render từ bảng đã hoàn thiện, gồm actor, boundary, use case và quan hệ UML; backend không tạo React Flow plan mới.
+- Nếu model có lỗi luật, API vẫn có thể trả model để người dùng review; đọc `validation` trước khi cho trạng thái “đủ điều kiện SRS/UML”.
 
 Flow đề nghị:
 
 1. Mở tab: gọi `GET`.
 2. Bấm **Generate**: gọi `POST`, khóa nút và hiển thị loading vì đây là tác vụ LLM.
-3. Thành công: thay toàn bộ state bằng `response.data.data`, sau đó render Table và Diagram từ state mới.
-4. Nếu `validation.issues` có lỗi: vẫn hiển thị Table để review, nhưng không báo model/diagram là đã đạt SRS.
+3. Thành công: thay toàn bộ state bằng `response.data.data`, sau đó render Table và editor/preview PlantUML từ state mới.
+4. Nếu `validation.issues` có lỗi: vẫn hiển thị Table để review, nhưng không báo model/UML là đã đạt SRS.
+
+### 3.3. Lưu source PlantUML đã chỉnh sửa
+
+```http
+PATCH /api/v1/projects/{projectId}/use-case-model/uml
+Content-Type: application/json
+```
+
+```json
+{ "source": "@startuml\n...\n@enduml" }
+```
+
+Endpoint chỉ lưu source text, không gọi LLM và không thay đổi bảng. Sau khi sửa bảng, `plantUml.stale` là `true` cho đến lần generate tiếp theo.
 
 ## 4. TypeScript domain types
 

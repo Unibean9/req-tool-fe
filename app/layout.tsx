@@ -20,6 +20,7 @@ export default function RootLayout({
       className={`${rootFontVariables} dark h-full`}
     >
       <body
+        suppressHydrationWarning
         className={`${fontInter.className} min-h-full flex flex-col font-sans antialiased`}
       >
         <RootJsonLd />

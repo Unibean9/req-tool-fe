@@ -1,6 +1,8 @@
-# Use Case Table và Diagram — API Contract
+# Use Case Table và PlantUML — API Contract
 
-Tài liệu này mô tả các API cần có cho màn hình **Use Case Table** và **Diagram**, gồm method/path, payload, response và cách dùng dữ liệu. Backend hiện chưa triển khai các endpoint này; frontend đang dùng mock `fetchUseCaseModel()` tại `lib/api/services/useCaseModel.ts`. Path `/api/...` dưới đây là contract đề xuất.
+Tài liệu này mô tả các API cho màn hình **Use Case Table** và **PlantUML source**, gồm method/path, payload, response và cách dùng dữ liệu. Frontend dùng một model chung; React Flow không còn là output của màn hình này. `diagrams` và `diagramPlans` là field legacy có thể còn trong dữ liệu cũ nhưng không được render.
+
+Sau khi `POST /use-case-model/generate` hoàn tất, response có thêm `plantUml` với `language`, `source`, `editable`, `stale`, và `generatedFrom`. FE hiển thị `source` trong editor và preview PlantUML. Chỉnh sửa source được lưu bằng `PATCH /use-case-model/uml`.
 
 ## Quy ước
 

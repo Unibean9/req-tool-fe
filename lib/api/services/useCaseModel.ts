@@ -54,6 +54,13 @@ export type UseCaseValidation = {
   eligibleDiagramIds: string[];
   confirmedUseCaseIds: string[];
 };
+export type UseCasePlantUml = {
+  language: "plantuml";
+  source: string;
+  editable: boolean;
+  stale: boolean;
+  generatedFrom: "use-case-table" | "manual";
+};
 export type UseCaseModelResponse = {
   projectId: string;
   projectName: string;
@@ -64,7 +71,8 @@ export type UseCaseModelResponse = {
   diagramPlans: UseCaseDiagramPlan[];
   sourceHash: string | null;
   validation: UseCaseValidation | null;
-  generation: Record<string, unknown> | null;
+  generation: (Record<string, unknown> & { relationsGenerated?: boolean }) | null;
+  plantUml: UseCasePlantUml | null;
 };
 
 export type UseCaseModelQuery = {
@@ -73,6 +81,7 @@ export type UseCaseModelQuery = {
   includeRelationships?: boolean;
 };
 export type GenerateUseCaseModelRequest = { maxLevel?: UseCaseLevel; providerConfigId?: string };
+export type UpdateUseCasePlantUmlRequest = { source: string };
 export type UseCaseActorCreateRequest = { name: string; kind?: UseCaseActorKind };
 export type UseCaseCreateRequest = Omit<UseCaseItemResponse, "id">;
 export type UseCaseUpdateRequest = Partial<Omit<UseCaseItemResponse, "id">>;
@@ -98,6 +107,16 @@ export async function fetchUseCaseModel(projectId: string, query: UseCaseModelQu
 
 export async function generateUseCaseModel(projectId: string, body: GenerateUseCaseModelRequest = {}): Promise<UseCaseModelResponse> {
   const response = await apiService.post<ApiEnvelope<UseCaseModelResponse>, GenerateUseCaseModelRequest>(`${projectPath(projectId)}/use-case-model/generate`, { maxLevel: body.maxLevel ?? "L2", ...(body.providerConfigId ? { providerConfigId: body.providerConfigId } : {}) });
+  return unwrap(response.data);
+}
+
+export async function generateUseCaseRelations(projectId: string, body: GenerateUseCaseModelRequest = {}): Promise<UseCaseModelResponse> {
+  const response = await apiService.post<ApiEnvelope<UseCaseModelResponse>, GenerateUseCaseModelRequest>(`${projectPath(projectId)}/use-case-model/relations/generate`, { maxLevel: body.maxLevel ?? "L2", ...(body.providerConfigId ? { providerConfigId: body.providerConfigId } : {}) });
+  return unwrap(response.data);
+}
+
+export async function updateUseCasePlantUml(projectId: string, body: UpdateUseCasePlantUmlRequest): Promise<UseCasePlantUml> {
+  const response = await apiService.patch<ApiEnvelope<UseCasePlantUml>, UpdateUseCasePlantUmlRequest>(`${projectPath(projectId)}/use-case-model/uml`, body);
   return unwrap(response.data);
 }
 
