@@ -16,6 +16,7 @@ import {
   ChevronRight,
   Circle,
   LayoutDashboard,
+  Network,
   TriangleAlert,
   Users,
 } from "lucide-react";
@@ -604,6 +605,19 @@ export function DeliverablesSidebarContent({
           />
         ))
       )}
+
+      <div className="min-w-0 shrink-0 space-y-1">
+        <SidebarSectionTitle withDivider>Use Case Diagram</SidebarSectionTitle>
+        <div className="space-y-1 px-0.5">
+          <SidebarNavLink
+            href={`${base}/usecases`}
+            label="Use Case"
+            icon={Network}
+            active={pathActive(pathname, `${base}/usecases`)}
+            trailing={<span className="rounded border border-amber-500/35 bg-amber-500/10 px-1.5 py-0.5 text-[9px] font-semibold tracking-wide text-amber-200">PREVIEW</span>}
+          />
+        </div>
+      </div>
     </>
   );
 }
