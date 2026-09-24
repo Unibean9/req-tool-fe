@@ -15,7 +15,7 @@ import {
   type EdgeProps,
   type Node,
 } from "@xyflow/react";
-import { Download, GitBranch, Maximize2, Minimize2, Users } from "lucide-react";
+import { Download, FileDown, GitBranch, Maximize2, Minimize2, Users } from "lucide-react";
 import "@xyflow/react/dist/style.css";
 import type {
   DiagramLayout,
@@ -24,6 +24,7 @@ import type {
   UseCaseItemResponse,
   UseCaseModelResponse,
 } from "@/lib/api/services/useCaseModel";
+import { buildDrawioXml, downloadDrawioFile } from "@/lib/usecases/drawioExport";
 
 type UseCaseDiagramProps = {
   response: UseCaseModelResponse;
@@ -618,6 +619,13 @@ export function UseCaseDiagram({ response }: UseCaseDiagramProps) {
     }
   };
 
+  const exportDrawio = () => {
+    if (!nodes.some((node) => node.type === "usecase")) return;
+    const source = buildDrawioXml(nodes, edges, boundaryName(response));
+    const filename = `${response.projectName}-use-case-diagram.drawio`.replace(/[^a-z0-9-_.]/gi, "-");
+    downloadDrawioFile(source, filename);
+  };
+
   return (
     <section ref={sectionRef} className={`flex min-h-[520px] min-w-0 flex-1 flex-col overflow-hidden rounded-xl border border-border/70 bg-card/25 ${fullscreen ? "h-screen w-screen rounded-none bg-background p-2" : ""}`}>
       <header className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-b border-border/70 px-4 py-3">
@@ -626,6 +634,9 @@ export function UseCaseDiagram({ response }: UseCaseDiagramProps) {
           <p className="mt-1 text-xs text-muted-foreground">React Flow preview · {response.useCases.length} use cases · {response.relationships.length} relationships</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          <button type="button" aria-label="Export editable Draw.io file" title="Export editable Draw.io file" className="inline-flex h-8 min-w-max shrink-0 items-center gap-1.5 whitespace-nowrap rounded-md border border-primary/50 bg-primary/5 px-2.5 text-xs text-primary hover:bg-primary/15 disabled:cursor-not-allowed disabled:opacity-50" onClick={exportDrawio} disabled={!nodes.some((node) => node.type === "usecase")}>
+            <FileDown className="size-3.5" />Export .drawio
+          </button>
           <button type="button" className="inline-flex h-8 items-center gap-1.5 rounded-md border border-border/70 px-2.5 text-xs hover:bg-muted/50" onClick={() => void exportPng()}>
             <Download className="size-3.5" />Export PNG
           </button>
