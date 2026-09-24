@@ -1,9 +1,10 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { ChevronDown, ChevronRight, FolderTree, Search } from "lucide-react";
+import { ChevronDown, ChevronRight, FolderTree, Loader2, RotateCw, Search } from "lucide-react";
 import type {
   UseCaseActorResponse,
+  UseCaseDetailStatus,
   UseCaseItemResponse,
   UseCaseModuleResponse,
   UseCaseRelationshipResponse,
@@ -130,6 +131,46 @@ function RelationshipChips({
   );
 }
 
+function DetailStatusLine({
+  status,
+  retrying,
+  retryDisabled,
+  onRetry,
+}: {
+  status: UseCaseDetailStatus | undefined;
+  retrying: boolean;
+  retryDisabled: boolean;
+  onRetry: () => void;
+}) {
+  if (status === "pending") {
+    return (
+      <span className="mt-1 inline-flex items-center gap-1 text-[11px] text-muted-foreground">
+        <Loader2 className="size-3 animate-spin" />
+        Writing detail…
+      </span>
+    );
+  }
+  if (status !== "failed") return null;
+  return (
+    <span className="mt-1 inline-flex items-center gap-2 text-[11px] text-amber-300">
+      No detail yet
+      <button
+        type="button"
+        disabled={retryDisabled || retrying}
+        onClick={(event) => {
+          event.stopPropagation();
+          onRetry();
+        }}
+        onKeyDown={(event) => event.stopPropagation()}
+        className="inline-flex items-center gap-1 rounded border border-amber-500/40 px-1.5 py-0.5 font-medium hover:bg-amber-500/10 disabled:opacity-50"
+      >
+        {retrying ? <Loader2 className="size-3 animate-spin" /> : <RotateCw className="size-3" />}
+        Retry
+      </button>
+    </span>
+  );
+}
+
 export function UseCaseTable({
   items,
   modules,
@@ -137,6 +178,10 @@ export function UseCaseTable({
   relationships,
   selectedId,
   onSelect,
+  detailStatus,
+  onRetryDetail,
+  retryingDetailId,
+  retryDisabled,
 }: {
   items: UseCaseItemResponse[];
   modules: UseCaseModuleResponse[];
@@ -144,6 +189,10 @@ export function UseCaseTable({
   relationships: UseCaseRelationshipResponse[];
   selectedId?: string;
   onSelect: (id: string) => void;
+  detailStatus?: Record<string, UseCaseDetailStatus>;
+  onRetryDetail: (id: string) => void;
+  retryingDetailId?: string;
+  retryDisabled: boolean;
 }) {
   const [query, setQuery] = useState("");
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(() => new Set());
@@ -309,6 +358,12 @@ export function UseCaseTable({
                                 <span className="mt-1 block break-all font-mono text-[11px] text-muted-foreground">
                                   {item.id}
                                 </span>
+                                <DetailStatusLine
+                                  status={detailStatus?.[item.id]}
+                                  retrying={retryingDetailId === item.id}
+                                  retryDisabled={retryDisabled || Boolean(retryingDetailId)}
+                                  onRetry={() => onRetryDetail(item.id)}
+                                />
                               </div>
                             </td>
                             <td className="border-b border-border/40 px-4 py-2.5 align-top text-xs">

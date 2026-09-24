@@ -152,6 +152,10 @@ export type UseCasePlantUml = {
   generatedFrom: "use-case-table" | "manual";
 };
 
+export type UseCaseDetailStatus = "pending" | "completed" | "failed";
+/** Client-side only: written into the cached generation by useUseCaseModel while it orchestrates. */
+export type GenerationProgress = { label: string; current?: number; total?: number };
+
 export type UseCaseModelResponse = {
   projectId: string;
   projectName: string;
@@ -170,6 +174,9 @@ export type UseCaseModelResponse = {
         completedBatchCount?: number;
         generationMode?: string;
         stages?: Record<string, "pending" | "running" | "completed" | "failed" | "skipped">;
+        detailStatus?: Record<string, UseCaseDetailStatus>;
+        relationsError?: string;
+        progress?: GenerationProgress;
       })
     | null;
   diagramLayout: DiagramLayout | null;
@@ -239,12 +246,9 @@ export async function fetchUseCaseModel(
 }
 
 /**
- * Monolithic generation: extracts modules, generates every module's use cases, and resolves
- * relationships inside a single request. On a project with several modules this can run long
- * enough to exceed a client/proxy timeout before any response comes back. `useUseCaseModel`
- * drives `generateUseCaseGroups` + `generateGroupUseCases` + `generateUseCaseRelations` instead
- * so each phase is its own bounded request with visible progress. Kept for callers that
- * genuinely want one blocking call.
+ * Monolithic generation: everything inside a single request, which can outlive a client/proxy
+ * timeout on a project with several modules. `useUseCaseModel` drives the split pipeline
+ * (groups -> candidates -> select -> details + relations -> finalize) instead.
  */
 export async function generateUseCaseModel(
   projectId: string,
@@ -295,30 +299,39 @@ export async function updateUseCaseDiagramPositions(
   return unwrap(response.data);
 }
 
-/** Phase 1 of split generation: extracts modules/actors only (`useCases` is always empty). */
-export async function generateUseCaseGroups(
+const post = async (path: string, body: object = {}): Promise<UseCaseModelResponse> => {
+  const response = await apiService.post<ApiEnvelope<UseCaseModelResponse>, object>(path, body);
+  return unwrap(response.data);
+};
+
+/** Pipeline step 1: extracts modules/actors only (`useCases` is always empty). */
+export function generateUseCaseGroups(
   projectId: string,
   body: GenerateUseCaseModelRequest = {},
 ): Promise<UseCaseModelResponse> {
-  const response = await apiService.post<ApiEnvelope<UseCaseModelResponse>, GenerateUseCaseModelRequest>(
-    `${projectPath(projectId)}/use-case-model/groups/generate`,
-    body,
-  );
-  return unwrap(response.data);
+  return post(`${projectPath(projectId)}/use-case-model/groups/generate`, body);
 }
 
-/** Phase 2 of split generation: generates one module's use cases; idempotently replaces that
- * module's previously generated rows. */
-export async function generateGroupUseCases(
-  projectId: string,
-  groupId: string,
-  body: GenerateUseCaseModelRequest = {},
-): Promise<UseCaseModelResponse> {
-  const response = await apiService.post<ApiEnvelope<UseCaseModelResponse>, GenerateUseCaseModelRequest>(
-    `${projectPath(projectId)}/use-case-model/groups/${encodeURIComponent(groupId)}/use-cases/generate`,
-    body,
+/** Pipeline step 2: a short, cited shortlist for one module (no flows). Safe to run in parallel. */
+export function generateModuleCandidates(projectId: string, moduleId: string): Promise<UseCaseModelResponse> {
+  return post(
+    `${projectPath(projectId)}/use-case-model/groups/${encodeURIComponent(moduleId)}/candidates/generate`,
   );
-  return unwrap(response.data);
+}
+
+/** Pipeline step 3 (no LLM call): keeps the best source-cited candidates as rows without detail. */
+export function selectUseCases(projectId: string): Promise<UseCaseModelResponse> {
+  return post(`${projectPath(projectId)}/use-case-model/use-cases/select`);
+}
+
+/** Pipeline step 4 and per-row retry: writes flows for up to 3 rows. A failure marks only them. */
+export function generateUseCaseDetails(projectId: string, useCaseIds: string[]): Promise<UseCaseModelResponse> {
+  return post(`${projectPath(projectId)}/use-case-model/use-cases/details/generate`, { useCaseIds });
+}
+
+/** Pipeline step 5 (no LLM call): validates and resolves the run's final status. */
+export function finalizeUseCaseGeneration(projectId: string): Promise<UseCaseModelResponse> {
+  return post(`${projectPath(projectId)}/use-case-model/generation/finalize`);
 }
 
 export async function updateUseCasePlantUml(

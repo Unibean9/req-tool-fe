@@ -6,36 +6,86 @@ import { toast } from "sonner";
 import { getApiErrorMessage } from "@/lib/api/getApiErrorMessage";
 import {
   fetchUseCaseModel,
-  generateGroupUseCases,
+  finalizeUseCaseGeneration,
+  generateModuleCandidates,
+  generateUseCaseDetails,
   generateUseCaseDiagram,
   generateUseCaseGroups,
   generateUseCaseRelations,
+  selectUseCases,
   updateUseCaseDiagramPositions,
   updateUseCasePlantUml,
   type DiagramNodePosition,
+  type GenerationProgress,
+  type UseCaseDetailStatus,
   type UseCaseModelResponse,
 } from "@/lib/api/services/useCaseModel";
 
-type StageStatus = "pending" | "running" | "completed" | "failed";
-type GenerationStages = Record<"source" | "table" | "relationships" | "validation", StageStatus>;
+// Parallel provider calls per run. Kept modest so a provider's rate limit is not the new bottleneck.
+const GENERATION_CONCURRENCY = 4;
+// Use cases per detail request: small enough that each request's output stays short.
+const DETAIL_BATCH_SIZE = 2;
 
-function withProgress(
-  response: UseCaseModelResponse,
-  patch: {
-    status: "running" | "completed" | "failed";
-    batchCount: number;
-    completedBatchCount: number;
-    stages: GenerationStages;
-    error?: string;
-  },
+/** Runs `worker` over `items` with at most `limit` in flight. After the first failure no new item
+ * is started; that failure is rethrown once the in-flight ones settle. */
+async function runPool<T>(items: T[], limit: number, worker: (item: T) => Promise<void>): Promise<void> {
+  const state: { next: number; failure?: { error: unknown } } = { next: 0 };
+  const lane = async () => {
+    while (!state.failure && state.next < items.length) {
+      const item = items[state.next];
+      state.next += 1;
+      try {
+        await worker(item);
+      } catch (error) {
+        state.failure ??= { error };
+      }
+    }
+  };
+  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, lane));
+  if (state.failure) throw state.failure.error;
+}
+
+function chunk<T>(items: T[], size: number): T[][] {
+  const chunks: T[][] = [];
+  for (let index = 0; index < items.length; index += size) chunks.push(items.slice(index, index + size));
+  return chunks;
+}
+
+function withProgress(response: UseCaseModelResponse, progress: GenerationProgress): UseCaseModelResponse {
+  return { ...response, generation: { ...(response.generation ?? {}), status: "running", progress } };
+}
+
+function withDetailStatus(
+  current: UseCaseModelResponse,
+  statuses: Record<string, UseCaseDetailStatus | undefined>,
 ): UseCaseModelResponse {
+  const detailStatus = { ...(current.generation?.detailStatus ?? {}) };
+  for (const [id, status] of Object.entries(statuses)) if (status) detailStatus[id] = status;
+  return { ...current, generation: { ...(current.generation ?? {}), detailStatus } };
+}
+
+/** Detail responses can arrive out of order, so take only the rows each one was for. */
+function mergeDetailRows(current: UseCaseModelResponse, from: UseCaseModelResponse, ids: string[]) {
+  const updated = new Map(from.useCases.filter((item) => ids.includes(item.id)).map((item) => [item.id, item]));
+  const merged = {
+    ...current,
+    useCases: current.useCases.map((item) => {
+      const next = updated.get(item.id);
+      return next ? { ...next, relationshipIds: item.relationshipIds } : item;
+    }),
+  };
+  return withDetailStatus(merged, Object.fromEntries(ids.map((id) => [id, from.generation?.detailStatus?.[id]])));
+}
+
+function mergeRelations(current: UseCaseModelResponse, from: UseCaseModelResponse): UseCaseModelResponse {
+  const relationshipIds = new Map(from.useCases.map((item) => [item.id, item.relationshipIds]));
   return {
-    ...response,
-    generation: {
-      ...(response.generation ?? {}),
-      ...patch,
-      generationMode: "module-batch",
-    },
+    ...current,
+    relationships: from.relationships,
+    useCases: current.useCases.map((item) => ({
+      ...item,
+      relationshipIds: relationshipIds.get(item.id) ?? item.relationshipIds,
+    })),
   };
 }
 
@@ -80,78 +130,85 @@ export function useUseCaseModel(projectId: string | undefined) {
   });
 
   const generateTableMutation = useMutation({
-    // Runs table generation as a sequence of short, independently-timed requests (module
-    // extraction, then one request per module, then relationships) instead of a single request
-    // that blocks for the whole pipeline. That single long-lived request was the source of
-    // "timeout exceeded" failures on projects with several modules -- each step here has its
-    // own bounded backend timeout and is persisted as soon as it completes.
+    // A pipeline of short requests instead of one long one: modules/actors, then a cited shortlist
+    // per module (in parallel), a deterministic selection of the final rows, then detail batches
+    // (in parallel) alongside relationships, and a final validation step. Every provider call
+    // has a small output budget, which is what keeps each request far from its timeout.
     //
-    // Deliberately stops at the first failure instead of skipping the failed module and
-    // continuing (no silent partial/best-effort table): whatever succeeded before the failure
-    // is already saved server-side, but the run itself surfaces as failed so it is obvious
-    // something needs attention, and the user re-runs Generate rather than the hook retrying
-    // on its own.
+    // Failure policy: steps 1-3 are fail-fast (without every shortlist there is nothing complete
+    // to select from). A detail batch failing only marks those rows failed -- the rest of the
+    // table is independent of them -- and they get a Retry action in the table. Nothing is
+    // retried automatically.
     mutationFn: async (): Promise<UseCaseModelResponse> => {
-      const pendingStages: GenerationStages = {
-        source: "completed",
-        table: "running",
-        relationships: "pending",
-        validation: "pending",
-      };
-      const groups = await generateUseCaseGroups(projectId!);
-      const total = groups.modules.length;
-      let current = withProgress(groups, {
-        status: "running",
-        batchCount: total,
-        completedBatchCount: 0,
-        stages: { ...pendingStages, table: total > 0 ? "running" : "completed" },
-      });
-      client.setQueryData(queryKey, current);
+      const id = projectId!;
+      const update = (patch: (current: UseCaseModelResponse) => UseCaseModelResponse) =>
+        client.setQueryData(queryKey, (current: UseCaseModelResponse | undefined) =>
+          current ? patch(current) : current,
+        );
 
-      for (let index = 0; index < groups.modules.length; index += 1) {
-        const useCaseModule = groups.modules[index];
-        const moduleResult = await generateGroupUseCases(projectId!, useCaseModule.id);
-        current = withProgress(moduleResult, {
-          status: "running",
-          batchCount: total,
-          completedBatchCount: index + 1,
-          stages: { ...pendingStages, table: index + 1 < total ? "running" : "completed" },
-        });
-        client.setQueryData(queryKey, current);
-      }
+      const groups = await generateUseCaseGroups(id);
+      let proposed = 0;
+      const proposing = (): GenerationProgress => ({
+        label: "Proposing use cases",
+        current: proposed,
+        total: groups.modules.length,
+      });
+      client.setQueryData(queryKey, withProgress(groups, proposing()));
+      await runPool(groups.modules, GENERATION_CONCURRENCY, async (useCaseModule) => {
+        await generateModuleCandidates(id, useCaseModule.id);
+        proposed += 1;
+        update((current) => withProgress(current, proposing()));
+      });
 
-      current = withProgress(current, {
-        status: "running",
-        batchCount: total,
-        completedBatchCount: total,
-        stages: { ...pendingStages, table: "completed", relationships: "running" },
+      const selected = await selectUseCases(id);
+      const ids = selected.useCases.map((item) => item.id);
+      let written = 0;
+      const writing = (): GenerationProgress => ({
+        label: "Writing use-case details",
+        current: written,
+        total: ids.length,
       });
-      client.setQueryData(queryKey, current);
-      // Always call this, even with zero use cases -- it is table generation's last phase and
-      // is what resolves the running marker to a terminal status either way.
-      const withRelations = await generateUseCaseRelations(projectId!);
-      current = withProgress(withRelations, {
-        status: "completed",
-        batchCount: total,
-        completedBatchCount: total,
-        stages: { ...pendingStages, table: "completed", relationships: "completed", validation: "completed" },
+      client.setQueryData(queryKey, withProgress(selected, writing()));
+
+      const details = runPool(chunk(ids, DETAIL_BATCH_SIZE), GENERATION_CONCURRENCY, async (batch) => {
+        try {
+          const result = await generateUseCaseDetails(id, batch);
+          written += batch.length;
+          update((current) => withProgress(mergeDetailRows(current, result, batch), writing()));
+        } catch {
+          written += batch.length;
+          update((current) =>
+            withProgress(withDetailStatus(current, Object.fromEntries(batch.map((item) => [item, "failed"]))), writing()),
+          );
+        }
       });
-      client.setQueryData(queryKey, current);
-      return current;
+      // Recorded on the run by the backend and reported by finalize, so not rethrown here.
+      const relations = ids.length
+        ? generateUseCaseRelations(id).then(
+            (result) => update((current) => mergeRelations(current, result)),
+            () => undefined,
+          )
+        : Promise.resolve();
+      await Promise.all([details, relations]);
+
+      update((current) => withProgress(current, { label: "Validating model" }));
+      const final = await finalizeUseCaseGeneration(id);
+      client.setQueryData(queryKey, final);
+      return final;
     },
     onMutate: () => {
       client.setQueryData(queryKey, (current: UseCaseModelResponse | undefined) => {
         if (!current) return current;
-        return {
-          ...current,
-          generation: {
-            ...(current.generation ?? {}),
-            status: "running",
-          },
-        };
+        return withProgress(current, { label: "Extracting modules and actors" });
       });
     },
-    onSuccess: () => toast.success("Use case table generated from the project BRD and PRD."),
+    onSuccess: (final) => {
+      if (final.generation?.status === "completed_with_errors") {
+        toast.warning("Use case table generated, but some parts are missing -- see the note above the table.");
+      } else {
+        toast.success("Use case table generated from the project BRD and PRD.");
+      }
+    },
     onError: (error) => {
       // The optimistic running marker is useful while the request is in flight, but it must
       // never leave the Generate button disabled after the request has failed. The server
@@ -170,6 +227,18 @@ export function useUseCaseModel(projectId: string | undefined) {
         };
       });
       toast.error(message);
+    },
+    onSettled: () => client.invalidateQueries({ queryKey }),
+  });
+
+  const retryDetailMutation = useMutation({
+    mutationFn: async (useCaseId: string) => {
+      const model = await generateUseCaseDetails(projectId!, [useCaseId]);
+      client.setQueryData(queryKey, model);
+      return model;
+    },
+    onError: (error) => {
+      toast.error(getApiErrorMessage(error, "Could not write this use case's detail."));
     },
     onSettled: () => client.invalidateQueries({ queryKey }),
   });
@@ -269,6 +338,22 @@ export function useUseCaseModel(projectId: string | undefined) {
     [projectId, savePositionsMutation],
   );
 
+  const retryDetail = useCallback(
+    async (useCaseId: string) => {
+      if (!projectId || locked.current) return false;
+      locked.current = true;
+      try {
+        await retryDetailMutation.mutateAsync(useCaseId);
+        return true;
+      } catch {
+        return false;
+      } finally {
+        locked.current = false;
+      }
+    },
+    [projectId, retryDetailMutation],
+  );
+
   const generateRelations = useCallback(
     () =>
       runLocked(
@@ -302,6 +387,8 @@ export function useUseCaseModel(projectId: string | undefined) {
     generateRelations,
     savePlantUml,
     savePositions,
+    retryDetail,
+    retryingDetailId: retryDetailMutation.isPending ? retryDetailMutation.variables : undefined,
     saving: saveMutation.isPending,
     generatingTable: generateTableMutation.isPending,
     generatingDiagram: generateDiagramMutation.isPending,

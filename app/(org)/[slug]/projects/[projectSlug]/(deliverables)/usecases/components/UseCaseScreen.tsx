@@ -40,6 +40,8 @@ export default function UseCaseScreen() {
     generatingDiagram,
     savePositions,
     savingPositions,
+    retryDetail,
+    retryingDetailId,
   } = useUseCaseModel(projectId);
   const [tab, setTab] = useState<Tab>("table");
   const [selectedId, setSelectedId] = useState("");
@@ -71,66 +73,11 @@ export default function UseCaseScreen() {
   const generationRunning = response?.generation?.status === "running";
   const tableBusy = generatingTable || generationRunning;
   const diagramBusy = generatingDiagram;
-  const [generationStage, setGenerationStage] = useState({
-    label: "Preparing BRD/PRD source",
-    current: 1,
-    total: 4,
-  });
-  const activeGenerationStage = useMemo(() => {
-    const generation = response?.generation;
-    const stages = generation?.stages;
-    if (!tableBusy || !generation || !stages) return generationStage;
-    const batchCount = generation.batchCount;
-    const completedBatchCount = generation.completedBatchCount ?? 0;
-    if (stages.table === "running" && typeof batchCount === "number" && batchCount > 0) {
-      return {
-        label: "Generating module details",
-        current: Math.min(completedBatchCount + 1, batchCount),
-        total: batchCount,
-      };
-    }
-    const definitions = [
-      ["source", "Reading BRD/PRD components"],
-      ["table", "Generating use-case table"],
-      ["relationships", "Resolving relationships"],
-      ["validation", "Validating model"],
-    ] as const;
-    const activeIndex = definitions.findIndex(([key]) => stages[key] === "running" || stages[key] === "pending");
-    if (activeIndex < 0) return generationStage;
-    return { label: definitions[activeIndex][1], current: activeIndex + 1, total: definitions.length };
-  }, [
-    tableBusy,
-    generationStage,
-    response?.generation?.batchCount,
-    response?.generation?.completedBatchCount,
-    response?.generation?.stages,
-  ]);
-
-  useEffect(() => {
-    if (!tableBusy) return;
-    const tableTimer = window.setTimeout(
-      () => setGenerationStage({ label: "Generating use-case table", current: 2, total: 4 }),
-      650,
-    );
-    const relationTimer = window.setTimeout(
-      () => setGenerationStage({ label: "Resolving relationships", current: 3, total: 4 }),
-      1600,
-    );
-    const validationTimer = window.setTimeout(
-      () => setGenerationStage({ label: "Validating model", current: 4, total: 4 }),
-      2600,
-    );
-    return () => {
-      window.clearTimeout(tableTimer);
-      window.clearTimeout(relationTimer);
-      window.clearTimeout(validationTimer);
-    };
-  }, [tableBusy]);
-
-  const startTableGeneration = () => {
-    setGenerationStage({ label: "Reading BRD/PRD components", current: 1, total: 4 });
-    void generateTable();
-  };
+  // Written by useUseCaseModel while it orchestrates; absent after a reload mid-run.
+  const progress = response?.generation?.progress;
+  const progressLabel = progress
+    ? progress.label + (progress.total ? ` · ${progress.current ?? 0}/${progress.total}` : "")
+    : "Generating use-case table…";
 
   if (!response) {
     return (
@@ -180,11 +127,11 @@ export default function UseCaseScreen() {
             <button
               type="button"
               disabled={tableBusy || !projectId}
-              onClick={startTableGeneration}
+              onClick={() => void generateTable()}
               className="rounded-md bg-primary px-3 py-2 text-xs font-medium text-primary-foreground disabled:opacity-50"
             >
               {tableBusy
-                ? `${activeGenerationStage.label} · ${activeGenerationStage.current}/${activeGenerationStage.total}`
+                ? progressLabel
                 : useCases.length
                   ? "Regenerate table"
                   : "Generate use-case table"}
@@ -258,6 +205,10 @@ export default function UseCaseScreen() {
             relationships={relationships}
             selectedId={selected?.id}
             onSelect={setSelectedId}
+            detailStatus={response.generation?.detailStatus}
+            onRetryDetail={(id) => void retryDetail(id)}
+            retryingDetailId={retryingDetailId}
+            retryDisabled={tableBusy}
           />
           <UseCaseDetails
             selected={selected}
