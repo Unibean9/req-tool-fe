@@ -562,7 +562,7 @@ function createDiagramSvg(nodes: DiagramNode[], edges: Edge[], projectName: stri
       : "";
     return `<path d="${path}" fill="none" stroke="#686868" stroke-width="1.3"${dash}${marker ? ` marker-end="${marker}"` : ""}/>${labelMarkup}`;
   }).join("");
-  const nodeMarkup = nodes.map((node) => {
+  const nodeMarkup = (node: DiagramNode) => {
     if (node.type === "system") {
       const widthOf = Number(node.style?.width ?? 1000);
       const heightOf = Number(node.style?.height ?? 500);
@@ -579,8 +579,12 @@ function createDiagramSvg(nodes: DiagramNode[], edges: Edge[], projectName: stri
     const centerX = node.position.x + widthOf / 2;
     const centerY = node.position.y + heightOf / 2;
     return `<ellipse cx="${centerX}" cy="${centerY}" rx="${widthOf / 2}" ry="${heightOf / 2}" fill="#ffffff" stroke="#777777" stroke-width="1.3"/><text x="${centerX}" y="${centerY + 4}" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="#252932">${escape((node.data as UseCaseNodeData).name)}</text>`;
-  }).join("");
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${width * 2}" height="${height * 2}" viewBox="${minX} ${minY} ${width} ${height}"><defs><marker id="open-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto"><path d="M 0 0 L 10 5 L 0 10" fill="none" stroke="#686868" stroke-width="1.2"/></marker><marker id="generalization" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="12" markerHeight="12" orient="auto"><path d="M 0 0 L 12 6 L 0 12 Z" fill="#ffffff" stroke="#686868" stroke-width="1.2"/></marker></defs>${edgeMarkup}${nodeMarkup}</svg>`;
+  };
+  // Paint order matters in SVG: the boundary's white fill must sit under the edges (as its
+  // zIndex -1 does on screen), and the use cases on top so edges end at their outline.
+  const boundaryMarkup = nodes.filter((node) => node.type === "system").map(nodeMarkup).join("");
+  const elementMarkup = visibleNodes.map(nodeMarkup).join("");
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${width * 2}" height="${height * 2}" viewBox="${minX} ${minY} ${width} ${height}"><defs><marker id="open-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto"><path d="M 0 0 L 10 5 L 0 10" fill="none" stroke="#686868" stroke-width="1.2"/></marker><marker id="generalization" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="12" markerHeight="12" orient="auto"><path d="M 0 0 L 12 6 L 0 12 Z" fill="#ffffff" stroke="#686868" stroke-width="1.2"/></marker></defs>${boundaryMarkup}${edgeMarkup}${elementMarkup}</svg>`;
 }
 
 export function UseCaseDiagram({ response, onSavePositions, savingPositions }: UseCaseDiagramProps) {
