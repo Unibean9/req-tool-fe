@@ -20,6 +20,11 @@ export function useUseCaseModel(projectId: string | undefined) {
     queryFn: () => fetchUseCaseModel(projectId!),
     enabled: Boolean(projectId),
     retry: false,
+    // Generation state is durable on the backend. Do not let the global five-minute
+    // cache hide a running marker after a route change, reload, or browser-tab switch.
+    staleTime: 0,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: "always",
     refetchInterval: (currentQuery) =>
       currentQuery.state.data?.generation?.status === "running" ? 2000 : false,
     refetchIntervalInBackground: true,
