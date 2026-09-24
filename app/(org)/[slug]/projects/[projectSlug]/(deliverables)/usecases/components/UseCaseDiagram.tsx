@@ -1,14 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Background,
   BaseEdge,
   Controls,
   EdgeLabelRenderer,
-  getStraightPath,
   Handle,
-  MarkerType,
   Position,
   ReactFlow,
   useEdgesState,
@@ -20,6 +18,8 @@ import {
 import { Download, GitBranch, Maximize2, Minimize2, Users } from "lucide-react";
 import "@xyflow/react/dist/style.css";
 import type {
+  DiagramLayout,
+  DiagramLayoutPoint,
   UseCaseActorResponse,
   UseCaseItemResponse,
   UseCaseModelResponse,
@@ -37,12 +37,17 @@ type ActorNodeData = {
 
 type UseCaseNodeData = {
   name: string;
+  moduleId: string;
   moduleName: string;
   priority: UseCaseItemResponse["priority"];
 };
 
 type SystemNodeData = {
   name: string;
+};
+
+type DiagramEdgeData = {
+  points?: DiagramLayoutPoint[];
 };
 
 type DiagramNode = Node<ActorNodeData | UseCaseNodeData | SystemNodeData>;
@@ -53,6 +58,11 @@ const COLUMN_GAP = 88;
 const ROW_GAP = 92;
 const SYSTEM_X = 280;
 const SYSTEM_Y = 24;
+const HANDLE_OFFSETS = ["24%", "50%", "76%"] as const;
+// Handles remain available to React Flow for correct edge attachment, but they are implementation
+// points rather than UML symbols and must not appear as extra dots on the diagram.
+const VISIBLE_HANDLE_CLASS = "!size-2 !border-0 !bg-transparent !opacity-0";
+const HIDDEN_HANDLE_CLASS = "!size-2 !border-0 !bg-transparent !opacity-0";
 
 function SystemNode({ data }: { data: SystemNodeData }) {
   return (
@@ -66,18 +76,7 @@ function ActorNode({ data }: { data: ActorNodeData }) {
   const sidePosition = data.side === "left" ? Position.Right : Position.Left;
   return (
     <div className="flex w-40 flex-col items-center bg-transparent px-1 text-center text-[11px] text-[#24272e]">
-      <Handle
-        type="source"
-        position={sidePosition}
-        id="actor-source"
-        className="!size-2 !border-0 !bg-[#777]/70"
-      />
-      <Handle
-        type="target"
-        position={sidePosition}
-        id="actor-target"
-        className="!size-2 !border-0 !bg-[#777]/70"
-      />
+      <Handle type="source" position={sidePosition} id="actor-source" className={VISIBLE_HANDLE_CLASS} />
       <svg aria-hidden viewBox="0 0 80 88" className="mb-1 h-[78px] w-[72px] fill-none stroke-[#555] stroke-[1.2]">
         <circle cx="40" cy="12" r="10" />
         <path d="M40 22v33M16 34h48M40 55 20 82M40 55l20 27" />
@@ -90,38 +89,85 @@ function ActorNode({ data }: { data: ActorNodeData }) {
 function UseCaseNode({ data }: { data: UseCaseNodeData }) {
   return (
     <div className="relative flex min-h-[72px] w-[224px] items-center justify-center rounded-[50%] border border-[#777] bg-white px-6 text-center text-[11px] leading-tight text-[#252932]">
-      <Handle type="target" id="target-left" position={Position.Left} className="!size-2 !border-0 !bg-[#777]/70" />
-      <Handle type="target" id="target-right" position={Position.Right} className="!size-2 !border-0 !bg-[#777]/70" />
+      {HANDLE_OFFSETS.map((offset, index) => (
+        <Fragment key={`target-left-${index}`}>
+          <Handle type="target" id={`target-left-${index}`} position={Position.Left} style={{ top: offset }} className={index === 1 ? VISIBLE_HANDLE_CLASS : HIDDEN_HANDLE_CLASS} />
+          <Handle type="target" id={`target-right-${index}`} position={Position.Right} style={{ top: offset }} className={index === 1 ? VISIBLE_HANDLE_CLASS : HIDDEN_HANDLE_CLASS} />
+        </Fragment>
+      ))}
       <span title={`${data.moduleName} · ${data.priority}`}>{data.name}</span>
-      <Handle type="source" id="source-left" position={Position.Left} className="!size-2 !border-0 !bg-[#777]/70" />
-      <Handle type="source" id="source-right" position={Position.Right} className="!size-2 !border-0 !bg-[#777]/70" />
+      {HANDLE_OFFSETS.map((offset, index) => (
+        <Fragment key={`source-left-${index}`}>
+          <Handle type="source" id={`source-left-${index}`} position={Position.Left} style={{ top: offset }} className={index === 1 ? VISIBLE_HANDLE_CLASS : HIDDEN_HANDLE_CLASS} />
+          <Handle type="source" id={`source-right-${index}`} position={Position.Right} style={{ top: offset }} className={index === 1 ? VISIBLE_HANDLE_CLASS : HIDDEN_HANDLE_CLASS} />
+        </Fragment>
+      ))}
     </div>
   );
 }
 
-function GeneralizationEdge({ id, sourceX, sourceY, targetX, targetY, label, style }: EdgeProps) {
-  const [path, labelX, labelY] = getStraightPath({ sourceX, sourceY, targetX, targetY });
+function arrowPoints(sourceX: number, sourceY: number, targetX: number, targetY: number, length = 13, halfWidth = 5) {
   const distance = Math.hypot(targetX - sourceX, targetY - sourceY) || 1;
   const unitX = (targetX - sourceX) / distance;
   const unitY = (targetY - sourceY) / distance;
-  const baseX = targetX - unitX * 15;
-  const baseY = targetY - unitY * 15;
-  const normalX = -unitY * 7;
-  const normalY = unitX * 7;
-  const points = `${targetX},${targetY} ${baseX + normalX},${baseY + normalY} ${baseX - normalX},${baseY - normalY}`;
+  const baseX = targetX - unitX * length;
+  const baseY = targetY - unitY * length;
+  const normalX = -unitY * halfWidth;
+  const normalY = unitX * halfWidth;
+  return `${baseX + normalX},${baseY + normalY} ${targetX},${targetY} ${baseX - normalX},${baseY - normalY}`;
+}
+
+function normalizedEdgePoints(data: unknown, sourceX: number, sourceY: number, targetX: number, targetY: number) {
+  const points = data && typeof data === "object" && "points" in data ? (data as DiagramEdgeData).points : undefined;
+  return points && points.length >= 2 ? points : [{ x: sourceX, y: sourceY }, { x: targetX, y: targetY }];
+}
+
+function edgePath(points: DiagramLayoutPoint[]) {
+  return points.map((point, index) => `${index === 0 ? "M" : "L"} ${point.x} ${point.y}`).join(" ");
+}
+
+function edgeMidpoint(points: DiagramLayoutPoint[]) {
+  if (points.length < 2) return points[0] ?? { x: 0, y: 0 };
+  const total = points.reduce((sum, point, index) => {
+    if (!index) return sum;
+    return sum + Math.hypot(point.x - points[index - 1].x, point.y - points[index - 1].y);
+  }, 0);
+  if (!total) return points[0];
+  let travelled = 0;
+  const halfway = total / 2;
+  for (let index = 1; index < points.length; index += 1) {
+    const previous = points[index - 1];
+    const current = points[index];
+    const length = Math.hypot(current.x - previous.x, current.y - previous.y);
+    if (travelled + length >= halfway) {
+      const ratio = (halfway - travelled) / (length || 1);
+      return { x: previous.x + (current.x - previous.x) * ratio, y: previous.y + (current.y - previous.y) * ratio };
+    }
+    travelled += length;
+  }
+  return points.at(-1) ?? points[0] ?? { x: 0, y: 0 };
+}
+
+function GeneralizationEdge({ id, sourceX, sourceY, targetX, targetY, label, style, data }: EdgeProps) {
+  const points = normalizedEdgePoints(data, sourceX, sourceY, targetX, targetY);
+  const path = edgePath(points);
+  const midpoint = edgeMidpoint(points);
+  const last = points.at(-1) ?? { x: targetX, y: targetY };
+  const previous = points.at(-2) ?? { x: sourceX, y: sourceY };
+  const arrow = arrowPoints(previous.x, previous.y, last.x, last.y, 15, 7);
   const stroke = String(style?.stroke ?? "#686868");
 
   return (
     <>
       <BaseEdge id={id} path={path} style={style} />
-      <polygon points={points} fill="white" stroke={stroke} strokeWidth="1.4" />
+      <polygon points={arrow} fill="white" stroke={stroke} strokeWidth="1.4" />
       {label ? (
         <EdgeLabelRenderer>
           <div
             className="nodrag nopan rounded bg-white/90 px-1 text-[10px] text-[#555]"
             style={{
               position: "absolute",
-              transform: `translate(-50%, -50%) translate(${labelX}px,${labelY}px)`,
+              transform: `translate(-50%, -50%) translate(${midpoint.x}px,${midpoint.y}px)`,
               pointerEvents: "none",
             }}
           >
@@ -133,22 +179,20 @@ function GeneralizationEdge({ id, sourceX, sourceY, targetX, targetY, label, sty
   );
 }
 
-function RelationshipEdge({ id, sourceX, sourceY, targetX, targetY, label, style }: EdgeProps) {
-  const [path, labelX, labelY] = getStraightPath({ sourceX, sourceY, targetX, targetY });
-  const distance = Math.hypot(targetX - sourceX, targetY - sourceY) || 1;
-  const unitX = (targetX - sourceX) / distance;
-  const unitY = (targetY - sourceY) / distance;
-  const baseX = targetX - unitX * 13;
-  const baseY = targetY - unitY * 13;
-  const normalX = -unitY * 5;
-  const normalY = unitX * 5;
+function RelationshipEdge({ id, sourceX, sourceY, targetX, targetY, label, style, data }: EdgeProps) {
+  const points = normalizedEdgePoints(data, sourceX, sourceY, targetX, targetY);
+  const path = edgePath(points);
+  const midpoint = edgeMidpoint(points);
+  const last = points.at(-1) ?? { x: targetX, y: targetY };
+  const previous = points.at(-2) ?? { x: sourceX, y: sourceY };
+  const arrow = arrowPoints(previous.x, previous.y, last.x, last.y);
   const stroke = String(style?.stroke ?? "#686868");
 
   return (
     <>
       <BaseEdge id={id} path={path} style={style} />
       <polyline
-        points={`${baseX + normalX},${baseY + normalY} ${targetX},${targetY} ${baseX - normalX},${baseY - normalY}`}
+        points={arrow}
         fill="none"
         stroke={stroke}
         strokeWidth="1.4"
@@ -161,7 +205,7 @@ function RelationshipEdge({ id, sourceX, sourceY, targetX, targetY, label, style
             className="nodrag nopan rounded bg-white/90 px-1 text-[10px] text-[#555]"
             style={{
               position: "absolute",
-              transform: `translate(-50%, -50%) translate(${labelX}px,${labelY}px)`,
+              transform: `translate(-50%, -50%) translate(${midpoint.x}px,${midpoint.y}px)`,
               pointerEvents: "none",
             }}
           >
@@ -196,7 +240,92 @@ function boundaryName(response: UseCaseModelResponse) {
   return name && name.toLowerCase() !== "requirements system" ? name : response.projectName;
 }
 
+function layoutNodeId(node: DiagramLayout["nodes"][number]) {
+  if (node.kind === "system_boundary") return "system-boundary";
+  return node.kind === "actor" ? nodeKey("actor", node.id) : nodeKey("usecase", node.id);
+}
+
+function createGraphFromLayout(response: UseCaseModelResponse, layout: DiagramLayout) {
+  const moduleById = new Map(response.modules.map((module) => [module.id, module]));
+  const nodes: DiagramNode[] = layout.nodes.map((node) => {
+    if (node.kind === "system_boundary") {
+      return {
+        id: "system-boundary",
+        type: "system",
+        position: { x: node.x, y: node.y },
+        data: { name: node.name || boundaryName(response) },
+        style: { width: node.width, height: node.height },
+        draggable: false,
+        selectable: false,
+        deletable: false,
+        zIndex: -1,
+      } satisfies DiagramNode;
+    }
+    if (node.kind === "actor") {
+      return {
+        id: layoutNodeId(node),
+        type: "actor",
+        position: { x: node.x, y: node.y },
+        data: { name: node.name, side: node.side === "right" ? "right" : "left", kind: node.actorKind ?? "human" },
+        draggable: false,
+      } satisfies DiagramNode;
+    }
+    const moduleEntry = moduleById.get(node.moduleId ?? "");
+    return {
+      id: layoutNodeId(node),
+      type: "usecase",
+      position: { x: node.x, y: node.y },
+      data: {
+        name: node.name,
+        moduleId: node.moduleId ?? "",
+        moduleName: node.moduleName ?? moduleEntry?.name ?? "General",
+        priority: node.priority ?? "recommended",
+      },
+      draggable: false,
+    } satisfies DiagramNode;
+  });
+  const byCanonicalId = new Map(layout.nodes.map((node) => [node.id, layoutNodeId(node)]));
+  const edges: Edge[] = layout.edges.flatMap((edge): Edge[] => {
+    const source = byCanonicalId.get(edge.source);
+    const target = byCanonicalId.get(edge.target);
+    if (!source || !target) return [];
+    if (edge.kind === "association") {
+      return [{
+        id: edge.id,
+        source,
+        target,
+        sourceHandle: edge.sourceHandle ?? "actor-source",
+        targetHandle: edge.targetHandle ?? "target-left-1",
+        type: "straight",
+        label: undefined,
+        style: { stroke: "#686868", strokeWidth: 1.2 },
+      }];
+    }
+    return [{
+      id: edge.id,
+      source,
+      target,
+      sourceHandle: edge.sourceHandle ?? "source-right-1",
+      targetHandle: edge.targetHandle ?? "target-left-1",
+      type: edge.kind === "generalization" ? "generalization" : "relationship",
+      label: edge.label ?? undefined,
+      data: { points: edge.points },
+      style: {
+        stroke: "#686868",
+        strokeWidth: 1.2,
+        ...(edge.lineStyle === "dashed" ? { strokeDasharray: "6 5" } : {}),
+      },
+      labelStyle: { fill: "#4b5563", fontSize: 10 },
+      labelBgStyle: { fill: "#ffffff", fillOpacity: 0.95 },
+    }];
+  });
+  return { nodes, edges: orientEdges(nodes, edges) };
+}
+
 function createGraph(response: UseCaseModelResponse) {
+  if (response.diagramLayout?.engine === "elk" && response.diagramLayout.nodes.length) {
+    return createGraphFromLayout(response, response.diagramLayout);
+  }
   const useCases = response.useCases;
   const actors = response.actors;
   const columns = Math.min(4, Math.max(1, Math.ceil(Math.sqrt(Math.max(useCases.length, 1)))));
@@ -245,7 +374,7 @@ function createGraph(response: UseCaseModelResponse) {
           x: SYSTEM_X + 48 + column * (USE_CASE_WIDTH + COLUMN_GAP),
           y: SYSTEM_Y + 92 + row * (USE_CASE_HEIGHT + ROW_GAP),
         },
-        data: { name: item.name, moduleName: moduleEntry?.name ?? "", priority: item.priority },
+        data: { name: item.name, moduleId: item.moduleId, moduleName: moduleEntry?.name ?? "", priority: item.priority },
         draggable: false,
       } satisfies DiagramNode;
     }),
@@ -267,7 +396,7 @@ function createGraph(response: UseCaseModelResponse) {
       source: actor.id,
       target: useCase.id,
       sourceHandle: "actor-source",
-      targetHandle: side === "left" ? "target-left" : "target-right",
+      targetHandle: side === "left" ? "target-left-1" : "target-right-1",
       type: "straight",
       label: undefined,
       style: { stroke: "#686868", strokeWidth: 1.2 },
@@ -294,11 +423,10 @@ function createGraph(response: UseCaseModelResponse) {
       id: relation.id,
       source: source.id,
       target: target.id,
-      sourceHandle: toRight ? "source-right" : "source-left",
-      targetHandle: toRight ? "target-left" : "target-right",
+      sourceHandle: toRight ? "source-right-1" : "source-left-1",
+      targetHandle: toRight ? "target-left-1" : "target-right-1",
       type: isGeneralization ? "generalization" : "relationship",
       label,
-      markerEnd: isGeneralization ? undefined : { type: MarkerType.Arrow, color: "#686868" },
       style: {
         stroke: "#686868",
         strokeWidth: 1.2,
@@ -309,7 +437,64 @@ function createGraph(response: UseCaseModelResponse) {
     });
   }
 
-  return { nodes, edges };
+  return { nodes, edges: orientEdges(nodes, edges) };
+}
+
+function orientEdges(nodes: DiagramNode[], edges: Edge[]) {
+  const byId = new Map(nodes.map((node) => [node.id, node]));
+  const incomingSlots = new Map<string, number>();
+  const outgoingSlots = new Map<string, number>();
+  const incomingGroups = new Map<string, Edge[]>();
+  const outgoingGroups = new Map<string, Edge[]>();
+
+  for (const edge of edges) {
+    if (edge.type === "straight") continue;
+    if (edge.type !== "relationship" && edge.type !== "generalization") continue;
+    const incoming = incomingGroups.get(edge.target) ?? [];
+    incoming.push(edge);
+    incomingGroups.set(edge.target, incoming);
+    const outgoing = outgoingGroups.get(edge.source) ?? [];
+    outgoing.push(edge);
+    outgoingGroups.set(edge.source, outgoing);
+  }
+
+  const sortByPosition = (left: Edge, right: Edge, endpoint: "source" | "target") => {
+    const leftNode = byId.get(left[endpoint]);
+    const rightNode = byId.get(right[endpoint]);
+    return (leftNode?.position.y ?? 0) - (rightNode?.position.y ?? 0) || left.id.localeCompare(right.id);
+  };
+  for (const [targetId, group] of incomingGroups) {
+    group.slice().sort((left, right) => sortByPosition(left, right, "source")).forEach((edge, index) => {
+      incomingSlots.set(`${targetId}:${edge.id}`, index % HANDLE_OFFSETS.length);
+    });
+  }
+  for (const [sourceId, group] of outgoingGroups) {
+    group.slice().sort((left, right) => sortByPosition(left, right, "target")).forEach((edge, index) => {
+      outgoingSlots.set(`${sourceId}:${edge.id}`, index % HANDLE_OFFSETS.length);
+    });
+  }
+
+  return edges.map((edge) => {
+    const source = byId.get(edge.source);
+    const target = byId.get(edge.target);
+    if (!source || !target) return edge;
+    if (edge.type === "straight") {
+      const side = (source.data as ActorNodeData).side;
+      return {
+        ...edge,
+        sourceHandle: "actor-source",
+        targetHandle: side === "left" ? "target-left-1" : "target-right-1",
+      };
+    }
+    const toRight = target.position.x > source.position.x || (target.position.x === source.position.x && target.position.y >= source.position.y);
+    const sourceSlot = outgoingSlots.get(`${source.id}:${edge.id}`) ?? 1;
+    const targetSlot = incomingSlots.get(`${target.id}:${edge.id}`) ?? 1;
+    return {
+      ...edge,
+      sourceHandle: `${toRight ? "source-right" : "source-left"}-${sourceSlot}`,
+      targetHandle: `${toRight ? "target-left" : "target-right"}-${targetSlot}`,
+    };
+  });
 }
 
 function createDiagramSvg(nodes: DiagramNode[], edges: Edge[], projectName: string) {
@@ -329,8 +514,11 @@ function createDiagramSvg(nodes: DiagramNode[], edges: Edge[], projectName: stri
   const port = (node: DiagramNode, handle: string | null | undefined) => {
     const widthOf = Number(node.style?.width ?? (node.type === "usecase" ? USE_CASE_WIDTH : 160));
     const heightOf = Number(node.style?.height ?? (node.type === "usecase" ? USE_CASE_HEIGHT : 110));
-    const left = String(handle ?? "").includes("left") || (node.type === "actor" && (node.data as ActorNodeData).side === "right");
-    return { x: node.position.x + (left ? 0 : widthOf), y: node.position.y + heightOf / 2 };
+    const handleName = String(handle ?? "");
+    const left = handleName.includes("left") || (node.type === "actor" && (node.data as ActorNodeData).side === "right");
+    const slot = Number(handleName.match(/-(\d+)$/)?.[1] ?? 1);
+    const verticalOffset = Number.parseFloat(HANDLE_OFFSETS[Math.min(slot, HANDLE_OFFSETS.length - 1)]) / 100;
+    return { x: node.position.x + (left ? 0 : widthOf), y: node.position.y + heightOf * verticalOffset };
   };
   const edgeMarkup = edges.map((edge) => {
     const source = nodeById.get(edge.source);
@@ -338,13 +526,19 @@ function createDiagramSvg(nodes: DiagramNode[], edges: Edge[], projectName: stri
     if (!source || !target) return "";
     const from = port(source, edge.sourceHandle);
     const to = port(target, edge.targetHandle);
+    const layoutPoints = edge.data && typeof edge.data === "object" && "points" in edge.data
+      ? (edge.data as DiagramEdgeData).points
+      : undefined;
+    const points = layoutPoints && layoutPoints.length >= 2 ? layoutPoints : [{ x: from.x, y: from.y }, { x: to.x, y: to.y }];
+    const path = edgePath(points);
+    const midpoint = edgeMidpoint(points);
     const label = typeof edge.label === "string" ? edge.label : "";
     const dash = edge.style?.strokeDasharray ? ` stroke-dasharray="${edge.style.strokeDasharray}"` : "";
-    const marker = edge.type === "generalization" ? "url(#generalization)" : edge.markerEnd ? "url(#open-arrow)" : "";
+    const marker = edge.type === "generalization" ? "url(#generalization)" : edge.type === "relationship" ? "url(#open-arrow)" : "";
     const labelMarkup = label
-      ? `<rect x="${(from.x + to.x) / 2 - label.length * 3.1 - 6}" y="${(from.y + to.y) / 2 - 10}" width="${label.length * 6.2 + 12}" height="18" rx="3" fill="#ffffff"/><text x="${(from.x + to.x) / 2}" y="${(from.y + to.y) / 2 + 3}" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#4b5563">${escape(label)}</text>`
+      ? `<rect x="${midpoint.x - label.length * 3.1 - 6}" y="${midpoint.y - 10}" width="${label.length * 6.2 + 12}" height="18" rx="3" fill="#ffffff"/><text x="${midpoint.x}" y="${midpoint.y + 3}" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#4b5563">${escape(label)}</text>`
       : "";
-    return `<path d="M ${from.x} ${from.y} L ${to.x} ${to.y}" fill="none" stroke="#686868" stroke-width="1.3"${dash}${marker ? ` marker-end="${marker}"` : ""}/>${labelMarkup}`;
+    return `<path d="${path}" fill="none" stroke="#686868" stroke-width="1.3"${dash}${marker ? ` marker-end="${marker}"` : ""}/>${labelMarkup}`;
   }).join("");
   const nodeMarkup = nodes.map((node) => {
     if (node.type === "system") {
@@ -370,8 +564,6 @@ function createDiagramSvg(nodes: DiagramNode[], edges: Edge[], projectName: stri
 export function UseCaseDiagram({ response }: UseCaseDiagramProps) {
   const sectionRef = useRef<HTMLElement>(null);
   const [fullscreen, setFullscreen] = useState(false);
-  const stableNodeTypes = useMemo(() => nodeTypes, []);
-  const stableEdgeTypes = useMemo(() => edgeTypes, []);
   const graph = useMemo(() => createGraph(response), [response]);
   const [nodes, setNodes, onNodesChange] = useNodesState<DiagramNode>(graph.nodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(graph.edges);
@@ -450,12 +642,12 @@ export function UseCaseDiagram({ response }: UseCaseDiagramProps) {
           <ReactFlow
             nodes={nodes}
             edges={edges}
-            nodeTypes={stableNodeTypes}
-            edgeTypes={stableEdgeTypes}
+            nodeTypes={nodeTypes}
+            edgeTypes={edgeTypes}
             onNodesChange={onNodesChange}
             onEdgesChange={onEdgesChange}
             nodesConnectable={false}
-            nodesDraggable
+            nodesDraggable={false}
             fitView
             fitViewOptions={{ padding: 0.08 }}
             minZoom={0.1}

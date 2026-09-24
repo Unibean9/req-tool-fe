@@ -20,6 +20,9 @@ export function useUseCaseModel(projectId: string | undefined) {
     queryFn: () => fetchUseCaseModel(projectId!),
     enabled: Boolean(projectId),
     retry: false,
+    refetchInterval: (currentQuery) =>
+      currentQuery.state.data?.generation?.status === "running" ? 2000 : false,
+    refetchIntervalInBackground: true,
   });
 
   const saveMutation = useMutation({
@@ -42,26 +45,21 @@ export function useUseCaseModel(projectId: string | undefined) {
     mutationFn: async () => {
       const model = await generateUseCaseModel(projectId!);
       client.setQueryData(queryKey, model);
-
-      // The main endpoint already asks the agent for relationships. A second resolver pass is
-      // useful when the provider returns a complete table but no semantic relationship rows.
-      if (model.useCases.length > 0 && model.generation?.relationsGenerated !== true) {
-        try {
-          const resolved = await generateUseCaseRelations(projectId!);
-          client.setQueryData(queryKey, resolved);
-          return resolved;
-        } catch (error) {
-          toast.warning(
-            getApiErrorMessage(
-              error,
-              "The table is ready, but relationship resolution needs another attempt.",
-            ),
-          );
-        }
-      }
       return model;
     },
-    onSuccess: () => toast.success("Use case table generated from the project BRD and PRD."),
+    onMutate: () => {
+      client.setQueryData(queryKey, (current: Awaited<ReturnType<typeof fetchUseCaseModel>> | undefined) => {
+        if (!current) return current;
+        return {
+          ...current,
+          generation: {
+            ...(current.generation ?? {}),
+            status: "running",
+          },
+        };
+      });
+    },
+    onSuccess: () => toast.success("Use case table and diagram generated from the project BRD and PRD."),
     onError: (error) => {
       toast.error(getApiErrorMessage(error, "Could not generate the use case table."));
     },

@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
-import { Code2, Layers3, Network, RefreshCw, Sparkles, Table2 } from "lucide-react";
+import { Layers3, Network, RefreshCw, Sparkles, Table2 } from "lucide-react";
 import { toast } from "sonner";
 import type {
   UseCaseActorResponse,
@@ -14,7 +14,6 @@ import { useOrgProjects } from "@/hooks/useProject";
 import { useUseCaseModel } from "@/hooks/useUseCaseModel";
 import { getApiErrorMessage } from "@/lib/api/getApiErrorMessage";
 import { useOrgWorkspace } from "../../../../../orgWorkspaceContext";
-import { PlantUmlPreview } from "./PlantUmlPreview";
 import { UseCaseDiagram } from "./UseCaseDiagram";
 import { UseCaseDetails } from "./UseCaseDetails";
 import { UseCaseTable } from "./UseCaseTable";
@@ -23,7 +22,7 @@ const EMPTY_USE_CASES: UseCaseItemResponse[] = [];
 const EMPTY_ACTORS: UseCaseActorResponse[] = [];
 const EMPTY_MODULES: UseCaseModuleResponse[] = [];
 const EMPTY_RELATIONSHIPS: UseCaseRelationshipResponse[] = [];
-type Tab = "table" | "diagram" | "plantuml";
+type Tab = "table" | "diagram";
 
 export default function UseCaseScreen() {
   const params = useParams<{ projectSlug: string }>();
@@ -36,11 +35,7 @@ export default function UseCaseScreen() {
     isLoading,
     refetch,
     generate,
-    generateRelations,
-    savePlantUml,
-    saving,
     generating,
-    generatingRelations,
   } = useUseCaseModel(projectId);
   const [tab, setTab] = useState<Tab>("table");
   const [selectedId, setSelectedId] = useState("");
@@ -64,43 +59,74 @@ export default function UseCaseScreen() {
   const actorById = useMemo(() => new Map(actors.map((actor) => [actor.id, actor])), [actors]);
   const moduleById = useMemo(() => new Map(modules.map((module) => [module.id, module])), [modules]);
   const selected = useCases.find((item) => item.id === selectedId) ?? useCases[0] ?? null;
-  const plantUmlSource = response?.plantUml?.source ?? "";
-  const plantUmlIsAvailable = Boolean(plantUmlSource);
-  const plantUmlIsStale = Boolean(response?.plantUml?.stale);
-  const relationsGenerated = response?.generation?.relationsGenerated === true;
-  const busy = saving || generating || generatingRelations;
+  const generationRunning = response?.generation?.status === "running";
+  const busy = generating || generationRunning;
   const [generationStage, setGenerationStage] = useState({
     label: "Preparing BRD/PRD source",
     current: 1,
-    total: 4,
+    total: 6,
   });
-  const activeGenerationStage = generatingRelations
-    ? { label: "Generating relationships", current: 4, total: 4 }
-    : generationStage;
+  const activeGenerationStage = useMemo(() => {
+    const generation = response?.generation;
+    const stages = generation?.stages;
+    if (!generationRunning || !generation || !stages) return generationStage;
+    const batchCount = generation.batchCount;
+    const completedBatchCount = generation.completedBatchCount ?? 0;
+    if (stages.table === "running" && typeof batchCount === "number" && batchCount > 0) {
+      return {
+        label: "Generating module details",
+        current: Math.min(completedBatchCount + 1, batchCount),
+        total: batchCount,
+      };
+    }
+    const definitions = [
+      ["source", "Reading BRD/PRD components"],
+      ["table", "Generating use-case table"],
+      ["relationships", "Resolving relationships"],
+      ["validation", "Validating model"],
+      ["layout", "Arranging diagram"],
+      ["persist", "Saving generated model"],
+    ] as const;
+    const activeIndex = definitions.findIndex(([key]) => stages[key] === "running" || stages[key] === "pending");
+    if (activeIndex < 0) return generationStage;
+    return { label: definitions[activeIndex][1], current: activeIndex + 1, total: definitions.length };
+  }, [
+    generationRunning,
+    generationStage,
+    response?.generation?.batchCount,
+    response?.generation?.completedBatchCount,
+    response?.generation?.stages,
+  ]);
 
   useEffect(() => {
-    if (!generating || generatingRelations) return;
+    if (!busy) return;
     const tableTimer = window.setTimeout(
-      () => setGenerationStage({ label: "Generating use-case table", current: 2, total: 4 }),
+      () => setGenerationStage({ label: "Generating use-case table", current: 2, total: 6 }),
       650,
     );
-    const checkTimer = window.setTimeout(
-      () => setGenerationStage({ label: "Checking traceability", current: 3, total: 4 }),
+    const relationTimer = window.setTimeout(
+      () => setGenerationStage({ label: "Resolving relationships", current: 3, total: 6 }),
       1600,
+    );
+    const validationTimer = window.setTimeout(
+      () => setGenerationStage({ label: "Validating model", current: 4, total: 6 }),
+      2600,
+    );
+    const layoutTimer = window.setTimeout(
+      () => setGenerationStage({ label: "Arranging diagram", current: 5, total: 6 }),
+      3600,
     );
     return () => {
       window.clearTimeout(tableTimer);
-      window.clearTimeout(checkTimer);
+      window.clearTimeout(relationTimer);
+      window.clearTimeout(validationTimer);
+      window.clearTimeout(layoutTimer);
     };
-  }, [generating, generatingRelations]);
+  }, [busy]);
 
   const startGeneration = () => {
-    setGenerationStage({ label: "Reading BRD/PRD components", current: 1, total: 4 });
+    setGenerationStage({ label: "Reading BRD/PRD components", current: 1, total: 6 });
     void generate();
-  };
-  const startRelationGeneration = () => {
-    setGenerationStage({ label: "Generating relationships", current: 4, total: 4 });
-    void generateRelations();
   };
 
   if (!response) {
@@ -144,7 +170,7 @@ export default function UseCaseScreen() {
               </span>
             </div>
             <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
-              Review the generated business use cases grouped by capability. The table and detail panel are derived from the stored BRD and PRD components; PlantUML is the editable diagram source.
+              Review the generated business use cases grouped by capability. The table and React Flow diagram are derived from the stored BRD and PRD components.
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-3">
@@ -154,22 +180,12 @@ export default function UseCaseScreen() {
               onClick={startGeneration}
               className="rounded-md bg-primary px-3 py-2 text-xs font-medium text-primary-foreground disabled:opacity-50"
             >
-              {busy && (generating || generatingRelations)
+              {busy
                 ? `${activeGenerationStage.label} · ${activeGenerationStage.current}/${activeGenerationStage.total}`
                 : useCases.length
                   ? "Regenerate model"
                   : "Generate use-case model"}
             </button>
-            {useCases.length > 0 && !relationsGenerated ? (
-              <button
-                type="button"
-                disabled={busy || !projectId}
-                onClick={startRelationGeneration}
-                className="rounded-md border border-primary/50 px-3 py-2 text-xs font-medium text-primary disabled:opacity-50"
-              >
-                {generatingRelations ? "Resolving…" : "Resolve relationships"}
-              </button>
-            ) : null}
             <div className="inline-flex items-center gap-2 text-xs text-muted-foreground">
               <Layers3 className="size-4 text-primary" />
               {useCases.length} use cases · {modules.length} modules · {actors.length} actors
@@ -201,41 +217,18 @@ export default function UseCaseScreen() {
               <Network className="size-4" />
               Diagram
             </button>
-            <button
-              type="button"
-              onClick={() => setTab("plantuml")}
-              className={
-                "inline-flex h-8 items-center gap-2 rounded-md px-3 text-xs font-medium " +
-                (tab === "plantuml" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground")
-              }
-            >
-              <Code2 className="size-4" />
-              PlantUML code
-            </button>
           </div>
           <span className="text-xs text-muted-foreground">
             {tab === "diagram"
               ? "View the generated use-case diagram from the current model."
-              : tab === "plantuml"
-                ? "Edit the generated source and save it to preview the current UML."
-                : "Select a use case to inspect its full detail."}
+              : "Select a use case to inspect its full detail."}
           </span>
         </div>
       </header>
 
       {response.generation && typeof response.generation.error === "string" ? (
         <p role="status" className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 text-xs text-amber-200">
-          The source-backed table is available. AI detail generation reported: {response.generation.error}
-        </p>
-      ) : null}
-      {plantUmlIsStale ? (
-        <p role="status" className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 text-xs text-amber-200">
-          The PlantUML source is older than the current table. Regenerate the model to refresh generated UML.
-        </p>
-      ) : null}
-      {useCases.length > 0 && !relationsGenerated ? (
-        <p role="status" className="rounded-lg border border-primary/30 bg-primary/5 p-3 text-xs text-primary">
-          The table is ready. Resolve relationships to complete include, extend and generalization links.
+          The source-backed model is available, with a generation note: {response.generation.error}
         </p>
       ) : null}
 
@@ -260,16 +253,7 @@ export default function UseCaseScreen() {
         </div>
       ) : tab === "diagram" ? (
         <UseCaseDiagram response={response} />
-      ) : (
-        <PlantUmlPreview
-          key={plantUmlSource}
-          source={plantUmlSource}
-          projectName={response.projectName}
-          unavailable={!plantUmlIsAvailable}
-          busy={busy}
-          onSave={!projectId || !plantUmlIsAvailable ? undefined : savePlantUml}
-        />
-      )}
+      ) : null}
     </div>
   );
 }

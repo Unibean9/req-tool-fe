@@ -86,6 +86,49 @@ export type UseCaseRelationshipResponse = {
   sourceTrace: string[];
 };
 
+export type DiagramLayoutPoint = { x: number; y: number };
+export type DiagramLayoutNode = {
+  id: string;
+  kind: "system_boundary" | "actor" | "use_case";
+  name: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  moduleId: string | null;
+  moduleName: string | null;
+  priority: UseCasePriority | null;
+  actorKind: ActorKind | null;
+  side: ActorSide | "inside" | null;
+};
+export type DiagramLayoutEdge = {
+  id: string;
+  source: string;
+  target: string;
+  kind: "association" | UseCaseRelationshipType;
+  label: string | null;
+  lineStyle: "solid" | "dashed";
+  directed: boolean;
+  sourceHandle: string | null;
+  targetHandle: string | null;
+  points: DiagramLayoutPoint[];
+};
+export type DiagramLayout = {
+  engine: "elk";
+  version: string;
+  system: {
+    id: string;
+    name: string;
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  };
+  nodes: DiagramLayoutNode[];
+  edges: DiagramLayoutEdge[];
+  diagnostics: { warnings: string[]; overlapCount: number };
+};
+
 export type UseCaseValidationIssue = {
   severity: "error" | "warning";
   code: string;
@@ -118,7 +161,17 @@ export type UseCaseModelResponse = {
   relationships: UseCaseRelationshipResponse[];
   sourceHash: string | null;
   validation: UseCaseValidation | null;
-  generation: (Record<string, unknown> & { relationsGenerated?: boolean }) | null;
+  generation:
+    | (Record<string, unknown> & {
+        relationsGenerated?: boolean;
+        status?: "running" | "completed" | "completed_with_errors" | "failed";
+        batchCount?: number | null;
+        completedBatchCount?: number;
+        generationMode?: string;
+        stages?: Record<string, "pending" | "running" | "completed" | "failed" | "skipped">;
+      })
+    | null;
+  diagramLayout: DiagramLayout | null;
   plantUml: UseCasePlantUml | null;
 };
 
