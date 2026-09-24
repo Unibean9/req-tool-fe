@@ -1,59 +1,105 @@
 import apiService from "@/lib/api/core";
 
-export type UseCaseLevel = "L0" | "L1" | "L2";
-export type UseCaseStatus = "Confirmed" | "Inferred" | "Suggested";
-export type UseCasePriority = "Must" | "Should" | "Could";
-export type UseCaseActorKind = "Primary actor" | "Supporting actor";
-export type UseCaseRelationshipType = "association" | "part-of" | "include" | "extend" | "generalization";
+export type EvidenceType = "explicit" | "inferred";
+export type UseCasePriority = "required" | "recommended" | "optional";
+export type ActorKind = "human" | "external_system" | "scheduler";
+export type ActorSide = "left" | "right";
+export type UseCaseRelationshipType = "include" | "extend" | "generalization";
+export type FlowParticipantType = "actor" | "system" | "external_system";
+export type RequirementType = "functional" | "business_rule" | "non_functional";
+export type RelationshipReviewState = "accepted" | "review_required" | "rejected";
 
-export type UseCaseActorResponse = { id: string; name: string; kind: UseCaseActorKind };
-export type UseCaseItemResponse = {
+export type UseCaseFlowStepResponse = {
+  step: number;
+  participantType: FlowParticipantType;
+  participantId: string | null;
+  action: string;
+};
+
+export type UseCaseFlowResponse = {
+  flowType: "alternative" | "exception";
+  label: string;
+  branchAtStep: number | null;
+  steps: UseCaseFlowStepResponse[];
+};
+
+export type UseCaseRequirementLinkResponse = {
   id: string;
-  level: UseCaseLevel;
-  title: string;
-  primaryActorId: string;
-  supportingActorIds: string[];
-  subsystem: string;
-  status: UseCaseStatus;
-  priority: UseCasePriority;
-  parentUseCaseId: string | null;
-  description: string;
-  precondition: string;
+  type: RequirementType;
+  title: string | null;
   sourceTrace: string[];
 };
+
+export type UseCaseActorResponse = {
+  id: string;
+  name: string;
+  kind: ActorKind;
+  side: ActorSide | null;
+};
+
+export type UseCaseSystemResponse = {
+  id: string;
+  name: string;
+  description: string | null;
+  sourceTrace: string[];
+};
+
+export type UseCaseModuleResponse = {
+  id: string;
+  name: string;
+  goal: string | null;
+  sourceTrace: string[];
+};
+
+export type UseCaseItemResponse = {
+  id: string;
+  name: string;
+  moduleId: string;
+  primaryActorId: string;
+  secondaryActorIds: string[];
+  relationshipIds: string[];
+  evidence: EvidenceType;
+  priority: UseCasePriority;
+  description: string;
+  trigger: string | null;
+  preconditions: string[];
+  mainFlow: UseCaseFlowStepResponse[];
+  alternativeFlows: UseCaseFlowResponse[];
+  exceptionFlows: UseCaseFlowResponse[];
+  postconditionsSuccess: string[];
+  postconditionsFailure: string[];
+  businessRules: string[];
+  relatedRequirements: UseCaseRequirementLinkResponse[];
+  sourceTrace: string[];
+  note: string | null;
+};
+
 export type UseCaseRelationshipResponse = {
   id: string;
   sourceId: string;
   targetId: string;
   type: UseCaseRelationshipType;
   condition: string | null;
+  reason: string | null;
+  confidence: number | null;
+  reviewState: RelationshipReviewState | null;
+  sourceTrace: string[];
 };
-export type UseCaseDiagramNode = { id: string; kind: "system_boundary" | "actor" | "use_case"; label: string; shape: "rectangle" | "actor" | "ellipse"; side: "left" | "right" | "inside" | null };
-export type UseCaseDiagramEdge = {
-  id: string;
-  sourceId: string;
-  targetId: string;
-  kind: Exclude<UseCaseRelationshipType, "part-of">;
-  lineStyle: "solid" | "dashed";
-  directed: boolean;
-  marker: "none" | "open_arrow" | "open_triangle";
-  label: string | null;
-  condition: string | null;
+
+export type UseCaseValidationIssue = {
+  severity: "error" | "warning";
+  code: string;
+  message: string;
+  path: string | null;
 };
-export type UseCaseDiagramPlan = {
-  diagramId: string;
-  level: UseCaseLevel;
-  systemBoundary: string;
-  subsystem: string | null;
-  nodes: UseCaseDiagramNode[];
-  edges: UseCaseDiagramEdge[];
-};
+
 export type UseCaseValidation = {
-  issues: { severity: "error" | "warning"; code: string; message: string; path: string | null }[];
+  issues: UseCaseValidationIssue[];
   eligibleForSrs: boolean;
   eligibleDiagramIds: string[];
   confirmedUseCaseIds: string[];
 };
+
 export type UseCasePlantUml = {
   language: "plantuml";
   source: string;
@@ -61,14 +107,15 @@ export type UseCasePlantUml = {
   stale: boolean;
   generatedFrom: "use-case-table" | "manual";
 };
+
 export type UseCaseModelResponse = {
   projectId: string;
   projectName: string;
+  system: UseCaseSystemResponse;
   actors: UseCaseActorResponse[];
+  modules: UseCaseModuleResponse[];
   useCases: UseCaseItemResponse[];
   relationships: UseCaseRelationshipResponse[];
-  diagrams: { id: string; level: UseCaseLevel; systemBoundary: string; subsystem: string | null; actorIds: string[]; useCaseIds: string[]; relationIds: string[] }[];
-  diagramPlans: UseCaseDiagramPlan[];
   sourceHash: string | null;
   validation: UseCaseValidation | null;
   generation: (Record<string, unknown> & { relationsGenerated?: boolean }) | null;
@@ -76,100 +123,199 @@ export type UseCaseModelResponse = {
 };
 
 export type UseCaseModelQuery = {
-  maxLevel?: UseCaseLevel;
   includeActors?: boolean;
   includeRelationships?: boolean;
 };
-export type GenerateUseCaseModelRequest = { maxLevel?: UseCaseLevel; providerConfigId?: string };
+
+export type GenerateUseCaseModelRequest = { providerConfigId?: string };
 export type UpdateUseCasePlantUmlRequest = { source: string };
+
+/*
+ * Deprecated request types are retained so an old client module can still type-check while the
+ * generated model is migrated. The current screen never calls the manual Use Case endpoints.
+ */
+export type UseCaseLevel = "L0" | "L1" | "L2";
+export type UseCaseStatus = "Confirmed" | "Inferred" | "Suggested";
+export type UseCaseActorKind = ActorKind | "Primary actor" | "Supporting actor";
 export type UseCaseActorCreateRequest = { name: string; kind?: UseCaseActorKind };
-export type UseCaseCreateRequest = Omit<UseCaseItemResponse, "id">;
-export type UseCaseUpdateRequest = Partial<Omit<UseCaseItemResponse, "id">>;
+export type UseCaseCreateRequest = {
+  level?: UseCaseLevel;
+  title?: string;
+  name?: string;
+  primaryActorId: string;
+  supportingActorIds?: string[];
+  secondaryActorIds?: string[];
+  subsystem?: string;
+  moduleId?: string;
+  status?: UseCaseStatus;
+  evidence?: EvidenceType;
+  priority?: UseCasePriority | "Must" | "Should" | "Could";
+  parentUseCaseId?: string | null;
+  description: string;
+  precondition?: string;
+  preconditions?: string[];
+  sourceTrace: string[];
+};
+export type UseCaseUpdateRequest = Partial<UseCaseCreateRequest>;
 export type UseCaseRelationshipCreateRequest = Omit<UseCaseRelationshipResponse, "id">;
 
 type ApiEnvelope<T> = { success: boolean; data: T | null; message: string | null };
 
 function unwrap<T>(envelope: ApiEnvelope<T>): T {
-  if (!envelope.success || envelope.data === null) throw new Error(envelope.message || "The use case API returned no data.");
+  if (!envelope.success || envelope.data === null) {
+    throw new Error(envelope.message || "The use case API returned no data.");
+  }
   return envelope.data;
 }
 
 const projectPath = (projectId: string) => `/api/v1/projects/${encodeURIComponent(projectId)}`;
 
-export async function fetchUseCaseModel(projectId: string, query: UseCaseModelQuery = {}): Promise<UseCaseModelResponse> {
-  const response = await apiService.get<ApiEnvelope<UseCaseModelResponse>>(`${projectPath(projectId)}/use-case-model`, {
-    maxLevel: query.maxLevel ?? "L2",
-    includeActors: query.includeActors ?? true,
-    includeRelationships: query.includeRelationships ?? true,
-  });
+export async function fetchUseCaseModel(
+  projectId: string,
+  query: UseCaseModelQuery = {},
+): Promise<UseCaseModelResponse> {
+  const response = await apiService.get<ApiEnvelope<UseCaseModelResponse>>(
+    `${projectPath(projectId)}/use-case-model`,
+    {
+      includeActors: query.includeActors ?? true,
+      includeRelationships: query.includeRelationships ?? true,
+    },
+  );
   return unwrap(response.data);
 }
 
-export async function generateUseCaseModel(projectId: string, body: GenerateUseCaseModelRequest = {}): Promise<UseCaseModelResponse> {
-  const response = await apiService.post<ApiEnvelope<UseCaseModelResponse>, GenerateUseCaseModelRequest>(`${projectPath(projectId)}/use-case-model/generate`, { maxLevel: body.maxLevel ?? "L2", ...(body.providerConfigId ? { providerConfigId: body.providerConfigId } : {}) });
+export async function generateUseCaseModel(
+  projectId: string,
+  body: GenerateUseCaseModelRequest = {},
+): Promise<UseCaseModelResponse> {
+  const response = await apiService.post<ApiEnvelope<UseCaseModelResponse>, GenerateUseCaseModelRequest>(
+    `${projectPath(projectId)}/use-case-model/generate`,
+    body,
+  );
   return unwrap(response.data);
 }
 
-export async function generateUseCaseRelations(projectId: string, body: GenerateUseCaseModelRequest = {}): Promise<UseCaseModelResponse> {
-  const response = await apiService.post<ApiEnvelope<UseCaseModelResponse>, GenerateUseCaseModelRequest>(`${projectPath(projectId)}/use-case-model/relations/generate`, { maxLevel: body.maxLevel ?? "L2", ...(body.providerConfigId ? { providerConfigId: body.providerConfigId } : {}) });
+export async function generateUseCaseRelations(
+  projectId: string,
+  body: GenerateUseCaseModelRequest = {},
+): Promise<UseCaseModelResponse> {
+  const response = await apiService.post<ApiEnvelope<UseCaseModelResponse>, GenerateUseCaseModelRequest>(
+    `${projectPath(projectId)}/use-case-model/relations/generate`,
+    body,
+  );
   return unwrap(response.data);
 }
 
-// Split-generation flow: build the L0/L1 group skeleton deterministically (no LLM call, so it
-// cannot time out), then fill in L2 detail one small group at a time via generateGroupUseCases.
-// This replaces one giant generateUseCaseModel() call -- the thing that used to time out on a
-// larger project -- with several small calls.
-export async function generateUseCaseGroups(projectId: string, body: GenerateUseCaseModelRequest = {}): Promise<UseCaseModelResponse> {
-  const response = await apiService.post<ApiEnvelope<UseCaseModelResponse>, GenerateUseCaseModelRequest>(`${projectPath(projectId)}/use-case-model/groups/generate`, { maxLevel: body.maxLevel ?? "L2", ...(body.providerConfigId ? { providerConfigId: body.providerConfigId } : {}) });
+/** Compatibility endpoints for clients that still use split generation. */
+export async function generateUseCaseGroups(
+  projectId: string,
+  body: GenerateUseCaseModelRequest = {},
+): Promise<UseCaseModelResponse> {
+  const response = await apiService.post<ApiEnvelope<UseCaseModelResponse>, GenerateUseCaseModelRequest>(
+    `${projectPath(projectId)}/use-case-model/groups/generate`,
+    body,
+  );
   return unwrap(response.data);
 }
 
-export async function generateGroupUseCases(projectId: string, groupId: string, body: GenerateUseCaseModelRequest = {}): Promise<UseCaseModelResponse> {
-  const response = await apiService.post<ApiEnvelope<UseCaseModelResponse>, GenerateUseCaseModelRequest>(`${projectPath(projectId)}/use-case-model/groups/${encodeURIComponent(groupId)}/use-cases/generate`, { maxLevel: body.maxLevel ?? "L2", ...(body.providerConfigId ? { providerConfigId: body.providerConfigId } : {}) });
+export async function generateGroupUseCases(
+  projectId: string,
+  groupId: string,
+  body: GenerateUseCaseModelRequest = {},
+): Promise<UseCaseModelResponse> {
+  const response = await apiService.post<ApiEnvelope<UseCaseModelResponse>, GenerateUseCaseModelRequest>(
+    `${projectPath(projectId)}/use-case-model/groups/${encodeURIComponent(groupId)}/use-cases/generate`,
+    body,
+  );
   return unwrap(response.data);
 }
 
-export async function updateUseCasePlantUml(projectId: string, body: UpdateUseCasePlantUmlRequest): Promise<UseCasePlantUml> {
-  const response = await apiService.patch<ApiEnvelope<UseCasePlantUml>, UpdateUseCasePlantUmlRequest>(`${projectPath(projectId)}/use-case-model/uml`, body);
+export async function updateUseCasePlantUml(
+  projectId: string,
+  body: UpdateUseCasePlantUmlRequest,
+): Promise<UseCasePlantUml> {
+  const response = await apiService.patch<ApiEnvelope<UseCasePlantUml>, UpdateUseCasePlantUmlRequest>(
+    `${projectPath(projectId)}/use-case-model/uml`,
+    body,
+  );
   return unwrap(response.data);
 }
 
-export async function createUseCaseActor(projectId: string, body: UseCaseActorCreateRequest): Promise<UseCaseActorResponse> {
-  const response = await apiService.post<ApiEnvelope<UseCaseActorResponse>, UseCaseActorCreateRequest>(`${projectPath(projectId)}/actors`, body);
+export async function createUseCaseActor(
+  projectId: string,
+  body: UseCaseActorCreateRequest,
+): Promise<UseCaseActorResponse> {
+  const response = await apiService.post<ApiEnvelope<UseCaseActorResponse>, UseCaseActorCreateRequest>(
+    `${projectPath(projectId)}/actors`,
+    body,
+  );
   return unwrap(response.data);
 }
 
-export async function updateUseCaseActor(projectId: string, actorId: string, body: { name: string }): Promise<UseCaseActorResponse> {
-  const response = await apiService.patch<ApiEnvelope<UseCaseActorResponse>, { name: string }>(`${projectPath(projectId)}/actors/${encodeURIComponent(actorId)}`, body);
+export async function updateUseCaseActor(
+  projectId: string,
+  actorId: string,
+  body: { name: string },
+): Promise<UseCaseActorResponse> {
+  const response = await apiService.patch<ApiEnvelope<UseCaseActorResponse>, { name: string }>(
+    `${projectPath(projectId)}/actors/${encodeURIComponent(actorId)}`,
+    body,
+  );
   return unwrap(response.data);
 }
 
 export async function deleteUseCaseActor(projectId: string, actorId: string): Promise<void> {
-  const response = await apiService.delete<ApiEnvelope<{ id: string; deleted: boolean }>>(`${projectPath(projectId)}/actors/${encodeURIComponent(actorId)}`);
+  const response = await apiService.delete<ApiEnvelope<{ id: string; deleted: boolean }>>(
+    `${projectPath(projectId)}/actors/${encodeURIComponent(actorId)}`,
+  );
   unwrap(response.data);
 }
 
-export async function createUseCase(projectId: string, body: UseCaseCreateRequest): Promise<UseCaseItemResponse> {
-  const response = await apiService.post<ApiEnvelope<UseCaseItemResponse>, UseCaseCreateRequest>(`${projectPath(projectId)}/use-cases`, body);
+/** Deprecated manual CRUD wrappers. The backend rejects these for generated use cases. */
+export async function createUseCase(
+  projectId: string,
+  body: UseCaseCreateRequest,
+): Promise<UseCaseItemResponse> {
+  const response = await apiService.post<ApiEnvelope<UseCaseItemResponse>, UseCaseCreateRequest>(
+    `${projectPath(projectId)}/use-cases`,
+    body,
+  );
   return unwrap(response.data);
 }
 
-export async function updateUseCase(projectId: string, useCaseId: string, body: UseCaseUpdateRequest): Promise<UseCaseItemResponse> {
-  const response = await apiService.patch<ApiEnvelope<UseCaseItemResponse>, UseCaseUpdateRequest>(`${projectPath(projectId)}/use-cases/${encodeURIComponent(useCaseId)}`, body);
+export async function updateUseCase(
+  projectId: string,
+  useCaseId: string,
+  body: UseCaseUpdateRequest,
+): Promise<UseCaseItemResponse> {
+  const response = await apiService.patch<ApiEnvelope<UseCaseItemResponse>, UseCaseUpdateRequest>(
+    `${projectPath(projectId)}/use-cases/${encodeURIComponent(useCaseId)}`,
+    body,
+  );
   return unwrap(response.data);
 }
 
 export async function deleteUseCase(projectId: string, useCaseId: string): Promise<void> {
-  const response = await apiService.delete<ApiEnvelope<{ id: string; deleted: boolean }>>(`${projectPath(projectId)}/use-cases/${encodeURIComponent(useCaseId)}`);
+  const response = await apiService.delete<ApiEnvelope<{ id: string; deleted: boolean }>>(
+    `${projectPath(projectId)}/use-cases/${encodeURIComponent(useCaseId)}`,
+  );
   unwrap(response.data);
 }
 
-export async function createUseCaseRelationship(projectId: string, body: UseCaseRelationshipCreateRequest): Promise<UseCaseRelationshipResponse> {
-  const response = await apiService.post<ApiEnvelope<UseCaseRelationshipResponse>, UseCaseRelationshipCreateRequest>(`${projectPath(projectId)}/use-case-relationships`, body);
+export async function createUseCaseRelationship(
+  projectId: string,
+  body: UseCaseRelationshipCreateRequest,
+): Promise<UseCaseRelationshipResponse> {
+  const response = await apiService.post<ApiEnvelope<UseCaseRelationshipResponse>, UseCaseRelationshipCreateRequest>(
+    `${projectPath(projectId)}/use-case-relationships`,
+    body,
+  );
   return unwrap(response.data);
 }
 
 export async function deleteUseCaseRelationship(projectId: string, relationshipId: string): Promise<void> {
-  const response = await apiService.delete<ApiEnvelope<{ id: string; deleted: boolean }>>(`${projectPath(projectId)}/use-case-relationships/${encodeURIComponent(relationshipId)}`);
+  const response = await apiService.delete<ApiEnvelope<{ id: string; deleted: boolean }>>(
+    `${projectPath(projectId)}/use-case-relationships/${encodeURIComponent(relationshipId)}`,
+  );
   unwrap(response.data);
 }

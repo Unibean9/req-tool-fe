@@ -1,342 +1,192 @@
-# Use Case Table và PlantUML — API Contract
+# Use Case Table và PlantUML — API contract
 
-Tài liệu này mô tả các API cho màn hình **Use Case Table** và **PlantUML source**, gồm method/path, payload, response và cách dùng dữ liệu. Frontend dùng một model chung; React Flow không còn là output của màn hình này. `diagrams` và `diagramPlans` là field legacy có thể còn trong dữ liệu cũ nhưng không được render.
+Contract này phải được giữ đồng bộ với
+[`req-tool-be/docs/rule-diagram-usecase/use-case-model-api.md`](../../req-tool-be/docs/rule-diagram-usecase/use-case-model-api.md)
+và file đặc tả
+[`use-case-table-and-uml-spec-with-enums.md`](../../req-tool-be/docs/rule-diagram-usecase/use-case-table-and-uml-spec-with-enums.md).
 
-Sau khi `POST /use-case-model/generate` hoàn tất, response có thêm `plantUml` với `language`, `source`, `editable`, `stale`, và `generatedFrom`. FE hiển thị `source` trong editor và preview PlantUML. Chỉnh sửa source được lưu bằng `PATCH /use-case-model/uml`.
+Backend đọc các component/version BRD và PRD đang lưu trong document registry của project. Hai file
+Markdown mẫu trong repository không được đọc ở runtime.
 
-## Quy ước
+## Canonical model
 
-| Field | Giá trị |
+```text
+System
+└── Module / Capability
+    └── Use Case
+```
+
+Module chỉ là nhóm hiển thị, không phải một use case. Model không còn `L0`, `L1`, `L2`,
+`parentUseCaseId`, `part-of`, `diagramPlans` hoặc React Flow nodes/edges.
+
+Các phần hiển thị của FE lấy từ cùng một aggregate:
+
+```json
+{
+  "system": {},
+  "modules": [],
+  "actors": [],
+  "useCases": [],
+  "relationships": [],
+  "plantUml": {}
+}
+```
+
+## Enum
+
+| Enum | Giá trị |
 |---|---|
-| `level` | `L0`, `L1`, `L2` |
-| `status` | `Confirmed`, `Inferred`, `Suggested` |
-| `priority` | `Must`, `Should`, `Could` |
-| `actor.kind` | `Primary actor`, `Supporting actor` |
-| `relationship.type` | `association`, `part-of`, `include`, `extend` |
+| `priority` | `required`, `recommended`, `optional` |
+| `evidence` | `explicit`, `inferred` |
+| `relationships[].type` | `include`, `extend`, `generalization` |
+| `actors[].kind` | `human`, `external_system`, `scheduler` |
+| `actors[].side` | `left`, `right` |
+| `mainFlow[].participantType` / flow steps | `actor`, `system`, `external_system` |
+| `relatedRequirements[].type` | `functional`, `business_rule`, `non_functional` |
+| `relationships[].reviewState` | `accepted`, `review_required`, `rejected` |
 
-Actor/Use Case IDs phải ổn định vì các field `primaryActorId`, `supportingActorIds`, `parentUseCaseId`, `sourceId`, và `targetId` tham chiếu tới các ID này.
+Actor association không nằm trong `relationships`. Renderer suy ra association từ
+`primaryActorId` và `secondaryActorIds` của từng use case.
 
-## 1. Lấy model dùng chung cho Table và Diagram
-
-### Request
-
-```http
-GET /api/projects/{projectId}/use-case-model?maxLevel=L2&includeActors=true&includeRelationships=true
-```
-
-Không gửi JSON body với GET. Request object tương đương mà mock service hiện dùng:
-
-```json
-{
-  "projectId": "demo-ai-research-platform",
-  "includeActors": true,
-  "includeRelationships": true,
-  "maxLevel": "L2"
-}
-```
-
-| Param | Type | Default | Mô tả |
-|---|---|---|---|
-| `projectId` | `string` | bắt buộc | ID project trên URL path. |
-| `maxLevel` | `L0 \| L1 \| L2` | `L2` | Level sâu nhất cần trả về. |
-| `includeActors` | `boolean` | `true` | Có trả danh sách actors không. |
-| `includeRelationships` | `boolean` | `true` | Có trả quan hệ dùng cho panel/diagram không. |
-
-### Response `200 OK`
-
-```json
-{
-  "projectId": "demo-ai-research-platform",
-  "projectName": "AI Research Experimentation Platform",
-  "actors": [
-    { "id": "ACT-RESEARCHER", "name": "Researcher", "kind": "Primary actor" },
-    { "id": "ACT-ADMIN", "name": "System Administrator", "kind": "Supporting actor" },
-    { "id": "ACT-REVIEWER", "name": "Reviewer / Stakeholder", "kind": "Supporting actor" }
-  ],
-  "useCases": [
-    {
-      "id": "UC-L0-001",
-      "level": "L0",
-      "title": "Run a research experiment",
-      "primaryActorId": "ACT-RESEARCHER",
-      "supportingActorIds": ["ACT-ADMIN"],
-      "subsystem": "AI Research Experimentation Platform",
-      "status": "Confirmed",
-      "priority": "Must",
-      "parentUseCaseId": null,
-      "description": "Plan, execute, validate, and publish a research experiment using governed data and reproducible workflows.",
-      "precondition": "The organization and project are available.",
-      "sourceTrace": ["BRD §3", "PRD §4"]
-    },
-    {
-      "id": "UC-L1-001",
-      "level": "L1",
-      "title": "Manage research workspace and access",
-      "primaryActorId": "ACT-RESEARCHER",
-      "supportingActorIds": ["ACT-ADMIN"],
-      "subsystem": "Workspace & Access",
-      "status": "Confirmed",
-      "priority": "Must",
-      "parentUseCaseId": "UC-L0-001",
-      "description": "Set up a project workspace and ensure users only see projects and actions they are allowed to use.",
-      "precondition": "The organization and project are available.",
-      "sourceTrace": ["BRD §3", "FR-AUTH-01"]
-    },
-    {
-      "id": "UC-WAC-01",
-      "level": "L2",
-      "title": "Authenticate user",
-      "primaryActorId": "ACT-RESEARCHER",
-      "supportingActorIds": ["ACT-ADMIN"],
-      "subsystem": "Workspace & Access",
-      "status": "Confirmed",
-      "priority": "Must",
-      "parentUseCaseId": "UC-L1-001",
-      "description": "Verify a user's identity before granting access to the workspace.",
-      "precondition": "The user has an active account.",
-      "sourceTrace": ["BRD §3", "FR-AUTH-01"]
-    }
-  ],
-  "relationships": [
-    { "id": "rel-root-workspace", "sourceId": "UC-L0-001", "targetId": "UC-L1-001", "type": "part-of" },
-    { "id": "rel-auth-include", "sourceId": "UC-L1-001", "targetId": "UC-WAC-01", "type": "include" },
-    { "id": "rel-quality-extend", "sourceId": "UC-DAT-02", "targetId": "UC-L1-002", "type": "extend" }
-  ]
-}
-```
-
-Đây là response rút gọn để minh họa schema. Mock hiện có **15 Use Case**: 1 `L0`, 5 `L1`, 9 `L2`.
-
-### Dùng response để hiển thị Table
-
-- Các cột `Level`, `Use case`, `Subsystem`, `Status`, `Priority` lấy từ `useCases`.
-- `Primary actor` tra `primaryActorId` trong `actors` theo `id`.
-- Panel chi tiết lấy `description`, `precondition`, actor IDs, `sourceTrace`, và relationships liên quan.
-- Lọc level/tìm kiếm có thể chạy client-side. Khi dữ liệu lớn, hỗ trợ thêm query params `level`, `q`, `page`, `pageSize`.
-
-### Dùng response để hiển thị Diagram
-
-Frontend chuyển model domain sang React Flow nodes/edges. Ví dụ rút gọn:
-
-```json
-{
-  "nodes": [
-    {
-      "id": "system",
-      "type": "system",
-      "position": { "x": 250, "y": 0 },
-      "data": { "title": "AI Research Experimentation Platform" }
-    },
-    {
-      "id": "actor-ACT-RESEARCHER",
-      "type": "actor",
-      "position": { "x": 5, "y": 620 },
-      "data": { "actorId": "ACT-RESEARCHER", "name": "Researcher", "side": "left" }
-    },
-    {
-      "id": "usecase-UC-L1-001",
-      "type": "usecase",
-      "position": { "x": 390, "y": 330 },
-      "data": { "useCaseId": "UC-L1-001", "title": "Manage research workspace and access", "level": "L1" }
-    }
-  ],
-  "edges": [
-    {
-      "id": "assoc-ACT-RESEARCHER-UC-L1-001",
-      "source": "actor-ACT-RESEARCHER",
-      "target": "usecase-UC-L1-001",
-      "type": "straight"
-    },
-    {
-      "id": "rel-auth-include",
-      "source": "usecase-UC-L1-001",
-      "target": "usecase-UC-WAC-01",
-      "type": "straight",
-      "label": "«include»",
-      "markerEnd": { "type": "arrowclosed" }
-    }
-  ]
-}
-```
-
-Trong API model response, **không bắt buộc** lưu React Flow `nodes`/`edges`: frontend có thể dựng chúng từ actors, use cases, relationships như hiện tại. Nếu cần giữ vị trí người dùng sắp xếp, lưu `position: {x, y}` riêng cho actor và Use Case, hoặc tạo API layout riêng. `include`/`extend` thành đường nét đứt có arrowhead; `part-of` dùng làm hierarchy và hiện không vẽ như UML edge.
-
-## 2. Lấy chi tiết Use Case
-
-### Request
+## Đọc model
 
 ```http
-GET /api/projects/{projectId}/use-cases/{useCaseId}
+GET /api/v1/projects/{projectId}/use-case-model?includeActors=true&includeRelationships=true
 ```
 
-### Response `200 OK`
+`projectId` là UUID. Không gửi `maxLevel`.
 
-```json
-{
-  "id": "UC-L1-001",
-  "level": "L1",
-  "title": "Manage research workspace and access",
-  "primaryActorId": "ACT-RESEARCHER",
-  "supportingActorIds": ["ACT-ADMIN"],
-  "subsystem": "Workspace & Access",
-  "status": "Confirmed",
-  "priority": "Must",
-  "parentUseCaseId": "UC-L0-001",
-  "description": "Set up a project workspace and ensure users only see projects and actions they are allowed to use.",
-  "precondition": "The organization and project are available.",
-  "sourceTrace": ["BRD §3", "FR-AUTH-01"],
-  "relationships": [
-    { "id": "rel-root-workspace", "sourceId": "UC-L0-001", "targetId": "UC-L1-001", "type": "part-of" },
-    { "id": "rel-auth-include", "sourceId": "UC-L1-001", "targetId": "UC-WAC-01", "type": "include" }
-  ]
-}
+Envelope:
+
+```ts
+type ApiEnvelope<T> = {
+  success: boolean;
+  data: T | null;
+  message: string | null;
+};
 ```
 
-## 3. Actor APIs
+Response data có các field:
 
-### Tạo Actor
+```ts
+type UseCaseModel = {
+  projectId: string;
+  projectName: string;
+  system: {
+    id: string;
+    name: string;
+    description: string | null;
+    sourceTrace: string[];
+  };
+  actors: Actor[];
+  modules: Module[];
+  useCases: UseCase[];
+  relationships: Relationship[];
+  sourceHash: string | null;
+  validation: Validation | null;
+  generation: Record<string, unknown> | null;
+  plantUml: PlantUml | null;
+};
+```
+
+Use case table dùng các cột `Use case`, `Main actor`, `Relationships`, `Evidence`, `Priority`.
+Chi tiết dùng `description`, actors, relationships, trigger, preconditions, các flow,
+postconditions, business rules, related requirements và `sourceTrace`.
+
+## Generate
 
 ```http
-POST /api/projects/{projectId}/actors
+POST /api/v1/projects/{projectId}/use-case-model/generate
 Content-Type: application/json
 ```
 
-Request body:
-
-```json
-{ "name": "Data steward", "kind": "Supporting actor" }
-```
-
-Response `201 Created`:
-
-```json
-{ "id": "ACT-DATA-STEWARD", "name": "Data steward", "kind": "Supporting actor" }
-```
-
-### Đổi tên Actor
-
-```http
-PATCH /api/projects/{projectId}/actors/{actorId}
-Content-Type: application/json
-```
-
-Request body:
-
-```json
-{ "name": "Research lead" }
-```
-
-Response `200 OK` trả Actor đã cập nhật:
-
-```json
-{ "id": "ACT-RESEARCHER", "name": "Research lead", "kind": "Primary actor" }
-```
-
-### Xóa Actor
-
-```http
-DELETE /api/projects/{projectId}/actors/{actorId}
-```
-
-Response `200 OK`:
-
-```json
-{ "id": "ACT-ADMIN", "deleted": true }
-```
-
-Nếu Actor còn được Use Case tham chiếu, backend nên trả `409 Conflict` hoặc yêu cầu `reassignPrimaryActorId` trước khi xóa.
-
-## 4. Use Case APIs
-
-### Tạo Use Case
-
-```http
-POST /api/projects/{projectId}/use-cases
-Content-Type: application/json
-```
-
-Request body:
+Body có thể rỗng hoặc chọn provider đã cấu hình cho user:
 
 ```json
 {
-  "level": "L2",
-  "title": "Review experiment trace",
-  "primaryActorId": "ACT-RESEARCHER",
-  "supportingActorIds": ["ACT-REVIEWER"],
-  "subsystem": "Execution & Scientific Validation",
-  "status": "Suggested",
-  "priority": "Should",
-  "parentUseCaseId": "UC-L1-004",
-  "description": "Inspect the provenance and execution trace for an experiment.",
-  "precondition": "An experiment run has completed.",
-  "sourceTrace": ["PRD §6"]
+  "providerConfigId": "optional-provider-config-uuid"
 }
 ```
 
-Response `201 Created` trả Use Case đầy đủ theo schema ở mục 1, kèm `id` do backend cấp.
+FE không gửi API key. Backend dùng provider active mặc định hoặc provider được chỉ định.
+Pipeline là:
 
-### Cập nhật Use Case
+```text
+stored BRD/PRD components
+→ AI extraction
+→ source-backed completion
+→ enum/semantic validation
+→ one complete PlantUML system diagram
+```
+
+Completion giữ lại mọi requirement family có trong snapshot, nên AI không được phép làm mất row,
+actor, module hoặc source reference. Nếu LLM timeout hoặc trả JSON không hợp lệ, endpoint chính
+vẫn trả bảng source-backed và ghi nguyên nhân trong `generation.error`.
+
+Quan hệ semantic có thể được resolver trong cùng lần generate hoặc chạy lại bằng endpoint bên dưới.
+
+## Resolve relationships
 
 ```http
-PATCH /api/projects/{projectId}/use-cases/{useCaseId}
+POST /api/v1/projects/{projectId}/use-case-model/relations/generate
 Content-Type: application/json
 ```
 
-Request body chỉ cần có các field thay đổi, ví dụ:
+Endpoint chỉ được trả:
 
-```json
-{ "title": "Review experiment execution trace", "status": "Confirmed", "priority": "Must" }
+```text
+include: base → included
+extend: extension → base, bắt buộc condition
+generalization: child → parent
 ```
 
-Response `200 OK` trả Use Case đầy đủ sau cập nhật.
+Không trả `association`; association do PlantUML renderer lấy từ actor IDs. Nếu resolver timeout
+hoặc thất bại, FE giữ nguyên bảng và cho phép retry.
 
-## 5. Relationship APIs
-
-### Tạo relationship
+## PlantUML source
 
 ```http
-POST /api/projects/{projectId}/use-case-relationships
+PATCH /api/v1/projects/{projectId}/use-case-model/uml
 Content-Type: application/json
 ```
-
-Request body:
-
-```json
-{ "sourceId": "UC-L1-004", "targetId": "UC-EXP-02", "type": "include" }
-```
-
-Response `201 Created`:
-
-```json
-{ "id": "REL-EXP-002", "sourceId": "UC-L1-004", "targetId": "UC-EXP-02", "type": "include" }
-```
-
-### Xóa relationship
-
-```http
-DELETE /api/projects/{projectId}/use-case-relationships/{relationshipId}
-```
-
-Response `200 OK`:
-
-```json
-{ "id": "REL-EXP-002", "deleted": true }
-```
-
-## 6. Error response chung
 
 ```json
 {
-  "error": {
-    "code": "USE_CASE_NOT_FOUND",
-    "message": "The requested use case does not exist.",
-    "details": []
-  }
+  "source": "@startuml\n...\n@enduml"
 }
 ```
 
-Status dự kiến: `400` payload sai, `401` chưa đăng nhập, `403` thiếu quyền, `404` không thấy project/actor/Use Case, `409` xung đột khi xóa hoặc tạo relationship.
+Backend kiểm tra marker `@startuml`/`@enduml`, lưu source nguyên văn và không sync ngược vào bảng.
+Generate lại model sẽ tạo source mới từ canonical model.
 
-## 7. Mock hiện tại
+Renderer mặc định sinh một boundary cho toàn hệ thống, package cho từng module, actor ở ngoài
+boundary và các arrow sau:
 
-TypeScript request/response, 15 Use Case mock, relationships và `fetchUseCaseModel(payload)` nằm trong `lib/api/services/useCaseModel.ts`. Thay implementation của hàm mock bằng HTTP client khi backend sẵn sàng; giữ contract để Table và Diagram tiếp tục dùng chung model.
+```plantuml
+left to right direction
+skinparam shadowing false
+skinparam linetype ortho
+skinparam nodesep 70
+skinparam ranksep 80
+skinparam packageStyle rectangle
+
+ACTOR -- USE_CASE
+UC_BASE ..> UC_INCLUDED : <<include>>
+UC_EXTENSION ..> UC_BASE : <<extend>>
+UC_CHILD -|> UC_PARENT
+```
+
+## Use Case detail
+
+```http
+GET /api/v1/projects/{projectId}/use-cases/{useCaseId}
+```
+
+Response là một use case cùng các semantic relationship trực tiếp. Đây là dữ liệu inspect từ BRD/PRD
+và AI; FE không tạo/sửa/xóa use case thủ công. Chỉnh sửa thủ công chỉ áp dụng cho PlantUML source.
+
+## Deprecated compatibility routes
+
+Các route actor và route CRUD use case cũ có thể còn trong OpenAPI để tương thích client cũ. FE mới
+không gọi CRUD use case; backend trả `405` cho tạo/sửa/xóa use case. Không dùng `association` hoặc
+`part-of` trong payload canonical mới.
