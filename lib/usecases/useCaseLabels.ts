@@ -1,90 +1,38 @@
 import type {
-  UseCaseLevel,
+  EvidenceType,
   UseCasePriority,
   UseCaseRelationshipType,
-  UseCaseStatus,
 } from "@/lib/api/services/useCaseModel";
 
-export const USE_CASE_LEVEL_META: Record<UseCaseLevel, {
-  label: string;
-  shortLabel: string;
-  description: string;
-}> = {
-  L0: {
-    label: "Capability group",
-    shortLabel: "Capability",
-    description: "A top-level business capability from the PRD.",
-  },
-  L1: {
-    label: "Use case",
-    shortLabel: "Use case",
-    description: "A user goal or functional requirement under a capability group.",
-  },
-  L2: {
-    label: "Sub-use case",
-    shortLabel: "Sub-use case",
-    description: "A detailed child flow under a use case.",
-  },
+export const USE_CASE_EVIDENCE_META: Record<EvidenceType, { label: string; description: string }> = {
+  explicit: { label: "Explicit", description: "Directly supported by the stored BRD/PRD evidence." },
+  inferred: { label: "Inferred", description: "Derived from the available BRD/PRD context." },
 };
 
-export const USE_CASE_STATUS_META: Record<UseCaseStatus, {
-  label: string;
-  description: string;
-}> = {
-  Confirmed: {
-    label: "Confirmed",
-    description: "Directly supported by the stored BRD/PRD evidence.",
-  },
-  Inferred: {
-    label: "Inferred",
-    description: "Derived from the available BRD/PRD context.",
-  },
-  Suggested: {
-    label: "Suggested",
-    description: "A proposal that still needs human review.",
-  },
+export const USE_CASE_PRIORITY_META: Record<UseCasePriority, { label: string; description: string }> = {
+  required: { label: "Required", description: "Needed for the current scope." },
+  recommended: { label: "Recommended", description: "Useful for the intended product scope." },
+  optional: { label: "Optional", description: "Can be deferred when scope is constrained." },
 };
 
-export const USE_CASE_PRIORITY_META: Record<UseCasePriority, {
-  label: string;
-  description: string;
-}> = {
-  Must: { label: "Required", description: "Needed for the current scope." },
-  Should: { label: "Recommended", description: "Important, but can follow the required scope." },
-  Could: { label: "Optional", description: "Useful when time and scope allow." },
+export const USE_CASE_RELATION_META: Record<
+  UseCaseRelationshipType,
+  { label: string; outgoing: string; incoming: string }
+> = {
+  include: { label: "«include»", outgoing: "Includes", incoming: "Included by" },
+  extend: { label: "«extend»", outgoing: "Extends", incoming: "Extended by" },
+  generalization: { label: "Generalization", outgoing: "Specializes", incoming: "Generalized by" },
 };
 
-export const USE_CASE_RELATION_META: Record<UseCaseRelationshipType, {
-  label: string;
-  outgoing: string;
-  incoming: string;
-}> = {
-  association: {
-    label: "Association",
-    outgoing: "Associated with",
-    incoming: "Associated with",
-  },
-  include: {
-    label: "«include»",
-    outgoing: "Always reuses",
-    incoming: "Included by",
-  },
-  extend: {
-    label: "«extend»",
-    outgoing: "Optionally extends",
-    incoming: "Extended by",
-  },
-  generalization: {
-    label: "Generalization",
-    outgoing: "Specializes",
-    incoming: "Generalized by",
-  },
-  "part-of": {
-    label: "Hierarchy",
-    outgoing: "Contains",
-    incoming: "Contained by",
-  },
-};
+/** Legacy labels kept only for unused compatibility dialogs from the previous L0/L1/L2 screen. */
+export const USE_CASE_LEVEL_META = {
+  L0: { label: "System", description: "Legacy compatibility value." },
+  L1: { label: "Module", description: "Legacy compatibility value." },
+  L2: { label: "Use case", description: "Legacy compatibility value." },
+} as const;
 
-export const USE_CASE_LEVEL_FILTERS: Array<"all" | UseCaseLevel> = ["all", "L0", "L1", "L2"];
-
+export const USE_CASE_STATUS_META = {
+  Confirmed: { label: "Explicit", description: "Legacy compatibility value." },
+  Inferred: { label: "Inferred", description: "Legacy compatibility value." },
+  Suggested: { label: "Inferred", description: "Legacy compatibility value." },
+} as const;
