@@ -10,7 +10,9 @@ import {
   generateUseCaseDiagram,
   generateUseCaseGroups,
   generateUseCaseRelations,
+  updateUseCaseDiagramPositions,
   updateUseCasePlantUml,
+  type DiagramNodePosition,
   type UseCaseModelResponse,
 } from "@/lib/api/services/useCaseModel";
 
@@ -189,6 +191,21 @@ export function useUseCaseModel(projectId: string | undefined) {
     onSettled: () => client.invalidateQueries({ queryKey }),
   });
 
+  const savePositionsMutation = useMutation({
+    // A separate mutation (rather than routing through the generic `save`) so a failure here
+    // gets its own message instead of the generic "Could not save use case changes.", and so
+    // its pending state can disable just the diagram's own save affordance.
+    mutationFn: async (positions: DiagramNodePosition[]) => {
+      const model = await updateUseCaseDiagramPositions(projectId!, positions);
+      client.setQueryData(queryKey, model);
+      return model;
+    },
+    onError: (error) => {
+      toast.error(getApiErrorMessage(error, "Could not save the diagram layout."));
+    },
+    onSettled: () => client.invalidateQueries({ queryKey }),
+  });
+
   const runLocked = useCallback(
     async (operation: () => Promise<unknown>, mutation: typeof saveMutation) => {
       if (!projectId || locked.current) return false;
@@ -236,6 +253,22 @@ export function useUseCaseModel(projectId: string | undefined) {
     }
   }, [generateDiagramMutation, projectId]);
 
+  const savePositions = useCallback(
+    async (positions: DiagramNodePosition[]) => {
+      if (!projectId || locked.current || !positions.length) return false;
+      locked.current = true;
+      try {
+        await savePositionsMutation.mutateAsync(positions);
+        return true;
+      } catch {
+        return false;
+      } finally {
+        locked.current = false;
+      }
+    },
+    [projectId, savePositionsMutation],
+  );
+
   const generateRelations = useCallback(
     () =>
       runLocked(
@@ -268,9 +301,11 @@ export function useUseCaseModel(projectId: string | undefined) {
     generateDiagram,
     generateRelations,
     savePlantUml,
+    savePositions,
     saving: saveMutation.isPending,
     generatingTable: generateTableMutation.isPending,
     generatingDiagram: generateDiagramMutation.isPending,
     generatingRelations: relationMutation.isPending,
+    savingPositions: savePositionsMutation.isPending,
   };
 }

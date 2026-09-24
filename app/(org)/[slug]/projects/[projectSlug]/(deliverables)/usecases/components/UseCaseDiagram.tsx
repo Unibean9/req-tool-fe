@@ -14,12 +14,14 @@ import {
   type Edge,
   type EdgeProps,
   type Node,
+  type OnNodeDrag,
 } from "@xyflow/react";
-import { Download, FileDown, GitBranch, Maximize2, Minimize2, Users } from "lucide-react";
+import { Download, FileDown, GitBranch, Loader2, Maximize2, Minimize2, Users } from "lucide-react";
 import "@xyflow/react/dist/style.css";
 import type {
   DiagramLayout,
   DiagramLayoutPoint,
+  DiagramNodePosition,
   UseCaseActorResponse,
   UseCaseItemResponse,
   UseCaseModelResponse,
@@ -28,15 +30,19 @@ import { buildDrawioXml, downloadDrawioFile } from "@/lib/usecases/drawioExport"
 
 type UseCaseDiagramProps = {
   response: UseCaseModelResponse;
+  onSavePositions?: (positions: DiagramNodePosition[]) => Promise<boolean>;
+  savingPositions?: boolean;
 };
 
 type ActorNodeData = {
+  rawId: string;
   name: string;
   side: "left" | "right";
   kind: UseCaseActorResponse["kind"];
 };
 
 type UseCaseNodeData = {
+  rawId: string;
   name: string;
   moduleId: string;
   moduleName: string;
@@ -267,8 +273,13 @@ function createGraphFromLayout(response: UseCaseModelResponse, layout: DiagramLa
         id: layoutNodeId(node),
         type: "actor",
         position: { x: node.x, y: node.y },
-        data: { name: node.name, side: node.side === "right" ? "right" : "left", kind: node.actorKind ?? "human" },
-        draggable: false,
+        data: {
+          rawId: node.id,
+          name: node.name,
+          side: node.side === "right" ? "right" : "left",
+          kind: node.actorKind ?? "human",
+        },
+        draggable: true,
       } satisfies DiagramNode;
     }
     const moduleEntry = moduleById.get(node.moduleId ?? "");
@@ -277,12 +288,13 @@ function createGraphFromLayout(response: UseCaseModelResponse, layout: DiagramLa
       type: "usecase",
       position: { x: node.x, y: node.y },
       data: {
+        rawId: node.id,
         name: node.name,
         moduleId: node.moduleId ?? "",
         moduleName: node.moduleName ?? moduleEntry?.name ?? "General",
         priority: node.priority ?? "recommended",
       },
-      draggable: false,
+      draggable: true,
     } satisfies DiagramNode;
   });
   const byCanonicalId = new Map(layout.nodes.map((node) => [node.id, layoutNodeId(node)]));
@@ -360,7 +372,10 @@ function createGraph(response: UseCaseModelResponse) {
           x: side === "left" ? 0 : SYSTEM_X + systemWidth + 160,
           y: actorY(sideIndex, sideActors.length),
         },
-        data: { name: actor.name, side, kind: actor.kind },
+        // This whole branch only runs when the backend has no diagramLayout yet (see createGraph
+        // below), so there is nothing saved server-side for a drag here to attach to -- stays
+        // undraggable rather than letting the user rearrange a layout that can't be saved.
+        data: { rawId: actor.id, name: actor.name, side, kind: actor.kind },
         draggable: false,
       } satisfies DiagramNode;
     }),
@@ -375,7 +390,13 @@ function createGraph(response: UseCaseModelResponse) {
           x: SYSTEM_X + 48 + column * (USE_CASE_WIDTH + COLUMN_GAP),
           y: SYSTEM_Y + 92 + row * (USE_CASE_HEIGHT + ROW_GAP),
         },
-        data: { name: item.name, moduleId: item.moduleId, moduleName: moduleEntry?.name ?? "", priority: item.priority },
+        data: {
+          rawId: item.id,
+          name: item.name,
+          moduleId: item.moduleId,
+          moduleName: moduleEntry?.name ?? "",
+          priority: item.priority,
+        },
         draggable: false,
       } satisfies DiagramNode;
     }),
@@ -562,7 +583,7 @@ function createDiagramSvg(nodes: DiagramNode[], edges: Edge[], projectName: stri
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${width * 2}" height="${height * 2}" viewBox="${minX} ${minY} ${width} ${height}"><defs><marker id="open-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto"><path d="M 0 0 L 10 5 L 0 10" fill="none" stroke="#686868" stroke-width="1.2"/></marker><marker id="generalization" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="12" markerHeight="12" orient="auto"><path d="M 0 0 L 12 6 L 0 12 Z" fill="#ffffff" stroke="#686868" stroke-width="1.2"/></marker></defs>${edgeMarkup}${nodeMarkup}</svg>`;
 }
 
-export function UseCaseDiagram({ response }: UseCaseDiagramProps) {
+export function UseCaseDiagram({ response, onSavePositions, savingPositions }: UseCaseDiagramProps) {
   const sectionRef = useRef<HTMLElement>(null);
   const [fullscreen, setFullscreen] = useState(false);
   const graph = useMemo(() => createGraph(response), [response]);
@@ -577,6 +598,13 @@ export function UseCaseDiagram({ response }: UseCaseDiagramProps) {
     syncGraph();
   }, [syncGraph]);
 
+  // "Unsaved changes" is derived from whether a drag happened against the graph that is still
+  // current, not stored as its own flag reset in an effect: `graph` only gets a new identity
+  // when `response` (fresh server data, including after a successful position save) changes, so
+  // this clears itself the moment that happens, with no separate reset step to keep in sync.
+  const [draggedAtGraph, setDraggedAtGraph] = useState<typeof graph | null>(null);
+  const dirty = draggedAtGraph === graph;
+
   useEffect(() => {
     const syncFullscreen = () => setFullscreen(document.fullscreenElement === sectionRef.current);
     document.addEventListener("fullscreenchange", syncFullscreen);
@@ -588,9 +616,52 @@ export function UseCaseDiagram({ response }: UseCaseDiagramProps) {
     else await sectionRef.current?.requestFullscreen();
   };
 
+  // Once anything has been dragged, relationship/generalization edges stop trusting the
+  // server-computed `points` (frozen at whatever the positions were before the drag) and fall
+  // back to the live handle coordinates React Flow already recomputes on every node move --
+  // see normalizedEdgePoints. Saving persists positions the backend can turn back into proper
+  // routed `points` for the next load; until then, straight lines that actually follow the
+  // nodes read better than perfectly-routed lines pointing at where a node used to be.
+  const renderEdges = useMemo(
+    () => (dirty ? edges.map((edge) => ({ ...edge, data: { ...(edge.data as object), points: undefined } })) : edges),
+    [dirty, edges],
+  );
+
+  const handleNodeDragStop: OnNodeDrag<DiagramNode> = useCallback(
+    (_event, node) => {
+      if (node.type === "actor" || node.type === "usecase") setDraggedAtGraph(graph);
+    },
+    [graph],
+  );
+
+  const savePositions = useCallback(async () => {
+    if (!onSavePositions) return;
+    const positions = nodes
+      .filter((node): node is DiagramNode & { data: ActorNodeData | UseCaseNodeData } => node.type === "actor" || node.type === "usecase")
+      .map((node) => ({ id: (node.data as { rawId: string }).rawId, x: node.position.x, y: node.position.y }));
+    if (!positions.length) return;
+    const saved = await onSavePositions(positions);
+    // On success the parent's response updates from the save response, which gives `graph` a
+    // new identity and clears `dirty` on its own (see above) -- this is just belt-and-suspenders
+    // for the moment in between, in case that round-trip is not instant.
+    if (saved) setDraggedAtGraph(null);
+  }, [nodes, onSavePositions]);
+
+  useEffect(() => {
+    if (!dirty) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "s") {
+        event.preventDefault();
+        void savePositions();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [dirty, savePositions]);
+
   const exportPng = async () => {
     if (!nodes.length) return;
-    const svg = createDiagramSvg(nodes, edges, boundaryName(response));
+    const svg = createDiagramSvg(nodes, renderEdges, boundaryName(response));
     const svgUrl = URL.createObjectURL(new Blob([svg], { type: "image/svg+xml;charset=utf-8" }));
     try {
       const image = new Image();
@@ -621,7 +692,7 @@ export function UseCaseDiagram({ response }: UseCaseDiagramProps) {
 
   const exportDrawio = () => {
     if (!nodes.some((node) => node.type === "usecase")) return;
-    const source = buildDrawioXml(nodes, edges, boundaryName(response));
+    const source = buildDrawioXml(nodes, renderEdges, boundaryName(response));
     const filename = `${response.projectName}-use-case-diagram.drawio`.replace(/[^a-z0-9-_.]/gi, "-");
     downloadDrawioFile(source, filename);
   };
@@ -652,13 +723,13 @@ export function UseCaseDiagram({ response }: UseCaseDiagramProps) {
         ) : (
           <ReactFlow
             nodes={nodes}
-            edges={edges}
+            edges={renderEdges}
             nodeTypes={nodeTypes}
             edgeTypes={edgeTypes}
             onNodesChange={onNodesChange}
             onEdgesChange={onEdgesChange}
+            onNodeDragStop={handleNodeDragStop}
             nodesConnectable={false}
-            nodesDraggable={false}
             fitView
             fitViewOptions={{ padding: 0.08 }}
             minZoom={0.1}
@@ -669,12 +740,26 @@ export function UseCaseDiagram({ response }: UseCaseDiagramProps) {
             <Controls className="!overflow-hidden !rounded-lg !border !border-[#ccc] !bg-white !shadow-md [&>button]:!border-[#ddd] [&>button]:!bg-white [&>button]:!fill-[#333]" />
           </ReactFlow>
         )}
+        {dirty ? (
+          <div className="absolute inset-x-0 bottom-0 flex items-center justify-between gap-3 border-t border-amber-500/40 bg-amber-50 px-4 py-2 text-xs text-amber-900">
+            <span>Unsaved layout changes.</span>
+            <button
+              type="button"
+              disabled={savingPositions}
+              onClick={() => void savePositions()}
+              className="inline-flex items-center gap-1.5 rounded-md border border-amber-600/50 bg-white px-2.5 py-1 font-medium text-amber-900 hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {savingPositions ? <Loader2 className="size-3.5 animate-spin" /> : null}
+              Save ({typeof navigator !== "undefined" && navigator.platform.includes("Mac") ? "⌘S" : "Ctrl+S"})
+            </button>
+          </div>
+        ) : null}
       </div>
       <div className="flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-border/60 px-4 py-2.5 text-[10px] text-muted-foreground">
         <span className="inline-flex items-center gap-1.5"><Users className="size-3" />Actor</span>
         <span className="inline-flex items-center gap-1.5"><span className="inline-block h-3 w-5 rounded-full border border-muted-foreground" />Use case</span>
         <span className="inline-flex items-center gap-1.5"><GitBranch className="size-3" />Association · include · extend · generalization</span>
-        <span className="ml-auto">All generated use cases are shown</span>
+        <span className="ml-auto">{onSavePositions ? "Drag actors or use cases to reposition · " : ""}All generated use cases are shown</span>
       </div>
     </section>
   );

@@ -38,6 +38,8 @@ export default function UseCaseScreen() {
     generatingTable,
     generateDiagram,
     generatingDiagram,
+    savePositions,
+    savingPositions,
   } = useUseCaseModel(projectId);
   const [tab, setTab] = useState<Tab>("table");
   const [selectedId, setSelectedId] = useState("");
@@ -267,7 +269,7 @@ export default function UseCaseScreen() {
           />
         </div>
       ) : effectiveTab === "diagram" ? (
-        <UseCaseDiagram response={response} />
+        <UseCaseDiagram response={response} onSavePositions={savePositions} savingPositions={savingPositions} />
       ) : null}
     </div>
   );

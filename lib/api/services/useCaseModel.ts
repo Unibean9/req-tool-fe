@@ -100,6 +100,7 @@ export type DiagramLayoutNode = {
   priority: UseCasePriority | null;
   actorKind: ActorKind | null;
   side: ActorSide | "inside" | null;
+  manual: boolean;
 };
 export type DiagramLayoutEdge = {
   id: string;
@@ -273,6 +274,23 @@ export async function generateUseCaseDiagram(projectId: string): Promise<UseCase
   const response = await apiService.post<ApiEnvelope<UseCaseModelResponse>, Record<string, never>>(
     `${projectPath(projectId)}/use-case-model/diagram/generate`,
     {},
+  );
+  return unwrap(response.data);
+}
+
+export type DiagramNodePosition = { id: string; x: number; y: number };
+export type UpdateUseCaseDiagramPositionsRequest = { positions: DiagramNodePosition[] };
+
+/** Saves actor/use-case positions dragged by hand. Only updates nodes that already exist in the
+ * current diagram; the backend marks them so a later table/diagram regenerate keeps this
+ * position instead of recomputing it. */
+export async function updateUseCaseDiagramPositions(
+  projectId: string,
+  positions: DiagramNodePosition[],
+): Promise<UseCaseModelResponse> {
+  const response = await apiService.patch<ApiEnvelope<UseCaseModelResponse>, UpdateUseCaseDiagramPositionsRequest>(
+    `${projectPath(projectId)}/use-case-model/diagram/positions`,
+    { positions },
   );
   return unwrap(response.data);
 }
