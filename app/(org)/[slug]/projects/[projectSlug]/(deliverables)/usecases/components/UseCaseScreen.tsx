@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
-import { Code2, Layers3, RefreshCw, Sparkles, Table2 } from "lucide-react";
+import { Code2, Layers3, Network, RefreshCw, Sparkles, Table2 } from "lucide-react";
 import { toast } from "sonner";
 import type {
   UseCaseActorResponse,
@@ -15,6 +15,7 @@ import { useUseCaseModel } from "@/hooks/useUseCaseModel";
 import { getApiErrorMessage } from "@/lib/api/getApiErrorMessage";
 import { useOrgWorkspace } from "../../../../../orgWorkspaceContext";
 import { PlantUmlPreview } from "./PlantUmlPreview";
+import { UseCaseDiagram } from "./UseCaseDiagram";
 import { UseCaseDetails } from "./UseCaseDetails";
 import { UseCaseTable } from "./UseCaseTable";
 
@@ -22,7 +23,7 @@ const EMPTY_USE_CASES: UseCaseItemResponse[] = [];
 const EMPTY_ACTORS: UseCaseActorResponse[] = [];
 const EMPTY_MODULES: UseCaseModuleResponse[] = [];
 const EMPTY_RELATIONSHIPS: UseCaseRelationshipResponse[] = [];
-type Tab = "table" | "plantuml";
+type Tab = "table" | "diagram" | "plantuml";
 
 export default function UseCaseScreen() {
   const params = useParams<{ projectSlug: string }>();
@@ -191,6 +192,17 @@ export default function UseCaseScreen() {
             </button>
             <button
               type="button"
+              onClick={() => setTab("diagram")}
+              className={
+                "inline-flex h-8 items-center gap-2 rounded-md px-3 text-xs font-medium " +
+                (tab === "diagram" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground")
+              }
+            >
+              <Network className="size-4" />
+              Diagram
+            </button>
+            <button
+              type="button"
               onClick={() => setTab("plantuml")}
               className={
                 "inline-flex h-8 items-center gap-2 rounded-md px-3 text-xs font-medium " +
@@ -202,7 +214,11 @@ export default function UseCaseScreen() {
             </button>
           </div>
           <span className="text-xs text-muted-foreground">
-            {tab === "plantuml" ? "Edit the generated source and save it to preview the current UML." : "Select a use case to inspect its full detail."}
+            {tab === "diagram"
+              ? "View the generated use-case diagram from the current model."
+              : tab === "plantuml"
+                ? "Edit the generated source and save it to preview the current UML."
+                : "Select a use case to inspect its full detail."}
           </span>
         </div>
       </header>
@@ -242,6 +258,8 @@ export default function UseCaseScreen() {
             onSelect={setSelectedId}
           />
         </div>
+      ) : tab === "diagram" ? (
+        <UseCaseDiagram response={response} />
       ) : (
         <PlantUmlPreview
           key={plantUmlSource}
