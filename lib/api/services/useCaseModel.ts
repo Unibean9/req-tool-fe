@@ -237,6 +237,14 @@ export async function fetchUseCaseModel(
   return unwrap(response.data);
 }
 
+/**
+ * Monolithic generation: extracts modules, generates every module's use cases, and resolves
+ * relationships inside a single request. On a project with several modules this can run long
+ * enough to exceed a client/proxy timeout before any response comes back. `useUseCaseModel`
+ * drives `generateUseCaseGroups` + `generateGroupUseCases` + `generateUseCaseRelations` instead
+ * so each phase is its own bounded request with visible progress. Kept for callers that
+ * genuinely want one blocking call.
+ */
 export async function generateUseCaseModel(
   projectId: string,
   body: GenerateUseCaseModelRequest = {},
@@ -259,7 +267,17 @@ export async function generateUseCaseRelations(
   return unwrap(response.data);
 }
 
-/** Compatibility endpoints for clients that still use split generation. */
+/** Recomputes the ELK diagram layout from the already-generated table. No LLM call; the
+ * backend rejects this with 409 if the table has no use cases yet. */
+export async function generateUseCaseDiagram(projectId: string): Promise<UseCaseModelResponse> {
+  const response = await apiService.post<ApiEnvelope<UseCaseModelResponse>, Record<string, never>>(
+    `${projectPath(projectId)}/use-case-model/diagram/generate`,
+    {},
+  );
+  return unwrap(response.data);
+}
+
+/** Phase 1 of split generation: extracts modules/actors only (`useCases` is always empty). */
 export async function generateUseCaseGroups(
   projectId: string,
   body: GenerateUseCaseModelRequest = {},
@@ -271,6 +289,8 @@ export async function generateUseCaseGroups(
   return unwrap(response.data);
 }
 
+/** Phase 2 of split generation: generates one module's use cases; idempotently replaces that
+ * module's previously generated rows. */
 export async function generateGroupUseCases(
   projectId: string,
   groupId: string,

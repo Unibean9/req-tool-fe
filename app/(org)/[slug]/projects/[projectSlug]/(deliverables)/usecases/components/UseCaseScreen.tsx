@@ -34,8 +34,10 @@ export default function UseCaseScreen() {
     error: loadError,
     isLoading,
     refetch,
-    generate,
-    generating,
+    generateTable,
+    generatingTable,
+    generateDiagram,
+    generatingDiagram,
   } = useUseCaseModel(projectId);
   const [tab, setTab] = useState<Tab>("table");
   const [selectedId, setSelectedId] = useState("");
@@ -56,20 +58,26 @@ export default function UseCaseScreen() {
   const modules = response?.modules ?? EMPTY_MODULES;
   const relationships = response?.relationships ?? EMPTY_RELATIONSHIPS;
   const actors = response?.actors ?? EMPTY_ACTORS;
+  // The diagram requires a table (see the two Generate buttons below), so fall back to the
+  // table tab whenever there is none -- derived at render time rather than synced via an
+  // effect, so this never shows a stale diagram tab for one extra frame.
+  const effectiveTab: Tab = useCases.length === 0 ? "table" : tab;
+
   const actorById = useMemo(() => new Map(actors.map((actor) => [actor.id, actor])), [actors]);
   const moduleById = useMemo(() => new Map(modules.map((module) => [module.id, module])), [modules]);
   const selected = useCases.find((item) => item.id === selectedId) ?? useCases[0] ?? null;
   const generationRunning = response?.generation?.status === "running";
-  const busy = generating || generationRunning;
+  const tableBusy = generatingTable || generationRunning;
+  const diagramBusy = generatingDiagram;
   const [generationStage, setGenerationStage] = useState({
     label: "Preparing BRD/PRD source",
     current: 1,
-    total: 6,
+    total: 4,
   });
   const activeGenerationStage = useMemo(() => {
     const generation = response?.generation;
     const stages = generation?.stages;
-    if (!generationRunning || !generation || !stages) return generationStage;
+    if (!tableBusy || !generation || !stages) return generationStage;
     const batchCount = generation.batchCount;
     const completedBatchCount = generation.completedBatchCount ?? 0;
     if (stages.table === "running" && typeof batchCount === "number" && batchCount > 0) {
@@ -84,14 +92,12 @@ export default function UseCaseScreen() {
       ["table", "Generating use-case table"],
       ["relationships", "Resolving relationships"],
       ["validation", "Validating model"],
-      ["layout", "Arranging diagram"],
-      ["persist", "Saving generated model"],
     ] as const;
     const activeIndex = definitions.findIndex(([key]) => stages[key] === "running" || stages[key] === "pending");
     if (activeIndex < 0) return generationStage;
     return { label: definitions[activeIndex][1], current: activeIndex + 1, total: definitions.length };
   }, [
-    generationRunning,
+    tableBusy,
     generationStage,
     response?.generation?.batchCount,
     response?.generation?.completedBatchCount,
@@ -99,34 +105,29 @@ export default function UseCaseScreen() {
   ]);
 
   useEffect(() => {
-    if (!busy) return;
+    if (!tableBusy) return;
     const tableTimer = window.setTimeout(
-      () => setGenerationStage({ label: "Generating use-case table", current: 2, total: 6 }),
+      () => setGenerationStage({ label: "Generating use-case table", current: 2, total: 4 }),
       650,
     );
     const relationTimer = window.setTimeout(
-      () => setGenerationStage({ label: "Resolving relationships", current: 3, total: 6 }),
+      () => setGenerationStage({ label: "Resolving relationships", current: 3, total: 4 }),
       1600,
     );
     const validationTimer = window.setTimeout(
-      () => setGenerationStage({ label: "Validating model", current: 4, total: 6 }),
+      () => setGenerationStage({ label: "Validating model", current: 4, total: 4 }),
       2600,
-    );
-    const layoutTimer = window.setTimeout(
-      () => setGenerationStage({ label: "Arranging diagram", current: 5, total: 6 }),
-      3600,
     );
     return () => {
       window.clearTimeout(tableTimer);
       window.clearTimeout(relationTimer);
       window.clearTimeout(validationTimer);
-      window.clearTimeout(layoutTimer);
     };
-  }, [busy]);
+  }, [tableBusy]);
 
-  const startGeneration = () => {
-    setGenerationStage({ label: "Reading BRD/PRD components", current: 1, total: 6 });
-    void generate();
+  const startTableGeneration = () => {
+    setGenerationStage({ label: "Reading BRD/PRD components", current: 1, total: 4 });
+    void generateTable();
   };
 
   if (!response) {
@@ -176,16 +177,26 @@ export default function UseCaseScreen() {
           <div className="flex flex-wrap items-center gap-3">
             <button
               type="button"
-              disabled={busy || !projectId}
-              onClick={startGeneration}
+              disabled={tableBusy || !projectId}
+              onClick={startTableGeneration}
               className="rounded-md bg-primary px-3 py-2 text-xs font-medium text-primary-foreground disabled:opacity-50"
             >
-              {busy
+              {tableBusy
                 ? `${activeGenerationStage.label} · ${activeGenerationStage.current}/${activeGenerationStage.total}`
                 : useCases.length
-                  ? "Regenerate model"
-                  : "Generate use-case model"}
+                  ? "Regenerate table"
+                  : "Generate use-case table"}
             </button>
+            {useCases.length > 0 ? (
+              <button
+                type="button"
+                disabled={tableBusy || diagramBusy || !projectId}
+                onClick={() => void generateDiagram()}
+                className="rounded-md border border-border px-3 py-2 text-xs font-medium disabled:opacity-50"
+              >
+                {diagramBusy ? "Generating diagram…" : "Generate diagram"}
+              </button>
+            ) : null}
             <div className="inline-flex items-center gap-2 text-xs text-muted-foreground">
               <Layers3 className="size-4 text-primary" />
               {useCases.length} use cases · {modules.length} modules · {actors.length} actors
@@ -200,7 +211,7 @@ export default function UseCaseScreen() {
               onClick={() => setTab("table")}
               className={
                 "inline-flex h-8 items-center gap-2 rounded-md px-3 text-xs font-medium " +
-                (tab === "table" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground")
+                (effectiveTab === "table" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground")
               }
             >
               <Table2 className="size-4" />
@@ -208,10 +219,12 @@ export default function UseCaseScreen() {
             </button>
             <button
               type="button"
+              disabled={useCases.length === 0}
               onClick={() => setTab("diagram")}
+              title={useCases.length === 0 ? "Generate the use-case table first" : undefined}
               className={
-                "inline-flex h-8 items-center gap-2 rounded-md px-3 text-xs font-medium " +
-                (tab === "diagram" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground")
+                "inline-flex h-8 items-center gap-2 rounded-md px-3 text-xs font-medium disabled:cursor-not-allowed disabled:opacity-40 " +
+                (effectiveTab === "diagram" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground")
               }
             >
               <Network className="size-4" />
@@ -219,9 +232,11 @@ export default function UseCaseScreen() {
             </button>
           </div>
           <span className="text-xs text-muted-foreground">
-            {tab === "diagram"
+            {effectiveTab === "diagram"
               ? "View the generated use-case diagram from the current model."
-              : "Select a use case to inspect its full detail."}
+              : useCases.length === 0
+                ? "Generate the use-case table to unlock the diagram."
+                : "Select a use case to inspect its full detail."}
           </span>
         </div>
       </header>
@@ -232,7 +247,7 @@ export default function UseCaseScreen() {
         </p>
       ) : null}
 
-      {tab === "table" ? (
+      {effectiveTab === "table" ? (
         <div className="grid min-h-[520px] min-w-0 flex-1 grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_390px]">
           <UseCaseTable
             items={useCases}
@@ -251,7 +266,7 @@ export default function UseCaseScreen() {
             onSelect={setSelectedId}
           />
         </div>
-      ) : tab === "diagram" ? (
+      ) : effectiveTab === "diagram" ? (
         <UseCaseDiagram response={response} />
       ) : null}
     </div>
