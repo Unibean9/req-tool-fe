@@ -1,17 +1,21 @@
 "use client";
 
-import { Fragment, useMemo, useState } from "react";
+import { Fragment, useMemo, useRef, useState } from "react";
 import {
   Braces,
   CheckCircle2,
   ChevronDown,
   Eye,
   FileText,
+  Layers,
   Loader2,
   PencilLine,
   Send,
+  ShieldCheck,
+  Sparkles,
   ThumbsDown,
   ThumbsUp,
+  TriangleAlert,
   XCircle,
 } from "lucide-react";
 
@@ -518,7 +522,7 @@ function ProposalMetadataSection({
 }: {
   entries: Array<[string, unknown]>;
 }) {
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(false);
   const rowCount = useMemo(
     () => flattenMetadataEntries(entries).length,
     [entries]
@@ -538,7 +542,7 @@ function ProposalMetadataSection({
         )}
       >
         <span className="text-sm font-medium text-foreground">
-          Agent metadata
+          Technical details
         </span>
         <span className="flex items-center gap-2 text-xs text-muted-foreground">
           {rowCount} {rowCount === 1 ? "field" : "fields"}
@@ -555,6 +559,226 @@ function ProposalMetadataSection({
         <ProposalMetadataPanel entries={entries} />
       </CollapsibleContent>
     </Collapsible>
+  );
+}
+
+// Snapshot keys that are bookkeeping for the pipeline, not something a reviewer decides on. They
+// are summarised in ProposalReviewSummary and kept, raw, under "Technical details".
+const TECHNICAL_KEYS = new Set([
+  "source_evidence",
+  "lifecycle_metadata",
+  "synthesis_metadata",
+  "candidate_readiness",
+]);
+
+const READINESS_LABELS: Record<string, { label: string; tone: "ok" | "warn" }> = {
+  sufficient: { label: "Ready to approve", tone: "ok" },
+  needs_confirmation: { label: "Has points to confirm", tone: "warn" },
+  well_structured_but_incomplete: { label: "Incomplete", tone: "warn" },
+};
+
+function stringList(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .filter((item): item is string => typeof item === "string")
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function dedupe(items: string[]): string[] {
+  return Array.from(new Set(items));
+}
+
+/** A marked line is often a raw markdown table row; show its cells as plain text. */
+function cleanMarkedLine(line: string): string {
+  const trimmed = line.trim();
+  if (!trimmed.startsWith("|")) return trimmed;
+  return trimmed
+    .replace(/^\|/, "")
+    .replace(/\|$/, "")
+    .split("|")
+    .map((cell) => cell.trim())
+    .filter(Boolean)
+    .join(" · ");
+}
+
+function describeWarning(warning: string): string {
+  const reference = warning.match(/^unknown_reference:\s*(\S+) is not defined in (\S+)/);
+  if (reference) {
+    return `Mentions ${reference[1]}, which does not exist in ${formatArtifactTypeLabel(reference[2])}.`;
+  }
+  const stale = warning.match(/^stale_predecessor:([^:]+):(\S+)/);
+  if (stale) {
+    const source = formatArtifactTypeLabel(stale[1]);
+    if (stale[2] === "retired_predecessor") return `${source} has been archived since this draft was written.`;
+    if (stale[2] === "missing_predecessor") return `${source} no longer exists.`;
+    return `${source} has changed since this draft was written.`;
+  }
+  const vague = warning.match(/^Weasel word[^']*'([^']+)'/);
+  if (vague) return `Vague wording: "${vague[1]}".`;
+  return warning;
+}
+
+function sourceTitles(snapshot: Record<string, unknown>): string[] {
+  const evidence = Array.isArray(snapshot.source_evidence) ? snapshot.source_evidence : [];
+  return dedupe(
+    evidence
+      .map((item) => (isRecord(item) && isRecord(item.metadata) ? item.metadata.title : null))
+      .filter((title): title is string => typeof title === "string" && title.trim().length > 0)
+  );
+}
+
+function ReviewBlock({
+  icon,
+  title,
+  tone = "neutral",
+  children,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  tone?: "neutral" | "warn";
+  children: React.ReactNode;
+}) {
+  return (
+    <section
+      className={cn(
+        "flex flex-col gap-2.5 rounded-xl border px-4 py-3.5",
+        tone === "warn"
+          ? "border-amber-500/35 bg-amber-500/8"
+          : "border-border/50 bg-card/35"
+      )}
+    >
+      <h3 className="flex items-center gap-2 text-sm font-medium text-foreground">
+        {icon}
+        {title}
+      </h3>
+      {children}
+    </section>
+  );
+}
+
+function ProposalReviewSummary({ snapshot }: { snapshot: Record<string, unknown> }) {
+  const synthesis = isRecord(snapshot.synthesis_metadata) ? snapshot.synthesis_metadata : {};
+  const readiness = isRecord(snapshot.candidate_readiness) ? snapshot.candidate_readiness : {};
+  const toConfirm = dedupe([
+    ...stringList(readiness.needs_confirmation),
+    ...stringList(synthesis.pending_assumptions),
+  ]);
+  const inferred = dedupe(stringList(readiness.inferred).map(cleanMarkedLine));
+  const warnings = stringList(synthesis.deterministic_warnings).map(describeWarning);
+  const basedOn = sourceTitles(snapshot);
+  const lifecycle = isRecord(snapshot.lifecycle_metadata) ? snapshot.lifecycle_metadata : {};
+  const basedOnCount = isRecord(lifecycle.based_on) ? Object.keys(lifecycle.based_on).length : 0;
+  const hiddenSources = Math.max(0, basedOnCount - basedOn.length);
+  const readinessState = typeof readiness.state === "string" ? READINESS_LABELS[readiness.state] : undefined;
+  const hasChecks = isRecord(snapshot.synthesis_metadata);
+
+  if (!toConfirm.length && !inferred.length && !basedOn.length && !hasChecks) return null;
+
+  return (
+    <section className="flex flex-col gap-4 border-t border-border/45 pt-8">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h2 className="text-sm font-semibold text-foreground">Before you approve</h2>
+        {readinessState ? (
+          <Badge variant={readinessState.tone === "ok" ? "secondary" : "outline"}>
+            {readinessState.label}
+          </Badge>
+        ) : null}
+      </div>
+
+      {toConfirm.length ? (
+        <ReviewBlock
+          tone="warn"
+          icon={<TriangleAlert className="size-4 text-amber-400" aria-hidden />}
+          title={`Needs your confirmation (${toConfirm.length})`}
+        >
+          <ul className="flex list-disc flex-col gap-1.5 pl-5 text-sm leading-6 text-foreground/90">
+            {toConfirm.map((item) => (
+              <li key={item}>{item}</li>
+            ))}
+          </ul>
+          <p className="text-xs leading-relaxed text-muted-foreground">
+            Approving keeps these marked as open points in the document. To settle them first, use
+            Request revision and tell the agent what is confirmed.
+          </p>
+        </ReviewBlock>
+      ) : null}
+
+      {basedOn.length ? (
+        <ReviewBlock
+          icon={<Layers className="size-4 text-primary" aria-hidden />}
+          title="Based on"
+        >
+          <ul className="flex flex-wrap gap-1.5">
+            {basedOn.map((title) => (
+              <li key={title}>
+                <Badge variant="outline" className="max-w-full whitespace-normal">
+                  {title}
+                </Badge>
+              </li>
+            ))}
+            {hiddenSources ? (
+              <li className="self-center text-xs text-muted-foreground">
+                +{hiddenSources} more approved {hiddenSources === 1 ? "artifact" : "artifacts"}
+              </li>
+            ) : null}
+          </ul>
+        </ReviewBlock>
+      ) : null}
+
+      {hasChecks ? (
+        <ReviewBlock
+          tone={warnings.length ? "warn" : "neutral"}
+          icon={
+            warnings.length ? (
+              <TriangleAlert className="size-4 text-amber-400" aria-hidden />
+            ) : (
+              <ShieldCheck className="size-4 text-primary" aria-hidden />
+            )
+          }
+          title="Automated checks"
+        >
+          {warnings.length ? (
+            <ul className="flex list-disc flex-col gap-1.5 pl-5 text-sm leading-6 text-foreground/90">
+              {warnings.map((warning) => (
+                <li key={warning}>{warning}</li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-sm text-muted-foreground">No issues found.</p>
+          )}
+        </ReviewBlock>
+      ) : null}
+
+      {inferred.length ? (
+        <Collapsible>
+          <CollapsibleTrigger
+            type="button"
+            className="group flex w-full items-center justify-between gap-3 rounded-xl border border-border/50 bg-card/35 px-4 py-3 text-left text-sm font-medium outline-none hover:bg-muted/30 focus-visible:ring-[3px] focus-visible:ring-ring/40"
+          >
+            <span className="flex items-center gap-2">
+              <Sparkles className="size-4 text-primary" aria-hidden />
+              Inferred by the agent ({inferred.length})
+            </span>
+            <ChevronDown
+              className="size-4 shrink-0 text-muted-foreground transition-transform duration-200 group-data-[panel-open]:rotate-180 motion-reduce:transition-none"
+              aria-hidden
+            />
+          </CollapsibleTrigger>
+          <CollapsibleContent className="pt-2">
+            <p className="px-1 pb-2 text-xs text-muted-foreground">
+              Not stated directly in your answers or earlier documents — the agent derived them. They
+              are marked in the content above.
+            </p>
+            <ul className="flex list-disc flex-col gap-1.5 pl-6 text-sm leading-6 text-foreground/85">
+              {inferred.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
+          </CollapsibleContent>
+        </Collapsible>
+      ) : null}
+    </section>
   );
 }
 
@@ -591,6 +815,9 @@ export function AgentProposalReviewDialog({
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState<ReviewMode>("review");
   const [editNote, setEditNote] = useState("");
+  // Focus the title on open: otherwise the first focusable element inside the scroll area (near
+  // the bottom) receives focus and the browser scrolls the dialog down to it.
+  const titleRef = useRef<HTMLHeadingElement>(null);
 
   const approve = useApproveToolCall();
   const reject = useRejectToolCall();
@@ -656,6 +883,7 @@ export function AgentProposalReviewDialog({
     for (const entry of detailEntries) {
       const [key, value] = entry;
       if (
+        TECHNICAL_KEYS.has(key) ||
         METADATA_OBJECT_KEYS.has(key) ||
         (isRecord(value) && isFlatMetadataObject(value))
       ) {
@@ -792,6 +1020,7 @@ export function AgentProposalReviewDialog({
         className="top-2 h-[calc(100dvh-1rem)] max-h-[calc(100dvh-1rem)] w-[calc(100vw-1rem)] max-w-none -translate-y-0 overflow-hidden rounded-xl sm:top-4 sm:h-[calc(100dvh-2rem)] sm:max-h-[calc(100dvh-2rem)] sm:w-[min(100vw-2rem,72rem)] sm:max-w-[min(100vw-2rem,72rem)]"
         contentClassName="relative flex h-full min-h-0 flex-col overflow-hidden"
         aria-busy={isBusy}
+        initialFocus={titleRef}
         showCloseButton
       >
         <DialogHeader className="shrink-0 gap-3 border-b border-border/70 px-5 py-4 pr-14 text-left sm:px-7 sm:py-5">
@@ -803,7 +1032,11 @@ export function AgentProposalReviewDialog({
             <Badge variant={status.variant}>{status.label}</Badge>
           </div>
           <div className="flex flex-col gap-1.5">
-            <DialogTitle className="text-balance wrap-break-word text-xl font-semibold leading-tight">
+            <DialogTitle
+              ref={titleRef}
+              tabIndex={-1}
+              className="text-balance wrap-break-word text-xl font-semibold leading-tight outline-none"
+            >
               {proposalTitle}
             </DialogTitle>
             <DialogDescription className="text-pretty">
@@ -836,16 +1069,15 @@ export function AgentProposalReviewDialog({
               </div>
             )}
 
+            <ProposalReviewSummary snapshot={snapshot} />
+
             {detailEntries.length ? (
               <section className="flex flex-col gap-4 border-t border-border/45 pt-8">
-                <div className="flex flex-col gap-1">
+                {contentDetailEntries.length ? (
                   <h2 className="text-balance text-sm font-semibold text-foreground">
-                    Supporting details
+                    Additional details
                   </h2>
-                  <p className="text-pretty text-sm leading-relaxed text-muted-foreground">
-                    Extra context supplied alongside the main proposal body.
-                  </p>
-                </div>
+                ) : null}
 
                 {contentDetailEntries.length ? (
                   <div className="flex flex-col gap-3">

@@ -199,9 +199,10 @@ export function MarkdownContent({
                       "[&_th:last-child:nth-child(2)]:pl-5",
                       "[&_td:first-child:nth-last-child(2)]:border-r [&_td:first-child:nth-last-child(2)]:border-border/40 [&_td:first-child:nth-last-child(2)]:pr-5 [&_td:first-child:nth-last-child(2)]:font-medium [&_td:first-child:nth-last-child(2)]:text-foreground",
                       "[&_td:last-child:nth-child(2)]:pl-5 [&_td:last-child:nth-child(2)]:leading-relaxed [&_td:last-child:nth-child(2)]:text-foreground/85",
-                      // 3+ columns: keep ID / code column from crushing
-                      "[&_th:first-child:nth-last-child(n+3)]:w-[1%] [&_th:first-child:nth-last-child(n+3)]:min-w-13 [&_th:first-child:nth-last-child(n+3)]:whitespace-nowrap [&_th:first-child:nth-last-child(n+3)]:pr-4",
-                      "[&_td:first-child:nth-last-child(n+3)]:w-[1%] [&_td:first-child:nth-last-child(n+3)]:min-w-13 [&_td:first-child:nth-last-child(n+3)]:whitespace-nowrap [&_td:first-child:nth-last-child(n+3)]:pr-4 [&_td:first-child:nth-last-child(n+3)]:font-medium [&_td:first-child:nth-last-child(n+3)]:tabular-nums [&_td:first-child:nth-last-child(n+3)]:text-foreground",
+                      // 3+ columns: the first column is usually a short id, but it can also hold
+                      // long text, so it must wrap -- a min width only keeps an id like C-TIME-01 whole.
+                      "[&_th:first-child:nth-last-child(n+3)]:min-w-20 [&_th:first-child:nth-last-child(n+3)]:pr-4",
+                      "[&_td:first-child:nth-last-child(n+3)]:min-w-20 [&_td:first-child:nth-last-child(n+3)]:pr-4 [&_td:first-child:nth-last-child(n+3)]:font-medium [&_td:first-child:nth-last-child(n+3)]:tabular-nums [&_td:first-child:nth-last-child(n+3)]:text-foreground",
                     ].join(" "),
                 )}
               >
